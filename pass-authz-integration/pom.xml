@@ -1,0 +1,159 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.dataconservancy.pass</groupId>
+    <artifactId>pass-authz</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>pass-authz-integration</artifactId>
+
+  <properties>
+    <fcrepo.cxtPath>fcrepo</fcrepo.cxtPath>
+  </properties>
+
+
+  <profiles>
+    <profile>
+      <id>standard</id>
+      <properties>
+        <fcrepo.dynamic.test.port>8080</fcrepo.dynamic.test.port>
+        <fcrepo.dynamic.jms.port>61616</fcrepo.dynamic.jms.port>
+        <fcrepo.dynamic.stomp.port>61613</fcrepo.dynamic.stomp.port>
+        <FUSEKI_PORT>3030</FUSEKI_PORT>
+      </properties>
+    </profile>
+  </profiles>
+
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>reserve-port</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>reserve-network-port</goal>
+            </goals>
+            <configuration>
+              <portNames>
+                <portName>fcrepo.dynamic.test.port</portName>
+                <portName>fcrepo.dynamic.jms.port</portName>
+                <portName>fcrepo.dynamic.stomp.port</portName>
+              </portNames>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <systemPropertyVariables>
+            <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
+            <fcrepo.cxtPath>${fcrepo.cxtPath}</fcrepo.cxtPath>
+            <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
+            <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
+            <project.basedir>${project.basedir}</project.basedir>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.cargo</groupId>
+        <artifactId>cargo-maven2-plugin</artifactId>
+        <version>1.6.7</version>
+        <configuration>
+          <!-- Container configuration -->
+          <container>
+            <containerId>tomcat8x</containerId>
+            <type>installed</type>
+            <timeout>1200000</timeout>
+            <systemProperties>
+              <fcrepo.home>${project.build.directory}/fcrepo</fcrepo.home>
+              <fcrepo.modeshape.configuration>classpath:/config/file-simple/repository.json</fcrepo.modeshape.configuration>
+              <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
+              <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
+            </systemProperties>
+          </container>
+          <deployables>
+            <deployable>
+              <groupId>org.fcrepo</groupId>
+              <artifactId>fcrepo-webapp</artifactId>
+              <type>war</type>
+              <properties>
+                <context>${fcrepo.cxtPath}</context>
+              </properties>
+            </deployable>
+            <deployable>
+              <groupId>org.dataconservancy.pass</groupId>
+              <artifactId>pass-user-service</artifactId>
+              <type>war</type>
+            </deployable>
+          </deployables>
+          <configuration>
+            <properties>
+              <!-- <cargo.jvmargs>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005</cargo.jvmargs> -->
+              <cargo.servlet.port>${fcrepo.dynamic.test.port}</cargo.servlet.port>
+            </properties>
+          </configuration>
+        </configuration>
+        <executions>
+          <execution>
+            <id>start-container</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>start</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>stop-container</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>stop</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-user-service</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-webapp</artifactId>
+      <type>war</type>
+      <version>${fcrepo.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+  </dependencies>
+</project>
