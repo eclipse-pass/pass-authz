@@ -44,7 +44,7 @@ public class AuthUser {
     public void setFaculty(boolean faculty) {
         isFaculty = faculty;
     }
-    
+
     /**
      * Get the user's email address
      * @return the email address
