@@ -49,6 +49,7 @@ public class UserServlet extends HttpServlet {
 
         final AuthUser shibUser = provider.getUser(request);
 
+
         try (Writer out = response.getWriter()) {
             mapper.writerWithDefaultPrettyPrinter().writeValue(out, shibUser);
         }
