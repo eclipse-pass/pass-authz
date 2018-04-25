@@ -84,5 +84,7 @@ public class UserServletTest {
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
 
         assertEquals(USER.getName(), fromServlet.getDisplayName());
+        assertEquals(USER.getEmail(), fromServlet.getEmail());
+        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
     }
 }
