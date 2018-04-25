@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -29,6 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 
+import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.model.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -53,23 +56,35 @@ public class UserServletTest {
     @Mock
     AuthUserProvider provider;
 
+    @Mock
+    FedoraPassClient client;
+
+
+
     @Test
     public void smokeTest() throws Exception {
         final AuthUser USER = new AuthUser();
-        USER.setName("MOOO");
+        USER.setName("MOOO COW");
+        USER.setFaculty(true);
+        USER.setInstitutionalId("cowb1");
+        USER.setEmail("bessie@farm.com");
 
         final UserServlet servlet = new UserServlet();
         servlet.provider = provider;
+        servlet.fedoraClient = client;
 
         final StringWriter output = new StringWriter();
 
         when(response.getWriter()).thenReturn(new PrintWriter(output));
         when(provider.getUser(any())).thenReturn(USER);
+        when(client.createResource(any())).thenReturn(URI.create("MOO"));
 
         servlet.doGet(request, response);
 
-        final AuthUser fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), AuthUser.class);
+        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
 
-        assertEquals(USER.getName(), fromServlet.getName());
+        assertEquals(USER.getName(), fromServlet.getDisplayName());
+        assertEquals(USER.getEmail(), fromServlet.getEmail());
+        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
     }
 }

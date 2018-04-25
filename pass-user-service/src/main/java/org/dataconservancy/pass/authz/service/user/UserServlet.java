@@ -18,6 +18,7 @@ package org.dataconservancy.pass.authz.service.user;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URI;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -29,6 +30,8 @@ import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.authz.ShibAuthUserProvider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.model.User;
 
 /**
  * @author apb@jhu.edu
@@ -40,6 +43,8 @@ public class UserServlet extends HttpServlet {
 
     AuthUserProvider provider = new ShibAuthUserProvider();
 
+    FedoraPassClient fedoraClient = new FedoraPassClient();
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -48,10 +53,60 @@ public class UserServlet extends HttpServlet {
         response.setCharacterEncoding("utf-8");
 
         final AuthUser shibUser = provider.getUser(request);
+        URI id = shibUser.getId();
+        String email = shibUser.getEmail();
+        String displayName = shibUser.getName();
+        String institutionalId = shibUser.getInstitutionalId();
 
+        User user = null;
 
-        try (Writer out = response.getWriter()) {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(out, shibUser);
+        //does the user already exist in the repository?
+        if (id != null) {
+            user = fedoraClient.readResource(id, User.class);
+
+            //is the user in COEUS? if not, update; else leave alone
+            if (user.getLocalKey() == null ) {//not in COEUS
+                boolean update = false;
+
+                if(!user.getEmail().equals(email)) {
+                    user.setEmail(email);
+                    update=true;
+                }
+                if(!user.getDisplayName().equals(displayName)) {
+                    user.setDisplayName(displayName);
+                    update=true;
+                }
+                if(!user.getInstitutionalId().equals(institutionalId)) {
+                    user.setInstitutionalId(institutionalId);
+                    update=true;
+                }
+
+                if(update) {
+                    fedoraClient.updateResource(user);
+                }
+            }
+
+        } else {//no id, so we add new user to repository if eligible
+            if (shibUser.isFaculty()) {
+                user = new User();
+                user.setInstitutionalId(institutionalId);
+                user.setDisplayName(displayName);
+                user.setEmail(email);
+                user.getRoles().add(User.Role.SUBMITTER);
+                id = fedoraClient.createResource(user);
+            }
+        }
+
+        //at this point, any eligible person will have an up to date User object in Fedora
+        //and the up to date User object and valid id here
+        //if the person is not eligible, id and user will be null
+
+        if (id != null) {
+            try (Writer out = response.getWriter()) {
+                mapper.writerWithDefaultPrettyPrinter().writeValue(out, user);
+            }
+        } else {
+            //spike the intruder
         }
     }
 
