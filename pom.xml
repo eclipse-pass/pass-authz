@@ -140,7 +140,7 @@
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>org.dataconservancy.pass</groupId>
         <artifactId>pass-fedora-client</artifactId>
@@ -188,6 +188,18 @@
       <releases>
         <enabled>false</enabled>
       </releases>
+    </repository>
+    <repository>
+      <id>dc.public.snapshots</id>
+      <name>Data Conservancy Public Maven Repository (snapshots)</name>
+      <layout>default</layout>
+      <url>http://maven.dataconservancy.org/public/snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
   </repositories>
 
