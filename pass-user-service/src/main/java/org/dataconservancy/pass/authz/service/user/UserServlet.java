@@ -35,6 +35,7 @@ import org.dataconservancy.pass.model.User;
 
 /**
  * @author apb@jhu.edu
+ * @author jrm@jhu.edu
  */
 @SuppressWarnings("serial")
 public class UserServlet extends HttpServlet {
