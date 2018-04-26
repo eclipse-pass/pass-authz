@@ -20,13 +20,43 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author apb@jhu.edu
+ * @author jrm@jhu.edu
  */
 public class ShibAuthUserProvider implements AuthUserProvider {
 
+    static final String DISPLAY_NAME_HEADER = "Displayname";
+    static final String EMAIL_HEADER = "Mail";
+    static final String EPPN_HEADER = "Eppn";
+    static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
+
+
     @Override
     public AuthUser getUser(HttpServletRequest request) {
+
+        String facultyAffiliation = "FACULTY";
+
+        String displayName;
+        String emailAddress;
+        String institutionalId;
+        boolean isFaculty = false;
+
+        displayName = request.getHeader(DISPLAY_NAME_HEADER).trim();
+        emailAddress = request.getHeader(EMAIL_HEADER).trim();
+        institutionalId = request.getHeader(EPPN_HEADER).split("@")[0];
+
+        String[] affiliationArray = request.getHeader(UNSCOPED_AFFILIATION_HEADER).split(";");
+        for (String affiliation : affiliationArray) {
+            if (affiliation.trim().equalsIgnoreCase(facultyAffiliation)) {
+                isFaculty = true;
+                break;
+            }
+        }
+
         final AuthUser user = new AuthUser();
-        user.setName("Gladys B. Taurus");
+        user.setName(displayName);
+        user.setEmail(emailAddress);
+        user.setInstitutionalId(institutionalId.trim().toLowerCase());//this is our normal format
+        user.setFaculty(isFaculty);
 
         return user;
     }

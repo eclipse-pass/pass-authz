@@ -23,11 +23,11 @@ import java.net.URI;
  */
 public class AuthUser {
 
-    String name;
-    String email;
-    String institutionalId;
-    URI id;
-    boolean isFaculty;
+    private String name;
+    private String email;
+    private String institutionalId;
+    private URI id;
+    private boolean isFaculty;
 
     /**
      * boolean indicating whether a person has faculty status
@@ -39,7 +39,7 @@ public class AuthUser {
 
     /**
      * set a boolean indicating whether the person has facuty status
-     * @param faculty
+     * @param faculty boolean indicating whether the user has a faculty affiliation
      */
     public void setFaculty(boolean faculty) {
         isFaculty = faculty;
@@ -55,7 +55,7 @@ public class AuthUser {
 
     /**
      * Set the user's email address
-     * @param email
+     * @param email the user's email address
      */
     public void setEmail(String email) {
         this.email = email;
@@ -70,8 +70,8 @@ public class AuthUser {
     }
 
     /**
-     * Set the institutional id for this user (for JHU it's the Jhed Id)
-     * @param institutionalId
+     * Set the institutional id for this user
+     * @param institutionalId (for JHU it's the Jhed Id)
      */
     public void setInstitutionalId(String institutionalId) {
         this.institutionalId = institutionalId;
