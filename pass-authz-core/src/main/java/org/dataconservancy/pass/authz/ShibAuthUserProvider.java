@@ -17,9 +17,6 @@
 package org.dataconservancy.pass.authz;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author apb@jhu.edu
@@ -38,36 +35,20 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         String facultyAffiliation = "FACULTY";
 
-        String displayName = "";
-        String emailAddress = "";
-        String institutionalId = "";
+        String displayName;
+        String emailAddress;
+        String institutionalId;
         boolean isFaculty = false;
 
-        Map<String, String> headerMap = new HashMap<>();
+        displayName = request.getHeader(DISPLAY_NAME_HEADER).trim();
+        emailAddress = request.getHeader(EMAIL_HEADER).trim();
+        institutionalId = request.getHeader(EPPN_HEADER).split("@")[0];
 
-        Enumeration headerNames = request.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String key = (String) headerNames.nextElement();
-            String value = request.getHeader(key);
-            headerMap.put(key, value);
-        }
-
-        if (headerMap.keySet().contains(DISPLAY_NAME_HEADER)) {
-            displayName = headerMap.get(DISPLAY_NAME_HEADER).trim();
-        }
-        if (headerMap.keySet().contains(EMAIL_HEADER)) {
-            emailAddress = headerMap.get(EMAIL_HEADER).trim();
-        }
-        if (headerMap.keySet().contains(EPPN_HEADER)) {
-            institutionalId = headerMap.get(EPPN_HEADER).split("@")[0];
-        }
-        if (headerMap.keySet().contains(UNSCOPED_AFFILIATION_HEADER)) {
-            String[] affiliationArray = headerMap.get(UNSCOPED_AFFILIATION_HEADER).split(";");
-            for (String affiliation : affiliationArray) {
-                if (affiliation.trim().equalsIgnoreCase(facultyAffiliation)) {
-                    isFaculty = true;
-                    break;
-                }
+        String[] affiliationArray = request.getHeader(UNSCOPED_AFFILIATION_HEADER).split(";");
+        for (String affiliation : affiliationArray) {
+            if (affiliation.trim().equalsIgnoreCase(facultyAffiliation)) {
+                isFaculty = true;
+                break;
             }
         }
 

@@ -17,16 +17,12 @@
 package org.dataconservancy.pass.authz;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Vector;
-import java.util.Enumeration;
-
 
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
 import static org.mockito.Mockito.when;
@@ -41,18 +37,6 @@ public class ShibAuthUserProviderTest {
     @Mock
     private HttpServletRequest request;
 
-    private Enumeration<String> headers;
-
-    @Before
-    public void setup() {
-        Vector<String> headerNames = new Vector<>();
-        headerNames.add(DISPLAY_NAME_HEADER);
-        headerNames.add(EMAIL_HEADER);
-        headerNames.add(EPPN_HEADER);
-        headerNames.add(UNSCOPED_AFFILIATION_HEADER);
-        headers = headerNames.elements();
-    }
-
     @Test
     public void getFacultyUserTest() {
 
@@ -61,7 +45,6 @@ public class ShibAuthUserProviderTest {
         String eppn = "bcow666@jhu.edu";
         String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
 
-        when(request.getHeaderNames()).thenReturn(headers);
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
@@ -84,7 +67,6 @@ public class ShibAuthUserProviderTest {
         String eppn = "cbull999@jhu.edu";
         String affiliation = "STAFF;WIDOWMAKER";
 
-        when(request.getHeaderNames()).thenReturn(headers);
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
