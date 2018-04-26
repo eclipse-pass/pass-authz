@@ -1,0 +1,26 @@
+language: java
+sudo: true
+script:
+- sudo service mysql stop
+- sudo service postgresql stop
+- sudo service acpid stop
+- sudo service atd stop
+- sudo service cron stop
+- sudo service memcached stop
+- sudo service ntp stop
+- sudo service rabbitmq-server stop
+- sudo service resolvconf stop
+- sudo service sshguard stop
+- sudo service ssh stop
+- mvn clean install
+jdk:
+- oraclejdk8
+after_failure:
+- cat pass-authz-integration/target/failsafe-reports/*.txt
+after_success:
+- if [ "$TRAVIS_BRANCH" == "master" ]; then mvn deploy --settings settings.xml -DskipTests=true
+  -B; fi
+env:
+  global:
+  - secure: QZsH5nZVsjNNKkDTO5gkRyCw4BQ4qrmQhjv/F/11fw3ig9AW8DdaVHgF+WAf/hQ2cvOVCioi0GlWNcww+VwcybiKJsktWFRiUHjyaPnWqhJXyI27+n3f1Skj1FGCefaRom1L72yRQ4WM9w/xUJ2wMyIPYFPplIxMNOquoG++T8+7dAPj7HZczMsHkgYJWcCXEB13jT3M/wMg4zHRtshMawP0UA6tfC3TXDRipT6/iW9vnkiCQC3mp9FqF0QQaXyo6YC9/AFvwj6l9ujP10/S7tVUu01/d2N2NIJFLSpCGvBomlcmfYHvKUGoKq5ahLDHckjLt4nhMc/rbuC0zs4MbeJk65v7namNsDykCd9u4GFU/Wtr7PwbxPUbAxmsakHZNHlDkGad83D6FA8C/CGHQjKcbAJcsFSpgyVGV5kOSzsEpjul/5Mq9nyWHeuo97n2PAFQoFcuTUPIn5vo5vw24DYpLgnIS8gUR7qA4NJi2Wf8XERZEcgwjDMcqJEx1LHrRLF2PBpihiq2DVYOi7tuyLDqpQTfi2Jl+0+okKi9OsP1enet0yPQ7mrEXCLWdsob3fu1zPeeRtDeRVhZnQn7Ah2xu5/9JDikHTVVf4MvrS3bqFlWUloubph3UFKJkd04YepfMNWmlOC0FC8Cx06+9LSgx9jVzdnz2AGn7pJJwhQ=
+  - secure: oLsLJ/WbpkAF5m98JbWalXClqrkmsdiU9fJo7iUgvM2QK9vKLvaszi1I6BvLn8te9wYeNO7FnkX6Unjd9KWAbr8Ie8jV7VRTN44GjmyqB0zEOZ3Z82fyZ5Kj9nCWkfLLzWjiA6ify9JMPFIlB3/6tMxClThXhEtlUp/ImZSam8433/RIxInmJ9rxonZDvlumgOFlJSOhhboR6B89m0EfaFiCrNgUDYq5p/uO/n6ZN3u+AkthsT/bQBHoNnOB+LJIN5XGe6rsuDuRc9YmaBE6zYldPvlLk6xX/0dxJEgdgdkCgD4G9zb+kluhbfugddiMkF8BrvUB914KB/lEsts22p2eyR9Y++vSa6aMM5BCE+rixxKTyNwpDB5bsREybbz8OB8HNLG7CWp+HOh0rO3pNLUbQNaeRipgLtQ2rC6WL/VPR54WeBi/qvIEV74P54Ub1O6FF39XsJgW79xWg0/p0OJKBPzXQgE+/bO0gJo98fTBof3ypsjAHOs205gNzA2wSQQAg2K+6wXNTrOkvAk2cvxB5forPyRVQNnYJuZONPnvThYMO5c1Rp69KrHV5ZQg5e/b/P4hm07nHDTTCl3zGx2DyLJ43CgEQhuXgPkfd5RPgTjz+V0PS2oTceChErWpN41dJvP4WWdCa5YesGWnld6LyS0bod/frA9LrU4TyFQ=
