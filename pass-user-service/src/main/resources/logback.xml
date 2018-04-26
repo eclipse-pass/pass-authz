@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration>
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%p %d{HH:mm:ss.SSS} \(%c{0}\) %m%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.dataconservancy.pass" additivity="false"
+    level="${pass.log:-null}">
+    <appender-ref ref="STDOUT" />
+  </logger>
+  <logger name="org.dataconservancy.pass.client" additivity="false"
+    level="${pass.client.log:-INFO}">
+    <appender-ref ref="STDOUT" />
+  </logger>
+
+  <root level="WARN">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

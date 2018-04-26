@@ -1,0 +1,11 @@
+<tomcat-users>
+  <!-- Create passwords with ./digest.sh -a sha-256 -h org.apache.catalina.realm.MessageDigestCredentialHandler [PASSWD] -->
+  <role rolename="fedoraUser" />
+  <role rolename="fedoraAdmin" />
+  <user name="bootstrap" password="d643a7be407e3f39a924b147a84f48397af41fe465f65b8506daac6cd84904dd$1$0e6a64c63d54a053607b156d48a34fca1ddcaedca71d743b8635f21d50a14fb2" roles="fedoraAdmin" />
+  <user name="admin" password="3a4384731fe845887c1307a668942ee37b516826a2c1085828a2e272bb71c544$1$36579ec0da60a5d1bbe0d6cde574400777b225e3e5939a8d5da9349d60020786" roles="fedoraUser" />
+  <user name="agudzun" password="c08a7d142bc26f7fadc8667083aa160ba7f3673c0809b9547edb62e1b119088e$1$366a735c8ac0ebbbc98ef20e9657d1339bb6540182eeb355137e5b6975a068c0" roles="fedoraUser" />
+  <user name="BenjaminHarman" password="c1894208115e79c594e7f133140e637fc4d8c8e8d43cff969f92261d8488988f$1$27bee1d70a6bd6d40d7862d23cfeb5836dc0edc47f78da0da42d6a781b471395" roles="fedoraUser" />
+  <user name="CynthiaSears" password="27387daea77f878f82b46c7e323db3245ce2fa079ab2c6f6c410bcbac4cb7da5$1$84f7dcbeb8fff3fa1bbcd50b41f272eec890f21749ce774a03742fa2d3a7399b" roles="fedoraUser" />
+  <user name="fedoraAdmin" password="53253a46e9f2f74e6a1141f654eb0cb4a71624d0493e7289489ada0c6255a1f0$1$4ab46c609603537a8665e0dde3a6aaadae24914cb4d8cff10084bb1a7a45c91e" roles="fedoraAdmin" />
+</tomcat-users>

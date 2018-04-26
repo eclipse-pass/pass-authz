@@ -10,6 +10,9 @@
 
   <properties>
     <fcrepo.cxtPath>fcrepo</fcrepo.cxtPath>
+    <FCREPO_HOST>localhost</FCREPO_HOST>
+    <ES_HOST>localhost</ES_HOST>
+    <COMPACTION_URI>https://oa-pass.github.io/pass-data-model/src/main/resources/context-2.0.jsonld</COMPACTION_URI>
   </properties>
 
 
@@ -17,10 +20,10 @@
     <profile>
       <id>standard</id>
       <properties>
-        <fcrepo.dynamic.test.port>8080</fcrepo.dynamic.test.port>
-        <fcrepo.dynamic.jms.port>61616</fcrepo.dynamic.jms.port>
-        <fcrepo.dynamic.stomp.port>61613</fcrepo.dynamic.stomp.port>
-        <FUSEKI_PORT>3030</FUSEKI_PORT>
+        <ES_PORT>9200</ES_PORT>
+        <FCREPO_PORT>8080</FCREPO_PORT>
+        <FCREPO_JMS_PORT>61616</FCREPO_JMS_PORT>
+        <FCREPO_STOMP_PORT>61613</FCREPO_STOMP_PORT>
       </properties>
     </profile>
   </profiles>
@@ -28,6 +31,37 @@
 
   <build>
     <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>copy</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <artifactItems>
+            <artifactItem>
+              <groupId>org.dataconservancy.pass</groupId>
+              <artifactId>pass-user-service</artifactId>
+              <version>${project.version}</version>
+              <type>war</type>
+              <overWrite>false</overWrite>
+              <outputDirectory>${project.build.testOutputDirectory}/docker</outputDirectory>
+              <destFileName>pass-user-service.war</destFileName>
+            </artifactItem>
+          </artifactItems>
+          <outputDirectory>${project.build.directory}/wars</outputDirectory>
+          <overWriteReleases>false</overWriteReleases>
+          <overWriteSnapshots>true</overWriteSnapshots>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -41,9 +75,9 @@
             </goals>
             <configuration>
               <portNames>
-                <portName>fcrepo.dynamic.test.port</portName>
-                <portName>fcrepo.dynamic.jms.port</portName>
-                <portName>fcrepo.dynamic.stomp.port</portName>
+                <portName>FCREPO_PORT</portName>
+                <portName>FCREPO_JMS_PORT</portName>
+                <portName>FCREPO_STOMP_PORT</portName>
               </portNames>
             </configuration>
           </execution>
@@ -63,64 +97,139 @@
         </executions>
         <configuration>
           <systemPropertyVariables>
-            <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
+            <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
             <fcrepo.cxtPath>${fcrepo.cxtPath}</fcrepo.cxtPath>
-            <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
-            <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
+            <FCREPO_JMS_PORT>${FCREPO_JMS_PORT}</FCREPO_JMS_PORT>
+            <FCREPO_STOMP_PORT>${FCREPO_STOMP_PORT}</FCREPO_STOMP_PORT>
             <project.basedir>${project.basedir}</project.basedir>
+            <COMPACTION_URI>${COMPACTION_URI}</COMPACTION_URI>
+            <pass.fedora.baseurl>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</pass.fedora.baseurl>
+            <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
           </systemPropertyVariables>
         </configuration>
       </plugin>
 
       <plugin>
-        <groupId>org.codehaus.cargo</groupId>
-        <artifactId>cargo-maven2-plugin</artifactId>
-        <version>1.6.7</version>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
         <configuration>
-          <!-- Container configuration -->
-          <container>
-            <containerId>tomcat8x</containerId>
-            <type>installed</type>
-            <timeout>1200000</timeout>
-            <systemProperties>
-              <fcrepo.home>${project.build.directory}/fcrepo</fcrepo.home>
-              <fcrepo.modeshape.configuration>classpath:/config/file-simple/repository.json</fcrepo.modeshape.configuration>
-              <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
-              <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
-            </systemProperties>
-          </container>
-          <deployables>
-            <deployable>
-              <groupId>org.fcrepo</groupId>
-              <artifactId>fcrepo-webapp</artifactId>
-              <type>war</type>
-              <properties>
-                <context>${fcrepo.cxtPath}</context>
-              </properties>
-            </deployable>
-            <deployable>
-              <groupId>org.dataconservancy.pass</groupId>
-              <artifactId>pass-user-service</artifactId>
-              <type>war</type>
-            </deployable>
-          </deployables>
-          <configuration>
-            <properties>
-              <!-- <cargo.jvmargs>-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005</cargo.jvmargs> -->
-              <cargo.servlet.port>${fcrepo.dynamic.test.port}</cargo.servlet.port>
-            </properties>
-          </configuration>
+          <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
+          <images>
+            <image>
+              <alias>fcrepo</alias>
+              <name>oapass/pass-authz-fcrepo</name>
+              <build>
+                <dockerFileDir>${project.build.testOutputDirectory}/docker</dockerFileDir>
+              </build>
+              <run>
+                <hostname>fcrepo</hostname>
+                <namingStrategy>alias</namingStrategy>
+                <env>
+                  <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
+                  <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
+                  <FCREPO_JMS_PORT>${FCREPO_JMS_PORT}</FCREPO_JMS_PORT>
+                  <FCREPO_STOMP_PORT>${FCREPO_STOMP_PORT}</FCREPO_STOMP_PORT>
+                  <FCREPO_JMS_BASEURL>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</FCREPO_JMS_BASEURL>
+                  <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
+                  <COMPACTION_URI>${COMPACTION_URI}</COMPACTION_URI>
+                  <COMPACTION_PRELOAD_URI_PASS_STATIC>${COMPACTION_URI}</COMPACTION_PRELOAD_URI_PASS_STATIC>
+                  <COMPACTION_PRELOAD_FILE_PASS_STATIC>/usr/local/tomcat/lib/context-2.0.jsonld</COMPACTION_PRELOAD_FILE_PASS_STATIC>
+                </env>
+                <ports>
+                  <port>${FCREPO_PORT}:${FCREPO_PORT}</port>
+                </ports>
+                <network>
+                  <mode>custom</mode>
+                  <name>pass</name>
+                  <alias>fcrepo</alias>
+                  <alias>localhost</alias>
+                </network>
+                <wait>
+                  <http>
+                    <url>http://admin:moo@${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</url>
+                  </http>
+                  <time>120000</time>
+                </wait>
+              </run>
+            </image>
+
+            <image>
+              <alias>indexer</alias>
+              <name>oapass/indexer:latest</name>
+              <run>
+                <namingStrategy>alias</namingStrategy>
+                <env>
+                  <PI_FEDORA_USER>fedoraAdmin</PI_FEDORA_USER>
+                  <PI_FEDORA_PASS>moo</PI_FEDORA_PASS>
+                  <PI_FEDORA_INTERNAL_BASE>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</PI_FEDORA_INTERNAL_BASE>
+                  <PI_ES_BASE>http://elasticsearch:9200/</PI_ES_BASE>
+                  <PI_ES_INDEX>http://elasticsearch:9200/pass/</PI_ES_INDEX>
+                  <PI_FEDORA_JMS_BROKER>tcp://${FCREPO_HOST}:${FCREPO_JMS_PORT}</PI_FEDORA_JMS_BROKER>
+                  <PI_FEDORA_JMS_QUEUE>fedora</PI_FEDORA_JMS_QUEUE>
+                  <PI_TYPE_PREFIX>http://example.org/pass/</PI_TYPE_PREFIX>
+                  <PI_LOG_LEVEL>debugo</PI_LOG_LEVEL>
+                </env>
+                <links>
+                  <link>fcrepo:localhost</link>
+                  <link>elasticsearch</link>
+                </links>
+                <volumes>
+                  <bind>./src/test/resources/docker/hosts:/etc/hosts</bind>
+                </volumes>
+                <network>
+                  <mode>custom</mode>
+                  <name>pass</name>
+                  <alias>indexer</alias>
+                </network>
+              </run>
+            </image>
+
+            <image>
+              <alias>elasticsearch</alias>
+              <name>docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.3</name>
+              <run>
+                <namingStrategy>alias</namingStrategy>
+                <env>
+                  <discovery.type>single-node</discovery.type>
+                  <bootstrap.memory_lock>true</bootstrap.memory_lock>
+                  <ES_JAVA_OPTS>-Xms512m -Xmx512m</ES_JAVA_OPTS>
+                </env>
+                <ports>
+                  <port>${ES_PORT}:9200</port>
+                </ports>
+                <network>
+                  <mode>custom</mode>
+                  <name>pass</name>
+                  <alias>elasticsearch</alias>
+                </network>
+                <wait>
+                  <http>
+                    <url>http://${ES_HOST}:${ES_PORT}/</url>
+                  </http>
+                  <time>120000</time>
+                </wait>
+              </run>
+            </image>
+
+          </images>
         </configuration>
         <executions>
           <execution>
-            <id>start-container</id>
+            <id>build-image</id>
+            <phase>package</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>start-docker-its</id>
             <phase>pre-integration-test</phase>
             <goals>
               <goal>start</goal>
             </goals>
           </execution>
           <execution>
-            <id>stop-container</id>
+            <id>stop-docker-its</id>
             <phase>post-integration-test</phase>
             <goals>
               <goal>stop</goal>
@@ -129,6 +238,13 @@
         </executions>
       </plugin>
     </plugins>
+
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
   </build>
 
   <dependencies>
@@ -138,6 +254,14 @@
       <artifactId>pass-user-service</artifactId>
       <version>${project.version}</version>
       <type>war</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.dataconservancy.fcrepo</groupId>
+      <artifactId>jsonld-addon-filters</artifactId>
+      <version>0.0.3-SNAPSHOT</version>
+      <classifier>shaded</classifier>
       <scope>test</scope>
     </dependency>
 
@@ -153,6 +277,17 @@
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-fedora-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>
