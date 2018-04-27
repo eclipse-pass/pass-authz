@@ -114,7 +114,10 @@ public class UserServlet extends HttpServlet {
         if (id != null) {
             try (Writer out = response.getWriter()) {
                 mapper.writerWithDefaultPrettyPrinter().writeValue(out, user);
+                response.setStatus(200);
             }
+        } else {
+            response.setStatus(401);
         }
     }
 

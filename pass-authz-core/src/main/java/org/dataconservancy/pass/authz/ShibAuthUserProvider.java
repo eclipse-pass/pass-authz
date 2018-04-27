@@ -16,7 +16,11 @@
 
 package org.dataconservancy.pass.authz;
 
+import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.model.User;
+
 import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
 
 /**
  * Implementation of the AuthUserProvider interface for JHU's Shibboleth service
@@ -48,6 +52,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     @Override
     public AuthUser getUser(HttpServletRequest request) {
 
+        FedoraPassClient passClient = new FedoraPassClient();
+
         String facultyAffiliation = "FACULTY";
 
         String displayName;
@@ -66,12 +72,15 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                 break;
             }
         }
+        
+        URI id = passClient.findByAttribute(User.class, "institutionalId", institutionalId);
 
         final AuthUser user = new AuthUser();
         user.setName(displayName);
         user.setEmail(emailAddress);
         user.setInstitutionalId(institutionalId.trim().toLowerCase());//this is our normal format
         user.setFaculty(isFaculty);
+        user.setId(id);
 
         return user;
     }
