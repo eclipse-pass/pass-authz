@@ -1,5 +1,5 @@
 # Pass Authoriation Tools
-
+[![Build Status](https://travis-ci.org/OA-PASS/pass-authz.svg?branch=master)](https://travis-ci.org/OA-PASS/pass-authz)
 ## User service
 
 1. Go to `pass-authz-integration`
