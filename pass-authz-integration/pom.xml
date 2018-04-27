@@ -114,6 +114,7 @@
         <artifactId>docker-maven-plugin</artifactId>
         <configuration>
           <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
+          <autoPull>true</autoPull>
           <images>
             <image>
               <alias>fcrepo</alias>
