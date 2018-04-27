@@ -34,6 +34,9 @@ import org.dataconservancy.pass.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * This class gets an {@link AuthUser} object from the {@link ShibAuthUserProvider} and creates {@link User}
+ * to be stored in the back end storage for PASS.
+ *
  * @author apb@jhu.edu
  * @author jrm@jhu.edu
  */
@@ -46,9 +49,15 @@ public class UserServlet extends HttpServlet {
 
     FedoraPassClient fedoraClient = new FedoraPassClient();
 
+    /**
+     * A method which calls  {@link ShibAuthUserProvider#getUser(HttpServletRequest)} to get an
+     * {@link AuthUser} in order to populate a {@link User} object and create/update and store it
+     * @param request - the {@code HttpServletRequest}
+     * @param response - the {@code HttpServletResponse}
+     * @throws IOException - if the
+     */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
@@ -106,8 +115,6 @@ public class UserServlet extends HttpServlet {
             try (Writer out = response.getWriter()) {
                 mapper.writerWithDefaultPrettyPrinter().writeValue(out, user);
             }
-        } else {
-            // spike the intruder
         }
     }
 

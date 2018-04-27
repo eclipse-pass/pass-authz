@@ -40,7 +40,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * Unit test for {@link UserServlet}
  * @author apb@jhu.edu
+ * @author jrm@jhu.edu
  */
 @RunWith(MockitoJUnitRunner.class)
 public class UserServletTest {

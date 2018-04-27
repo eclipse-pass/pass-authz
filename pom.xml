@@ -142,12 +142,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.dataconservancy.pass</groupId>
-        <artifactId>pass-fedora-client</artifactId>
-        <version>${pass.fedora.client.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>

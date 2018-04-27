@@ -19,6 +19,16 @@ package org.dataconservancy.pass.authz;
 import javax.servlet.http.HttpServletRequest;
 
 /**
+ * Implementation of the AuthUserProvider interface for JHU's Shibboleth service
+ * We are interested in four headers:
+ * <ul>
+ *     <li>Displayname  - First Last</li>
+ *     <li>Mail - the user's preferred email address</li>
+ *     <li>Eppn - the user's "official" JHU email address, which starts with the users institutional id</li>
+ *     <li>Unscoped-Affiliations - a semi-colon-separated list of roles or statuses indicating employment type </li>
+ * </ul>
+ *
+ *
  * @author apb@jhu.edu
  * @author jrm@jhu.edu
  */
@@ -29,7 +39,12 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     static final String EPPN_HEADER = "Eppn";
     static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
 
-
+    /**
+     * This method reads the shib headers and uses the values to populate an {@link AuthUser} object, which is consumed
+     * by the {@code UserServlet} to build a {@code User} object for the back-end storage system.
+     * @param request the HTTP servlet request
+     * @return the populated AuthUser
+     */
     @Override
     public AuthUser getUser(HttpServletRequest request) {
 
