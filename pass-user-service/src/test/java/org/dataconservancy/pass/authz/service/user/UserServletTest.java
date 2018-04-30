@@ -29,8 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
-
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,7 +58,7 @@ public class UserServletTest {
     AuthUserProvider provider;
 
     @Mock
-    FedoraPassClient client;
+    PassClient client;
 
 
 
