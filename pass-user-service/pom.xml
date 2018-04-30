@@ -27,7 +27,7 @@
 
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
-      <artifactId>pass-fedora-client</artifactId>
+      <artifactId>pass-data-client</artifactId>
     </dependency>
 
     <dependency>

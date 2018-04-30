@@ -17,7 +17,7 @@
 package org.dataconservancy.pass.authz;
 
 import org.dataconservancy.pass.client.PassClient;
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.User;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -32,7 +32,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
 
     @Test
     public void smokeTest() throws Exception {
-        final PassClient client = new FedoraPassClient();
+        final PassClient client = PassClientFactory.getPassClient();
 
         final CloseableHttpClient http = getHttpClient();
 
