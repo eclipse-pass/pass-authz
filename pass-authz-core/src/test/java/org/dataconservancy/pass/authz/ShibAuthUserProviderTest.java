@@ -16,6 +16,9 @@
 
 package org.dataconservancy.pass.authz;
 
+import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.model.User;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,6 +30,10 @@ import javax.servlet.http.HttpServletRequest;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
 import static org.mockito.Mockito.when;
 
+import static org.mockito.ArgumentMatchers.eq;
+
+import java.net.URI;
+
 /**
  *
  * @author jrm@jhu.edu
@@ -36,6 +43,9 @@ public class ShibAuthUserProviderTest {
 
     @Mock
     private HttpServletRequest request;
+    
+    @Mock
+    private PassClient client;
 
     @Test
     public void getFacultyUserTest() {
@@ -50,7 +60,9 @@ public class ShibAuthUserProviderTest {
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
         when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
 
-        ShibAuthUserProvider underTest = new ShibAuthUserProvider();
+        ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
+        
+        
         AuthUser user = underTest.getUser(request);
 
         Assert.assertEquals(displayName, user.getName());
@@ -72,7 +84,7 @@ public class ShibAuthUserProviderTest {
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
         when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
 
-        ShibAuthUserProvider underTest = new ShibAuthUserProvider();
+        ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
         AuthUser user = underTest.getUser(request);
         Assert.assertEquals(displayName, user.getName());
         Assert.assertEquals("cbull999", user.getInstitutionalId());

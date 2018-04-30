@@ -16,7 +16,8 @@
 
 package org.dataconservancy.pass.authz;
 
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.User;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +43,13 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     static final String EMAIL_HEADER = "Mail";
     static final String EPPN_HEADER = "Eppn";
     static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
+    
+    final PassClient passClient;
+    
+    
+    public ShibAuthUserProvider(PassClient client) {
+        this.passClient = client;
+    }
 
     /**
      * This method reads the shib headers and uses the values to populate an {@link AuthUser} object, which is consumed
@@ -51,8 +59,6 @@ public class ShibAuthUserProvider implements AuthUserProvider {
      */
     @Override
     public AuthUser getUser(HttpServletRequest request) {
-
-        FedoraPassClient passClient = new FedoraPassClient();
 
         String facultyAffiliation = "FACULTY";
 

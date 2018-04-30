@@ -19,7 +19,7 @@
     <junit.version>4.12</junit.version>
     <logback.version>1.2.3</logback.version>
     <mockito.version>2.18.0</mockito.version>
-    <pass.fedora.client.version>0.1.0-SNAPSHOT</pass.fedora.client.version>
+    <pass.fedora.client.version>0.2.0-SNAPSHOT</pass.fedora.client.version>
 
     <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
     <docker-maven-plugin.version>0.24.0</docker-maven-plugin.version>
@@ -124,7 +124,7 @@
 
       <dependency>
         <groupId>org.dataconservancy.pass</groupId>
-        <artifactId>pass-fedora-client</artifactId>
+        <artifactId>pass-data-client</artifactId>
         <version>${pass.fedora.client.version}</version>
       </dependency>
 
