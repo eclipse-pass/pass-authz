@@ -9,6 +9,12 @@
   <artifactId>pass-authz-core</artifactId>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+        <artifactId>pass-fedora-client</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
