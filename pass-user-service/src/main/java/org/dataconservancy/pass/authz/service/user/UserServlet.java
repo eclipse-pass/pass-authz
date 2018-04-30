@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.net.URI;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,7 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.authz.ShibAuthUserProvider;
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.User;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,10 +44,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class UserServlet extends HttpServlet {
 
     ObjectMapper mapper = new ObjectMapper();
+    PassClient fedoraClient = PassClientFactory.getPassClient();
+    
 
-    AuthUserProvider provider = new ShibAuthUserProvider();
-
-    FedoraPassClient fedoraClient = new FedoraPassClient();
+    AuthUserProvider provider = new ShibAuthUserProvider(fedoraClient);
 
     /**
      * A method which calls  {@link ShibAuthUserProvider#getUser(HttpServletRequest)} to get an
