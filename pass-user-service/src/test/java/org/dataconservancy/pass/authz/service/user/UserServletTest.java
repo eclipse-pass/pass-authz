@@ -16,13 +16,14 @@
 
 package org.dataconservancy.pass.authz.service.user;
 
-import static org.junit.Assert.assertEquals;
+import static org.dataconservancy.pass.authz.service.user.UserServlet.findLastName;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
+import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +31,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.client.PassClient;
+
 import org.dataconservancy.pass.model.User;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -46,16 +49,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RunWith(MockitoJUnitRunner.class)
 public class UserServletTest {
 
-    ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper = new ObjectMapper();
 
     @Mock
-    HttpServletRequest request;
+    private HttpServletRequest request;
 
     @Mock
-    HttpServletResponse response;
+    private HttpServletResponse response;
 
     @Mock
-    AuthUserProvider provider;
+    private AuthUserProvider provider;
 
     @Mock
     PassClient client;
@@ -84,8 +87,30 @@ public class UserServletTest {
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
 
-        assertEquals(USER.getName(), fromServlet.getDisplayName());
-        assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
+        Assert.assertEquals(USER.getName(), fromServlet.getDisplayName());
+        Assert.assertEquals(USER.getEmail(), fromServlet.getEmail());
+        Assert.assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
+    }
+
+    @Test
+    public void getLastNameTest() {
+
+        String name1 = "Johannes Diderik van der Waals";
+        String name2 = "Skip Class Jr.";
+        String name3 = "Rein de Graaff";
+        String name4 = "Reginald Van Gleason III";
+        String name5 = "Cameron Diaz";
+
+        String displayLast1 = "van der Waals";
+        String displayLast2 = "Class";
+        String displayLast3 = "de Graaff";
+        String displayLast4 = "Gleason";
+        String displayLast5 = "Diaz";
+
+        Assert.assertEquals(displayLast1, findLastName(Arrays.asList(name1.split(" "))));
+        Assert.assertEquals(displayLast2, findLastName(Arrays.asList(name2.split(" "))));
+        Assert.assertEquals(displayLast3, findLastName(Arrays.asList(name3.split(" "))));
+        Assert.assertEquals(displayLast4, findLastName(Arrays.asList(name4.split(" "))));
+        Assert.assertEquals(displayLast5, findLastName(Arrays.asList(name5.split(" "))));
     }
 }

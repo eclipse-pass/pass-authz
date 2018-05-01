@@ -90,9 +90,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                 break;
             }
         }
-        
-        URI id = userCache.getOrDo(institutionalId, () -> passClient.findByAttribute(User.class, "institutionalId", institutionalId));
 
+        URI id = userCache.getOrDo(institutionalId, () -> passClient.findByAttribute(User.class, "institutionalId", institutionalId));
 
         final AuthUser user = new AuthUser();
         user.setName(displayName);
