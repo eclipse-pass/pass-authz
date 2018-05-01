@@ -72,7 +72,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                 break;
             }
         }
-        
+
         URI id = passClient.findByAttribute(User.class, "institutionalId", institutionalId);
 
         final AuthUser user = new AuthUser();
