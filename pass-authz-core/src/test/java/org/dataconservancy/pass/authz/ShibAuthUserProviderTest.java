@@ -17,7 +17,6 @@
 package org.dataconservancy.pass.authz;
 
 import org.dataconservancy.pass.client.PassClient;
-import org.dataconservancy.pass.model.User;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,12 +26,16 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
+import static java.util.Arrays.asList;
+
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.DISPLAY_NAME_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMAIL_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.UNSCOPED_AFFILIATION_HEADER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
-
-import static org.mockito.ArgumentMatchers.eq;
-
-import java.net.URI;
 
 /**
  *
@@ -90,6 +93,43 @@ public class ShibAuthUserProviderTest {
         Assert.assertEquals("cbull999", user.getInstitutionalId());
         Assert.assertEquals(emailAddress, user.getEmail());
         Assert.assertFalse(user.isFaculty());
+    }
+    
+    @Test
+    public void userPrincipalTest() {
+        String displayName = "Charlie Bull";
+        String emailAddress = "bull@rodeo.org";
+        String eppn = "cbull999@jhu.edu";
+        String affiliation = "STAFF;WIDOWMAKER";
+
+        when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
+        when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
+        when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
+        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+
+        ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
+        AuthUser user = underTest.getUser(request);
+        Assert.assertEquals(eppn, user.getPrincipal());
+    }
+    
+    @Test
+    public void domainTest() {
+        String displayName = "Charlie Bull";
+        String emailAddress = "bull@rodeo.org";
+        String eppn = "cbull999@jhu.edu";
+        String affiliation = "STAFF;WIDOWMAKER";
+        String scopedAffiliation = "STAFF@jhu.edu;WIDOWMAKER@library.jhu.edu";
+
+        when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
+        when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
+        when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
+        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(SCOPED_AFFILIATION_HEADER)).thenReturn(scopedAffiliation);
+
+        ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
+        AuthUser user = underTest.getUser(request);
+        assertEquals(2, user.getDomains().size());
+        assertTrue(user.getDomains().containsAll(asList("jhu.edu", "library.jhu.edu")));
     }
 
 }

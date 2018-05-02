@@ -17,6 +17,8 @@
 package org.dataconservancy.pass.authz;
 
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author apb@jhu.edu
@@ -28,6 +30,8 @@ public class AuthUser {
     private String institutionalId;
     private URI id;
     private boolean isFaculty;
+    private String principal;
+    private Set<String> domains = new HashSet<>();
 
     /**
      * boolean indicating whether a person has faculty status
@@ -108,5 +112,36 @@ public class AuthUser {
     public void setName(String name) {
         this.name = name;
     }
+    
+    /** 
+     * Get all domains in which the user has affiliation..
+     * <p>
+     * The domain qualifies the username (eppn, in shib), and scoped 
+     * affiliations.  Typically, it is the institution (e.g. jonhshopkins.edu)
+     * </p>
+     * @return Set of all domains, or empty if none;
+     */
+    public Set<String> getDomains() {
+        return domains;
+    }
+    
+    /** Get the user's principal, identifying them in their authorization domain.
+     * <p>
+     * In shib terms, this is eppn;
+     * </p>
+     * @return
+     */
+    public String getPrincipal() {
+        return principal;
+    }
+    
+    /** Set the user's principal.
+     * 
+     * @param principal
+     */
+    public void setPrincipal(String principal) {
+        this.principal = principal;
+    }
+   
 }
 
