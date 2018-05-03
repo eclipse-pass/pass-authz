@@ -22,16 +22,35 @@ import java.util.Set;
 
 /**
  * @author apb@jhu.edu
+ * @author jrm@jhu.edu
  */
 public class AuthUser {
 
     private String name;
     private String email;
     private String institutionalId;
+    private String employeeId;
     private URI id;
     private boolean isFaculty;
     private String principal;
     private Set<String> domains = new HashSet<>();
+
+    /**
+     * the durable local key for the user
+     * @return the employee's id
+     */
+    public String getEmployeeId() {
+        return employeeId;
+    }
+
+    /**
+     * st the user's employee id, the durable local key
+     * @param employeeId the durable local key
+     */
+    public void setEmployeeId(String employeeId) {
+        this.employeeId = employeeId;
+    }
+
 
     /**
      * boolean indicating whether a person has faculty status
