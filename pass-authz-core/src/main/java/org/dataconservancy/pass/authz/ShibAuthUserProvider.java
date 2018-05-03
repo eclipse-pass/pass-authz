@@ -17,11 +17,15 @@
 package org.dataconservancy.pass.authz;
 
 import org.dataconservancy.pass.client.PassClient;
-import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
+import java.time.Duration;
+
+import static java.util.Arrays.stream;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Implementation of the AuthUserProvider interface for JHU's Shibboleth service
@@ -43,12 +47,20 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     static final String EMAIL_HEADER = "Mail";
     static final String EPPN_HEADER = "Eppn";
     static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
+    static final String SCOPED_AFFILIATION_HEADER = "Affiliation";
     
     final PassClient passClient;
     
+    final ExpiringLRUCache<String, URI> userCache;
     
     public ShibAuthUserProvider(PassClient client) {
         this.passClient = client;
+        userCache = new ExpiringLRUCache<>(100, Duration.ofMinutes(10));
+    }
+    
+    public ShibAuthUserProvider(PassClient client, ExpiringLRUCache<String, URI> cache) {
+        this.passClient = client;
+        userCache = cache;
     }
 
     /**
@@ -79,7 +91,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             }
         }
         
-        URI id = passClient.findByAttribute(User.class, "institutionalId", institutionalId);
+        URI id = userCache.getOrDo(institutionalId, () -> passClient.findByAttribute(User.class, "institutionalId", institutionalId));
+
 
         final AuthUser user = new AuthUser();
         user.setName(displayName);
@@ -87,6 +100,15 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         user.setInstitutionalId(institutionalId.trim().toLowerCase());//this is our normal format
         user.setFaculty(isFaculty);
         user.setId(id);
+        user.setPrincipal(request.getHeader(EPPN_HEADER));
+        
+        
+        user.getDomains().add(request.getHeader(EPPN_HEADER).split("@")[1]);
+        user.getDomains().addAll(stream(ofNullable(
+                request.getHeader(SCOPED_AFFILIATION_HEADER)).orElse("").split(";"))
+                        .filter(sa -> sa.contains("@"))
+                        .map(sa -> sa.split("@")[1])
+                        .collect(toSet()));
 
         return user;
     }
