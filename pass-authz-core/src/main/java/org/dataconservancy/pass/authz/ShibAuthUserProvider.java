@@ -21,6 +21,7 @@ import org.dataconservancy.pass.model.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
+import java.time.Duration;
 
 import static java.util.Arrays.stream;
 import static java.util.Optional.ofNullable;
@@ -50,8 +51,16 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     
     final PassClient passClient;
     
+    final ExpiringLRUCache<String, URI> userCache;
+    
     public ShibAuthUserProvider(PassClient client) {
         this.passClient = client;
+        userCache = new ExpiringLRUCache<>(100, Duration.ofMinutes(10));
+    }
+    
+    public ShibAuthUserProvider(PassClient client, ExpiringLRUCache<String, URI> cache) {
+        this.passClient = client;
+        userCache = cache;
     }
 
     /**
@@ -82,7 +91,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             }
         }
         
-        URI id = passClient.findByAttribute(User.class, "institutionalId", institutionalId);
+        URI id = userCache.getOrDo(institutionalId, () -> passClient.findByAttribute(User.class, "institutionalId", institutionalId));
+
 
         final AuthUser user = new AuthUser();
         user.setName(displayName);
