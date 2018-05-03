@@ -30,6 +30,7 @@ import java.net.URI;
  *     <li>Mail - the user's preferred email address</li>
  *     <li>Eppn - the user's "official" JHU email address, which starts with the users institutional id</li>
  *     <li>Unscoped-Affiliations - a semi-colon-separated list of roles or statuses indicating employment type </li>
+ *     <li>Employeenumber - the user's employee id, durable across institutional id changes</li>
  * </ul>
  *
  *
@@ -42,6 +43,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     static final String EMAIL_HEADER = "Mail";
     static final String EPPN_HEADER = "Eppn";
     static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
+    static final String EMPLOYEE_ID = "Employeenumber";
 
     /**
      * This method reads the shib headers and uses the values to populate an {@link AuthUser} object, which is consumed
@@ -59,11 +61,13 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         String displayName;
         String emailAddress;
         String institutionalId;
+        String employeeId;
         boolean isFaculty = false;
 
         displayName = request.getHeader(DISPLAY_NAME_HEADER).trim();
         emailAddress = request.getHeader(EMAIL_HEADER).trim();
         institutionalId = request.getHeader(EPPN_HEADER).split("@")[0];
+        employeeId = request.getHeader(EMPLOYEE_ID);
 
         String[] affiliationArray = request.getHeader(UNSCOPED_AFFILIATION_HEADER).split(";");
         for (String affiliation : affiliationArray) {
@@ -73,12 +77,13 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             }
         }
 
-        URI id = passClient.findByAttribute(User.class, "institutionalId", institutionalId);
+        URI id = passClient.findByAttribute(User.class, "localKey", employeeId);
 
         final AuthUser user = new AuthUser();
+        user.setEmployeeId(employeeId);
         user.setName(displayName);
         user.setEmail(emailAddress);
-        user.setInstitutionalId(institutionalId.trim().toLowerCase());//this is our normal format
+        user.setInstitutionalId(institutionalId.toLowerCase());//this is our normal format
         user.setFaculty(isFaculty);
         user.setId(id);
 

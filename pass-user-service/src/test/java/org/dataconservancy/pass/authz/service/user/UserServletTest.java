@@ -22,14 +22,12 @@ import static org.mockito.Mockito.when;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
-import java.util.Arrays;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
-import static org.dataconservancy.pass.authz.service.user.UserServlet.findLastName;
 
 import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.model.User;
@@ -72,6 +70,7 @@ public class UserServletTest {
         USER.setFaculty(true);
         USER.setInstitutionalId("cowb1");
         USER.setEmail("bessie@farm.com");
+        USER.setEmployeeId("08675309");
 
         final UserServlet servlet = new UserServlet();
         servlet.provider = provider;
@@ -90,27 +89,7 @@ public class UserServletTest {
         Assert.assertEquals(USER.getName(), fromServlet.getDisplayName());
         Assert.assertEquals(USER.getEmail(), fromServlet.getEmail());
         Assert.assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
+        Assert.assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
     }
 
-    @Test
-    public void getLastNameTest() {
-
-        String name1 = "Johannes Diderik van der Waals";
-        String name2 = "Skip Class Jr.";
-        String name3 = "Rein de Graaff";
-        String name4 = "Reginald Van Gleason III";
-        String name5 = "Cameron Diaz";
-
-        String displayLast1 = "van der Waals";
-        String displayLast2 = "Class";
-        String displayLast3 = "de Graaff";
-        String displayLast4 = "Gleason";
-        String displayLast5 = "Diaz";
-
-        Assert.assertEquals(displayLast1, findLastName(Arrays.asList(name1.split(" "))));
-        Assert.assertEquals(displayLast2, findLastName(Arrays.asList(name2.split(" "))));
-        Assert.assertEquals(displayLast3, findLastName(Arrays.asList(name3.split(" "))));
-        Assert.assertEquals(displayLast4, findLastName(Arrays.asList(name4.split(" "))));
-        Assert.assertEquals(displayLast5, findLastName(Arrays.asList(name5.split(" "))));
-    }
 }

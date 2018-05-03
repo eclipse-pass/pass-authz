@@ -44,11 +44,13 @@ public class ShibAuthUserProviderTest {
         String emailAddress = "bessie@farm.com";
         String eppn = "bcow666@jhu.edu";
         String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
+        String employeeId = "12345678";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
         when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
 
         ShibAuthUserProvider underTest = new ShibAuthUserProvider();
         AuthUser user = underTest.getUser(request);
@@ -57,6 +59,7 @@ public class ShibAuthUserProviderTest {
         Assert.assertEquals("bcow666", user.getInstitutionalId());
         Assert.assertEquals(emailAddress, user.getEmail());
         Assert.assertTrue(user.isFaculty());
+        Assert.assertEquals(employeeId, user.getEmployeeId());
     }
 
     @Test
@@ -66,11 +69,13 @@ public class ShibAuthUserProviderTest {
         String emailAddress = "bull@rodeo.org";
         String eppn = "cbull999@jhu.edu";
         String affiliation = "STAFF;WIDOWMAKER";
+        String employeeId = "87654321";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
         when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
 
         ShibAuthUserProvider underTest = new ShibAuthUserProvider();
         AuthUser user = underTest.getUser(request);
@@ -78,6 +83,7 @@ public class ShibAuthUserProviderTest {
         Assert.assertEquals("cbull999", user.getInstitutionalId());
         Assert.assertEquals(emailAddress, user.getEmail());
         Assert.assertFalse(user.isFaculty());
+        Assert.assertEquals(employeeId, user.getEmployeeId());
     }
 
 }
