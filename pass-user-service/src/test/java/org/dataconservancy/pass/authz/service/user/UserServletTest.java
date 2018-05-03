@@ -16,7 +16,6 @@
 
 package org.dataconservancy.pass.authz.service.user;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +29,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.client.PassClient;
+
 import org.dataconservancy.pass.model.User;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -46,16 +47,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RunWith(MockitoJUnitRunner.class)
 public class UserServletTest {
 
-    ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper = new ObjectMapper();
 
     @Mock
-    HttpServletRequest request;
+    private HttpServletRequest request;
 
     @Mock
-    HttpServletResponse response;
+    private HttpServletResponse response;
 
     @Mock
-    AuthUserProvider provider;
+    private AuthUserProvider provider;
 
     @Mock
     PassClient client;
@@ -69,6 +70,7 @@ public class UserServletTest {
         USER.setFaculty(true);
         USER.setInstitutionalId("cowb1");
         USER.setEmail("bessie@farm.com");
+        USER.setEmployeeId("08675309");
 
         final UserServlet servlet = new UserServlet();
         servlet.provider = provider;
@@ -84,8 +86,10 @@ public class UserServletTest {
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
 
-        assertEquals(USER.getName(), fromServlet.getDisplayName());
-        assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
+        Assert.assertEquals(USER.getName(), fromServlet.getDisplayName());
+        Assert.assertEquals(USER.getEmail(), fromServlet.getEmail());
+        Assert.assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
+        Assert.assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
     }
+
 }

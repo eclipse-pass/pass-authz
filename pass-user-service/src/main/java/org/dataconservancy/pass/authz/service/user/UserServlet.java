@@ -45,7 +45,6 @@ public class UserServlet extends HttpServlet {
 
     ObjectMapper mapper = new ObjectMapper();
     PassClient fedoraClient = PassClientFactory.getPassClient();
-    
 
     AuthUserProvider provider = new ShibAuthUserProvider(fedoraClient);
 
@@ -67,38 +66,40 @@ public class UserServlet extends HttpServlet {
         final String email = shibUser.getEmail();
         final String displayName = shibUser.getName();
         final String institutionalId = shibUser.getInstitutionalId();
+        final String employeeid = shibUser.getEmployeeId();
 
         User user = null;
 
         // does the user already exist in the repository?
         if (id != null) {
             user = fedoraClient.readResource(id, User.class);
+            boolean update = false;
 
-            // is the user in COEUS? if not, update; else leave alone
-            if (user.getLocalKey() == null) {// not in COEUS
-                boolean update = false;
+            //employeeId should never change
+            //each user provider will only adjust fields for which it is authoritative
+            //shib is authoritative for these
 
-                if (!user.getEmail().equals(email)) {
-                    user.setEmail(email);
-                    update = true;
-                }
-                if (!user.getDisplayName().equals(displayName)) {
-                    user.setDisplayName(displayName);
-                    update = true;
-                }
-                if (!user.getInstitutionalId().equals(institutionalId)) {
-                    user.setInstitutionalId(institutionalId);
-                    update = true;
-                }
+            if (!user.getEmail().equals(email)) {
+                user.setEmail(email);
+                update = true;
+            }
+            if (!user.getDisplayName().equals(displayName)) {
+                user.setDisplayName(displayName);
+                update = true;
+            }
+            if (!user.getInstitutionalId().equals(institutionalId)) {
+                user.setInstitutionalId(institutionalId);
+                update = true;
+            }
 
-                if (update) {
-                    fedoraClient.updateResource(user);
-                }
+            if (update) {
+                fedoraClient.updateResource(user);
             }
 
         } else {// no id, so we add new user to repository if eligible
             if (shibUser.isFaculty()) {
                 user = new User();
+                user.setLocalKey(employeeid);
                 user.setInstitutionalId(institutionalId);
                 user.setDisplayName(displayName);
                 user.setEmail(email);

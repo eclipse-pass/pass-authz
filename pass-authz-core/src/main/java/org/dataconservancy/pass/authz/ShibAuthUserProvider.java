@@ -35,6 +35,7 @@ import static java.util.stream.Collectors.toSet;
  *     <li>Mail - the user's preferred email address</li>
  *     <li>Eppn - the user's "official" JHU email address, which starts with the users institutional id</li>
  *     <li>Unscoped-Affiliations - a semi-colon-separated list of roles or statuses indicating employment type </li>
+ *     <li>Employeenumber - the user's employee id, durable across institutional id changes</li>
  * </ul>
  *
  *
@@ -48,6 +49,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     static final String EPPN_HEADER = "Eppn";
     static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
     static final String SCOPED_AFFILIATION_HEADER = "Affiliation";
+    static final String EMPLOYEE_ID = "Employeenumber";
     
     final PassClient passClient;
     
@@ -77,11 +79,13 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         String displayName;
         String emailAddress;
         String institutionalId;
+        String employeeId;
         boolean isFaculty = false;
 
         displayName = request.getHeader(DISPLAY_NAME_HEADER).trim();
         emailAddress = request.getHeader(EMAIL_HEADER).trim();
         institutionalId = request.getHeader(EPPN_HEADER).split("@")[0];
+        employeeId = request.getHeader(EMPLOYEE_ID);
 
         String[] affiliationArray = request.getHeader(UNSCOPED_AFFILIATION_HEADER).split(";");
         for (String affiliation : affiliationArray) {
@@ -90,14 +94,14 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                 break;
             }
         }
-        
-        URI id = userCache.getOrDo(institutionalId, () -> passClient.findByAttribute(User.class, "institutionalId", institutionalId));
 
+        URI id = userCache.getOrDo(institutionalId, () -> passClient.findByAttribute(User.class, "localKey", employeeId));
 
         final AuthUser user = new AuthUser();
+        user.setEmployeeId(employeeId);
         user.setName(displayName);
         user.setEmail(emailAddress);
-        user.setInstitutionalId(institutionalId.trim().toLowerCase());//this is our normal format
+        user.setInstitutionalId(institutionalId.toLowerCase());//this is our normal format
         user.setFaculty(isFaculty);
         user.setId(id);
         user.setPrincipal(request.getHeader(EPPN_HEADER));
