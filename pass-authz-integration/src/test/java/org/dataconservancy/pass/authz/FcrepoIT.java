@@ -16,17 +16,22 @@
 
 package org.dataconservancy.pass.authz;
 
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Callable;
 
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 
 /**
  * @author apb@jhu.edu
@@ -39,6 +44,8 @@ public abstract class FcrepoIT {
     static final URI USER_SERVICE_URI = URI.create(String.format("http://localhost:%s/pass-user-service/whoami",
             System.getProperty("FCREPO_PORT", "8080")));
 
+    static final String AUTH_ROLE_HEADER = "some-header";
+
     static {
         if (System.getProperty("pass.fedora.baseurl") == null) {
             System.setProperty("pass.fedora.baseurl", "http://localhost:8080/fcrepo/rest/");
@@ -49,16 +56,32 @@ public abstract class FcrepoIT {
         }
     }
 
-    CloseableHttpClient getHttpClient() {
+    /* Get a client with default/system username and password (fedoraAdmin) */
+    static CloseableHttpClient getHttpClient() {
+        return getAuthClient(FedoraConfig.getUserName(), FedoraConfig.getPassword());
+    }
+
+    /* Get a client with specific username and password */
+    static CloseableHttpClient getAuthClient(String user, String password) {
         final CredentialsProvider provider = new BasicCredentialsProvider();
-        final UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(FedoraConfig.getUserName(),
-                FedoraConfig.getPassword());
+        final UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(user,
+                password);
         provider.setCredentials(AuthScope.ANY, credentials);
 
         return HttpClientBuilder.create()
                 .setDefaultCredentialsProvider(provider)
                 .build();
+    }
 
+    static void assertSuccess(HttpResponse response) {
+        if (response.getStatusLine().getStatusCode() > 299) {
+            try {
+                final String message = EntityUtils.toString(response.getEntity());
+                fail("Http request failed: " + response.getStatusLine() + "; " + message);
+            } catch (final IOException e) {
+                fail("Http request failed: " + response.getStatusLine());
+            }
+        }
     }
 
     <T> T attempt(final int times, final Callable<T> it) {

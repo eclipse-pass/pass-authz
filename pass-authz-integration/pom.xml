@@ -126,6 +126,7 @@
                 <hostname>fcrepo</hostname>
                 <namingStrategy>alias</namingStrategy>
                 <env>
+                  <FCREPO_AUTH_LOG_LEVEL>DEBUG</FCREPO_AUTH_LOG_LEVEL>
                   <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
                   <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
                   <FCREPO_JMS_PORT>${FCREPO_JMS_PORT}</FCREPO_JMS_PORT>
@@ -156,7 +157,7 @@
 
             <image>
               <alias>indexer</alias>
-              <name>oapass/indexer:latest</name>
+              <name>oapass/indexer:0.0.5-2.0-SNAPSHOT</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
@@ -249,6 +250,13 @@
   </build>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-authz-core</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>

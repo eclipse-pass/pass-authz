@@ -21,14 +21,19 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.dataconservancy.pass.client.util.ConfigUtil.getSystemProperty;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.fcrepo.client.FcrepoClient;
 import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
@@ -38,18 +43,35 @@ import org.fcrepo.client.FcrepoResponse;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author apb@jhu.edu
  */
 public class ACLManager {
 
+    Logger LOG = LoggerFactory.getLogger(ACLManager.class);
+
     private final FcrepoClient repo;
 
     private final URI acls;
 
+    static final Pattern aclPattern = Pattern.compile(
+            ".+?\\s+<http://www.w3.org/ns/auth/acl#accessControl>\\s+<(.+?)>.+?");
+
     static final String TEMPLATE_ADD_ACL_TRIPLE =
             "INSERT {<> <http://www.w3.org/ns/auth/acl#accessControl> <%s>} WHERE {}";
+
+    static final String TEMPLATE_AUTHORIZATION =
+            "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n\n" +
+                    "<> a acl:Authorization;\n" +
+                    "acl:accessTo <%s>;\n" +
+                    "acl:agent <%s> .\n";
+
+    static final String READ_AUTH = "<> acl:mode acl:Read .\n";
+
+    static final String WRITE_AUTH = "<> acl:mode acl:Write .\n";
 
     public ACLManager() {
         repo = getFcrepoClient();
@@ -79,17 +101,49 @@ public class ACLManager {
 
     final BiConsumer<Builder, URI> ADD_AUTHORIZATION = (builder, acl) -> {
 
-        // Get auth
+        for (final URI role : builder.allRoles()) {
+            final StringBuilder auth = aclAuth(builder.resource, role);
 
+            if (builder.read.contains(role)) {
+                auth.append(READ_AUTH);
+            }
+
+            if (builder.write.contains(role)) {
+                auth.append(WRITE_AUTH);
+            }
+
+            postAuthzBody(acl, auth.toString());
+        }
+    };
+
+    private static void onErrorThrow(FcrepoResponse response, String message, Object... params) throws IOException {
+        if (response.getStatusCode() > 299) {
+            try (InputStream in = response.getBody()) {
+                throw new RuntimeException(
+                        format(message, params) + "; " +
+                                response.getStatusCode() + ": " +
+                                IOUtils.toString(in, UTF_8));
+            }
+        }
+
+    }
+
+    private static StringBuilder aclAuth(URI toResource, URI role) {
+        return new StringBuilder(format(TEMPLATE_AUTHORIZATION, toResource, role));
+    }
+
+    private void postAuthzBody(URI acl, String body) {
+
+        LOG.debug("POSTing authz to <{}> with body\n{}", acl, body);
         try (FcrepoResponse response = repo().post(acl)
-                .body(IOUtils.toInputStream("", UTF_8), "text/turtle")
+                .body(IOUtils.toInputStream(body, UTF_8), "text/turtle")
                 .perform()) {
-            onErrorThrow(response, "Error adding authorization to acl <%s> for <$s>", acl, builder.resource);
+            onErrorThrow(response, "Error adding authorization to acl <%s>", acl);
 
         } catch (FcrepoOperationFailedException | IOException e) {
             throw new RuntimeException("Error conecting to the repository", e);
         }
-    };
+    }
 
     public class Builder {
 
@@ -112,7 +166,7 @@ public class ACLManager {
         }
 
         public Builder grantWrite(Collection<URI> roles) {
-            read.addAll(roles);
+            write.addAll(roles);
             return this;
         }
 
@@ -132,13 +186,34 @@ public class ACLManager {
             }
         }
 
-        private URI findOrCreateACL() throws FcrepoOperationFailedException, IOException {
+        Set<URI> allRoles() {
+            final HashSet<URI> all = new HashSet<>();
+            all.addAll(read);
+            all.addAll(write);
+            return all;
+        }
 
-            try (FcrepoResponse response = repo.head(resource).perform()) {
-                final List<URI> acls = response.getLinkHeaders("acl");
+        URI findOrCreateACL() throws FcrepoOperationFailedException, IOException {
+
+            try (FcrepoResponse response = repo.get(resource).accept("application/n-triples").perform()) {
+
+                onErrorThrow(response, "Error looking for ACL");
+                final BufferedReader reader = new BufferedReader(new InputStreamReader(response.getBody(), UTF_8));
+
+                final List<URI> acls = new ArrayList<>();
+                while (reader.ready()) {
+                    final Matcher aclFinder = aclPattern.matcher(reader.readLine());
+                    if (aclFinder.matches()) {
+                        acls.add(URI.create(aclFinder.group(1)));
+                    }
+                }
+
                 if (acls.size() == 1) {
+                    LOG.debug("Found existing ACL <{}>", acls.get(0));
                     return acls.get(0);
                 } else {
+                    LOG.debug("No ACL, creating one");
+
                     return createAcl(resource);
                 }
             }
@@ -153,21 +228,13 @@ public class ACLManager {
                 acl = response.getLocation();
             }
 
+            LOG.debug("Linking ACL <{}> to <{}> via PATCH:\n{}", acl, resource, format(
+                    TEMPLATE_ADD_ACL_TRIPLE, acl));
+
             try (FcrepoResponse response = repo.patch(resource)
                     .body(toInputStream(format(TEMPLATE_ADD_ACL_TRIPLE, acl), UTF_8)).perform()) {
                 onErrorThrow(response, "Error linking to acl <%s> from <%s>", acl, resource);
                 return acl;
-            }
-        }
-    }
-
-    private static void onErrorThrow(FcrepoResponse response, String message, Object... params) throws IOException {
-        if (response.getStatusCode() > 299) {
-            try (InputStream in = response.getBody()) {
-                throw new RuntimeException(format(message, params) + "; " + response.getStatusCode() +
-                        ": " +
-                        IOUtils.toString(in,
-                                UTF_8));
             }
         }
     }
