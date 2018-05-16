@@ -1,0 +1,4 @@
+@prefix webac: <http://fedora.info/definitions/v4/webac#>.
+@prefix acl: <http://www.w3.org/ns/auth/acl#>.
+
+<> a webac:Acl .
