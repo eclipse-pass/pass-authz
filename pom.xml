@@ -9,6 +9,7 @@
     <module>pass-authz-core</module>
     <module>pass-authz-integration</module>
     <module>pass-user-service</module>
+    <module>pass-authz-filters</module>
   </modules>
 
   <properties>
