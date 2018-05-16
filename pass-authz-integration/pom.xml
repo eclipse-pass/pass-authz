@@ -135,6 +135,7 @@
                 <hostname>fcrepo</hostname>
                 <namingStrategy>alias</namingStrategy>
                 <env>
+                  <LOG_org_dataconservancy_authz>DEBUG</LOG_org_dataconservancy_authz>
                   <FCREPO_AUTH_LOG_LEVEL>DEBUG</FCREPO_AUTH_LOG_LEVEL>
                   <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
                   <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
