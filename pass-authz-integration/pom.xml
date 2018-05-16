@@ -12,7 +12,6 @@
     <fcrepo.cxtPath>fcrepo</fcrepo.cxtPath>
     <FCREPO_HOST>localhost</FCREPO_HOST>
     <ES_HOST>localhost</ES_HOST>
-    <COMPACTION_URI>https://oa-pass.github.io/pass-data-model/src/main/resources/context-2.0.jsonld</COMPACTION_URI>
   </properties>
 
 
@@ -102,7 +101,6 @@
             <FCREPO_JMS_PORT>${FCREPO_JMS_PORT}</FCREPO_JMS_PORT>
             <FCREPO_STOMP_PORT>${FCREPO_STOMP_PORT}</FCREPO_STOMP_PORT>
             <project.basedir>${project.basedir}</project.basedir>
-            <COMPACTION_URI>${COMPACTION_URI}</COMPACTION_URI>
             <pass.fedora.baseurl>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</pass.fedora.baseurl>
             <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
           </systemPropertyVariables>
@@ -133,9 +131,6 @@
                   <FCREPO_STOMP_PORT>${FCREPO_STOMP_PORT}</FCREPO_STOMP_PORT>
                   <FCREPO_JMS_BASEURL>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</FCREPO_JMS_BASEURL>
                   <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
-                  <COMPACTION_URI>${COMPACTION_URI}</COMPACTION_URI>
-                  <COMPACTION_PRELOAD_URI_PASS_STATIC>${COMPACTION_URI}</COMPACTION_PRELOAD_URI_PASS_STATIC>
-                  <COMPACTION_PRELOAD_FILE_PASS_STATIC>/usr/local/tomcat/lib/context-2.0.jsonld</COMPACTION_PRELOAD_FILE_PASS_STATIC>
                 </env>
                 <ports>
                   <port>${FCREPO_PORT}:${FCREPO_PORT}</port>
