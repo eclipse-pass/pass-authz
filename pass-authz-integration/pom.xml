@@ -152,7 +152,7 @@
 
             <image>
               <alias>indexer</alias>
-              <name>oapass/indexer:0.0.5-2.0-SNAPSHOT</name>
+              <name>oapass/indexer:0.0.6-2.0-SNAPSHOT</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
