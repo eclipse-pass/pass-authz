@@ -94,6 +94,11 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
             Assert.assertEquals(401, response.code());
         }
 
+        sleep(15000);//there should be nothing here, but we should wait for indexing to happen to make sure
+
+        final PassClient passClient = PassClientFactory.getPassClient();
+        Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER)));
+
     }
 
     @Ignore
