@@ -148,7 +148,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         shibHeaders.put(SHIB_MAIL_HEADER, "daffy@jhu.edu");
         shibHeaders.put(SHIB_EPPN_HEADER, "dduck1@jhu.edu");
         shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "TARGET;FACULTY");
-        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhu.edu");
+        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
         shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "10020030");
 
         final PassClient passClient = PassClientFactory.getPassClient();
