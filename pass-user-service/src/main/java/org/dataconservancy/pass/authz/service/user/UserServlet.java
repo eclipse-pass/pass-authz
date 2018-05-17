@@ -79,15 +79,15 @@ public class UserServlet extends HttpServlet {
             //each user provider will only adjust fields for which it is authoritative
             //shib is authoritative for these
 
-            if (!user.getEmail().equals(email)) {
+            if (user.getEmail() == null || !user.getEmail().equals(email)) {
                 user.setEmail(email);
                 update = true;
             }
-            if (!user.getDisplayName().equals(displayName)) {
+            if (user.getDisplayName() == null || !user.getDisplayName().equals(displayName)) {
                 user.setDisplayName(displayName);
                 update = true;
             }
-            if (!user.getInstitutionalId().equals(institutionalId)) {
+            if (user.getInstitutionalId() == null || !user.getInstitutionalId().equals(institutionalId)) {
                 user.setInstitutionalId(institutionalId);
                 update = true;
             }

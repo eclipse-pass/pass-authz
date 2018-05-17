@@ -31,7 +31,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -40,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author apb@jhu.edu
@@ -53,29 +53,6 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
     private static final String SHIB_SCOPED_AFFILIATION_HEADER = "Affiliation";
     private static final String SHIB_EMPLOYEE_NUMBER_HEADER = "Employeenumber";
 
-    @Test
-    public void smokeTest() throws Exception {
-        final PassClient client = PassClientFactory.getPassClient();
-
-        final CloseableHttpClient http = getHttpClient();
-
-        final User newUser = new User();
-        newUser.setDisplayName("Me");
-
-        client.createResource(newUser);
-
-        final HttpGet get = new HttpGet(USER_SERVICE_URI);
-
-        // For the smoke test, all we care is that the servlet is up. Don't care if it works.
-        try (CloseableHttpResponse response = http.execute(get)) {
-            final int code = response.getStatusLine().getStatusCode();
-            if ((code > 299 && code < 500) && code != 401 && code != 403) {
-                throw new RuntimeException("Failed connecting to user service with " + response.getStatusLine());
-            }
-        }
-    }
-
-    @Ignore
     @Test
     public void testGivenUserDoesNotExistNotFacultyReturns401() throws Exception {
 
@@ -94,14 +71,12 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
             Assert.assertEquals(401, response.code());
         }
 
-        sleep(15000);//there should be nothing here, but we should wait for indexing to happen to make sure
-
         final PassClient passClient = PassClientFactory.getPassClient();
-        Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER)));
-
+        attempt(15, () -> {
+            Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER)));
+        });
     }
 
-    @Ignore
     @Test
     public void testGivenUserDoesExistReturns200() throws Exception {
 
@@ -114,9 +89,9 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         final PassClient passClient = PassClientFactory.getPassClient();
         URI id = passClient.createResource(newUser);
 
-        sleep(15000);
-
-        Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", "10933511"));
+        attempt(15, () -> {
+            Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", "10933511")); 
+        });
 
         Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Bugs Bunny");
@@ -133,8 +108,6 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
             Assert.assertEquals(200, response.code());
         }
 
-        sleep(15000);
-
         User passUser = passClient.readResource(id, User.class);
 
         //these fields should be updated on this user
@@ -144,7 +117,6 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
 
     }
 
-    @Ignore
     @Test
     public void testGivenUserDoesNotExistIsFacultyReturns200() throws Exception {
 
@@ -165,10 +137,13 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         try (Response response = httpClient.newCall(get).execute()) {
             Assert.assertEquals(200, response.code());
         }
+        
+        URI id = attempt(15, () -> {
+            URI found = passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER));
+            assertNotNull(found);
+            return found;
+        });
 
-        sleep(15000);
-
-        URI id = passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER));
         User passUser = passClient.readResource(id, User.class);
 
         Assert.assertEquals(shibHeaders.get(SHIB_DISPLAYNAME_HEADER), passUser.getDisplayName());
