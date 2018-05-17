@@ -82,12 +82,12 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         String employeeId;
         boolean isFaculty = false;
 
-        displayName = request.getHeader(DISPLAY_NAME_HEADER).trim();
-        emailAddress = request.getHeader(EMAIL_HEADER).trim();
-        institutionalId = request.getHeader(EPPN_HEADER).split("@")[0];
+        displayName = ofNullable(request.getHeader(DISPLAY_NAME_HEADER)).map(String::trim).orElse(null);
+        emailAddress = ofNullable(request.getHeader(EMAIL_HEADER)).map(String::trim).orElse(null);
+        institutionalId = ofNullable(request.getHeader(EPPN_HEADER)).map(s -> s.split("@")[0]).orElse(null);
         employeeId = request.getHeader(EMPLOYEE_ID);
 
-        String[] affiliationArray = request.getHeader(UNSCOPED_AFFILIATION_HEADER).split(";");
+        String[] affiliationArray = ofNullable(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).orElse("").split(";");
         for (String affiliation : affiliationArray) {
             if (affiliation.trim().equalsIgnoreCase(facultyAffiliation)) {
                 isFaculty = true;
@@ -101,13 +101,18 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         user.setEmployeeId(employeeId);
         user.setName(displayName);
         user.setEmail(emailAddress);
-        user.setInstitutionalId(institutionalId.toLowerCase());//this is our normal format
+        if (institutionalId != null) {
+            user.setInstitutionalId(institutionalId.toLowerCase());//this is our normal format
+        }
         user.setFaculty(isFaculty);
         user.setId(id);
         user.setPrincipal(request.getHeader(EPPN_HEADER));
         
         
-        user.getDomains().add(request.getHeader(EPPN_HEADER).split("@")[1]);
+        ofNullable(request.getHeader(EPPN_HEADER))
+            .filter(s -> s.contains("@"))
+            .map(s -> s.split("@")[1])
+            .ifPresent(user.getDomains()::add);
         user.getDomains().addAll(stream(ofNullable(
                 request.getHeader(SCOPED_AFFILIATION_HEADER)).orElse("").split(";"))
                         .filter(sa -> sa.contains("@"))

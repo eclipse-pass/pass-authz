@@ -68,6 +68,13 @@ public class AuthRolesProviderTest {
         toTest = new AuthRolesProvider(client);
     }
 
+    // Verify that an empty AuthUser simply results in no domains
+    @Test
+    public void emptyUserTest() {
+        final AuthUser empty = new AuthUser();
+        assertTrue(toTest.getRoles(empty).isEmpty());
+    }
+
     // Somebody who doesn't have a User in PASS shouldn't have any roles.
     @Test
     public void noUserInPassTest() {
