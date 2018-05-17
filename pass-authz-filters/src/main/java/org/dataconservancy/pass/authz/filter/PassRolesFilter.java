@@ -56,15 +56,17 @@ public class PassRolesFilter implements Filter {
 
     Logger LOG = LoggerFactory.getLogger(PassRolesFilter.class);
 
-    static final String PROP_ALLOW_EXTERNAL_ROLES = "authz.allow.external.roles";
+    public static final String DEFAULT_ROLE_HEADER = "pass-roles";
 
-    static final String PROP_HEADER_NAME = "authz.header.name";
+    public static final String PROP_ALLOW_EXTERNAL_ROLES = "authz.allow.external.roles";
 
-    static final String PROP_HEADER_SEPARATOR = "authz.header.separator";
+    public static final String PROP_HEADER_NAME = "authz.header.name";
+
+    public static final String PROP_HEADER_SEPARATOR = "authz.header.separator";
 
     boolean allowExternalRoles;
 
-    final String authzHeader = ofNullable(getValue(PROP_HEADER_NAME)).orElse("pass-roles");
+    final String authzHeader = ofNullable(getValue(PROP_HEADER_NAME)).orElse(DEFAULT_ROLE_HEADER);
 
     final String authzRoleSeparator = ofNullable(getValue(PROP_HEADER_SEPARATOR)).orElse(",");
 
@@ -120,7 +122,7 @@ public class PassRolesFilter implements Filter {
 
             final String externalRoles = request.getHeader(authzHeader);
 
-            if (allowExternalRoles) {
+            if (allowExternalRoles && externalRoles != null) {
                 LOG.warn("Accepting user-asserted roles '{}'", externalRoles);
                 rolesDiscovered.addAll(Arrays.asList(externalRoles.split(authzRoleSeparator)));
             } else if (externalRoles != null) {
@@ -128,10 +130,14 @@ public class PassRolesFilter implements Filter {
                         externalRoles, authzHeader);
             }
 
-            final AuthUser user = userProvider.getUser(request);
+            try {
+                final AuthUser user = userProvider.getUser(request);
 
-            rolesDiscovered.addAll(rolesProvider.getRoles(user).stream().map(URI::toString).collect(Collectors
-                    .toList()));
+                rolesDiscovered.addAll(rolesProvider.getRoles(user).stream().map(URI::toString).collect(Collectors
+                        .toList()));
+            } catch (final Exception e) {
+                LOG.warn("Error looking up user or roles ", e);
+            }
 
             roles = String.join(authzRoleSeparator, rolesDiscovered);
 

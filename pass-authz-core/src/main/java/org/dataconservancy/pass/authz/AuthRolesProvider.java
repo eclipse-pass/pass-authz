@@ -20,10 +20,13 @@ import static java.lang.String.format;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
 
@@ -46,7 +49,7 @@ public class AuthRolesProvider {
 
     static final Logger LOG = LoggerFactory.getLogger(AuthRolesProvider.class);
 
-    final String ROLE_BASE = "http://dataconservancy.org/ns/pass/roles#";
+    public static final String ROLE_BASE = "http://dataconservancy.org/ns/pass/roles#";
 
     private final PassClient client;
 
@@ -89,7 +92,6 @@ public class AuthRolesProvider {
             throw new RuntimeException("Error reading User resource for" + authUser.getId(), e);
         }
 
-        // Should never really happen
         if (user == null) {
             LOG.warn("User {} was not found, granting NO authz roles", authUser.getId());
             return roles;
@@ -97,12 +99,31 @@ public class AuthRolesProvider {
 
         for (final String domain : authUser.getDomains()) {
             for (final Role role : user.getRoles()) {
-                roles.add(URI.create(ROLE_BASE + format("%s@%s", role, domain)));
+                roles.add(getAuthRoleURI(domain, role));
             }
         }
 
-        roles.add(user.getId());
+        roles.addAll(addFedoraHack(user.getId()));
 
         return roles;
+    }
+
+    public static URI getAuthRoleURI(String domain, Role role) {
+        return URI.create(ROLE_BASE + format("%s@%s", role, domain));
+    }
+
+    // This is a hack for fcrepo4, whereby ACLs cannot use http fedora resource URIs.
+    // For some unknown (and incorrect) reason, they need to begin with info:fedora.
+    // Therefore, we just add the info:fedora variant.
+    private List<URI> addFedoraHack(URI resource) {
+
+        final List<URI> roles = new ArrayList<>();
+        roles.add(resource);
+        if (resource.toString().startsWith(FedoraConfig.getBaseUrl())) {
+            roles.add(URI.create(resource.toString().replace(FedoraConfig.getBaseUrl(), "info:fedora/")));
+        }
+
+        return roles;
+
     }
 }

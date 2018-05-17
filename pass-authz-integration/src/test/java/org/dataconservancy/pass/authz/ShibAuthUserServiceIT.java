@@ -69,7 +69,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         // For the smoke test, all we care is that the servlet is up. Don't care if it works.
         try (CloseableHttpResponse response = http.execute(get)) {
             final int code = response.getStatusLine().getStatusCode();
-            if (code > 299 && code < 500) {
+            if ((code > 299 && code < 500) && code != 401 && code != 403) {
                 throw new RuntimeException("Failed connecting to user service with " + response.getStatusLine());
             }
         }

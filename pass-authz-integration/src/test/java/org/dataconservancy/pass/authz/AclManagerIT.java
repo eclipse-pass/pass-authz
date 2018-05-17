@@ -37,7 +37,7 @@ import org.junit.Test;
  */
 public class AclManagerIT extends FcrepoIT {
 
-    static final String AUTH_ROLE_HEADER = "pass-role";
+    static final String AUTH_ROLE_HEADER = "pass-roles";
 
     static final URI AUTH_ROLE = URI.create("http://example.org/auth/myRole");
 
