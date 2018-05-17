@@ -74,6 +74,7 @@
             </goals>
             <configuration>
               <portNames>
+                <portName>ES_PORT</portName>
                 <portName>FCREPO_PORT</portName>
                 <portName>FCREPO_JMS_PORT</portName>
                 <portName>FCREPO_STOMP_PORT</portName>
@@ -164,7 +165,7 @@
                   <PI_FEDORA_JMS_BROKER>tcp://${FCREPO_HOST}:${FCREPO_JMS_PORT}</PI_FEDORA_JMS_BROKER>
                   <PI_FEDORA_JMS_QUEUE>fedora</PI_FEDORA_JMS_QUEUE>
                   <PI_TYPE_PREFIX>http://example.org/pass/</PI_TYPE_PREFIX>
-                  <PI_LOG_LEVEL>debugo</PI_LOG_LEVEL>
+                  <PI_LOG_LEVEL>debug</PI_LOG_LEVEL>
                 </env>
                 <links>
                   <link>fcrepo:localhost</link>
@@ -286,6 +287,12 @@
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
       <artifactId>pass-data-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
