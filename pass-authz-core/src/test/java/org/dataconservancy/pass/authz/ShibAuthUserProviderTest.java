@@ -35,6 +35,7 @@ import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.UNSCOPED_AFFILIATION_HEADER;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -138,5 +139,19 @@ public class ShibAuthUserProviderTest {
         assertEquals(2, user.getDomains().size());
         assertTrue(user.getDomains().containsAll(asList("jhu.edu", "library.jhu.edu")));
     }
+    
+    // Everything should simply be null if there are no shib headers.
+    @Test
+    public void noShibHeadersTest() {
+        ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
+        AuthUser user = underTest.getUser(request);
+        assertEquals(0, user.getDomains().size());
+        assertNull(user.getEmail());
+        assertNull(user.getEmployeeId());
+        assertNull(user.getId());
+        assertNull(user.getInstitutionalId());
+        assertNull(user.getName());
+        assertNull(user.getPrincipal());
+    }   
 
 }

@@ -55,6 +55,16 @@
               <outputDirectory>${project.build.testOutputDirectory}/docker</outputDirectory>
               <destFileName>pass-user-service.war</destFileName>
             </artifactItem>
+            <artifactItem>
+              <groupId>org.dataconservancy.pass</groupId>
+              <artifactId>pass-authz-filters</artifactId>
+              <version>${project.version}</version>
+              <type>jar</type>
+              <classifier>shaded</classifier>
+              <overWrite>false</overWrite>
+              <outputDirectory>${project.build.testOutputDirectory}/docker</outputDirectory>
+              <destFileName>pass-authz-filters-shaded.jar</destFileName>
+            </artifactItem>
           </artifactItems>
           <outputDirectory>${project.build.directory}/wars</outputDirectory>
           <overWriteReleases>false</overWriteReleases>
@@ -78,6 +88,7 @@
                 <portName>FCREPO_PORT</portName>
                 <portName>FCREPO_JMS_PORT</portName>
                 <portName>FCREPO_STOMP_PORT</portName>
+                <portName>ES_PORT</portName>
               </portNames>
             </configuration>
           </execution>
@@ -125,6 +136,7 @@
                 <hostname>fcrepo</hostname>
                 <namingStrategy>alias</namingStrategy>
                 <env>
+                  <LOG_org_dataconservancy>DEBUG</LOG_org_dataconservancy>
                   <FCREPO_AUTH_LOG_LEVEL>DEBUG</FCREPO_AUTH_LOG_LEVEL>
                   <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
                   <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
@@ -132,6 +144,9 @@
                   <FCREPO_STOMP_PORT>${FCREPO_STOMP_PORT}</FCREPO_STOMP_PORT>
                   <FCREPO_JMS_BASEURL>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</FCREPO_JMS_BASEURL>
                   <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
+                  <PASS_FEDORA_BASEURL>http://localhost:${FCREPO_PORT}/fcrepo/rest/</PASS_FEDORA_BASEURL>
+                  <PASS_ELASTICSEARCH_URL>http://elasticsearch:9200</PASS_ELASTICSEARCH_URL>
+                  <AUTHZ_ALLOW_EXTERNAL_ROLES>true</AUTHZ_ALLOW_EXTERNAL_ROLES>
                 </env>
                 <ports>
                   <port>${FCREPO_PORT}:${FCREPO_PORT}</port>
@@ -165,7 +180,7 @@
                   <PI_FEDORA_JMS_BROKER>tcp://${FCREPO_HOST}:${FCREPO_JMS_PORT}</PI_FEDORA_JMS_BROKER>
                   <PI_FEDORA_JMS_QUEUE>fedora</PI_FEDORA_JMS_QUEUE>
                   <PI_TYPE_PREFIX>http://example.org/pass/</PI_TYPE_PREFIX>
-                  <PI_LOG_LEVEL>debug</PI_LOG_LEVEL>
+                  <PI_LOG_LEVEL>DEBUG</PI_LOG_LEVEL>
                 </env>
                 <links>
                   <link>fcrepo:localhost</link>
@@ -263,6 +278,15 @@
     </dependency>
 
     <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-authz-filters</artifactId>
+      <version>${project.version}</version>
+      <type>jar</type>
+      <classifier>shaded</classifier>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.dataconservancy.fcrepo</groupId>
       <artifactId>jsonld-addon-filters</artifactId>
       <version>0.0.3-SNAPSHOT</version>
@@ -298,6 +322,12 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
 

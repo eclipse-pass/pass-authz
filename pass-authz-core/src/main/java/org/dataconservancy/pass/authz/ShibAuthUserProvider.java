@@ -19,6 +19,9 @@ package org.dataconservancy.pass.authz;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.time.Duration;
@@ -43,13 +46,15 @@ import static java.util.stream.Collectors.toSet;
  * @author jrm@jhu.edu
  */
 public class ShibAuthUserProvider implements AuthUserProvider {
+    
+    Logger LOG = LoggerFactory.getLogger(ShibAuthUserProvider.class);
 
-    static final String DISPLAY_NAME_HEADER = "Displayname";
-    static final String EMAIL_HEADER = "Mail";
-    static final String EPPN_HEADER = "Eppn";
-    static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
-    static final String SCOPED_AFFILIATION_HEADER = "Affiliation";
-    static final String EMPLOYEE_ID = "Employeenumber";
+    public static final String DISPLAY_NAME_HEADER = "Displayname";
+    public static final String EMAIL_HEADER = "Mail";
+    public static final String EPPN_HEADER = "Eppn";
+    public static final String UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
+    public static final String SCOPED_AFFILIATION_HEADER = "Affiliation";
+    public static final String EMPLOYEE_ID = "Employeenumber";
     
     final PassClient passClient;
     
@@ -82,12 +87,12 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         String employeeId;
         boolean isFaculty = false;
 
-        displayName = request.getHeader(DISPLAY_NAME_HEADER).trim();
-        emailAddress = request.getHeader(EMAIL_HEADER).trim();
-        institutionalId = request.getHeader(EPPN_HEADER).split("@")[0];
+        displayName = ofNullable(request.getHeader(DISPLAY_NAME_HEADER)).map(String::trim).orElse(null);
+        emailAddress = ofNullable(request.getHeader(EMAIL_HEADER)).map(String::trim).orElse(null);
+        institutionalId = ofNullable(request.getHeader(EPPN_HEADER)).map(s -> s.split("@")[0]).orElse(null);
         employeeId = request.getHeader(EMPLOYEE_ID);
 
-        String[] affiliationArray = request.getHeader(UNSCOPED_AFFILIATION_HEADER).split(";");
+        String[] affiliationArray = ofNullable(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).orElse("").split(";");
         for (String affiliation : affiliationArray) {
             if (affiliation.trim().equalsIgnoreCase(facultyAffiliation)) {
                 isFaculty = true;
@@ -95,19 +100,37 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             }
         }
 
-        URI id = userCache.getOrDo(institutionalId, () -> passClient.findByAttribute(User.class, "localKey", employeeId));
+        URI id = null;
+        if (employeeId != null) {
+            LOG.debug("Looking up User based in employeeId '{}'", employeeId);
+            try {
+                id = userCache.getOrDo(employeeId, 
+                    () -> passClient.findByAttribute(User.class, "localKey", employeeId));
+                LOG.debug("User resource for {} is {}", employeeId, id);
+            } catch (Exception e) {
+                LOG.warn("Error looking up user with employee id " + employeeId, e);
+            }
+        } else {
+            LOG.debug("No shibboleth principal; skipping user lookip ");
+            id = null;
+        }
 
         final AuthUser user = new AuthUser();
         user.setEmployeeId(employeeId);
         user.setName(displayName);
         user.setEmail(emailAddress);
-        user.setInstitutionalId(institutionalId.toLowerCase());//this is our normal format
+        if (institutionalId != null) {
+            user.setInstitutionalId(institutionalId.toLowerCase());//this is our normal format
+        }
         user.setFaculty(isFaculty);
         user.setId(id);
         user.setPrincipal(request.getHeader(EPPN_HEADER));
         
         
-        user.getDomains().add(request.getHeader(EPPN_HEADER).split("@")[1]);
+        ofNullable(request.getHeader(EPPN_HEADER))
+            .filter(s -> s.contains("@"))
+            .map(s -> s.split("@")[1])
+            .ifPresent(user.getDomains()::add);
         user.getDomains().addAll(stream(ofNullable(
                 request.getHeader(SCOPED_AFFILIATION_HEADER)).orElse("").split(";"))
                         .filter(sa -> sa.contains("@"))
