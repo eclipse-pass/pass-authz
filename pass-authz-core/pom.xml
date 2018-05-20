@@ -12,7 +12,7 @@
 
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
-        <artifactId>pass-data-client</artifactId>
+      <artifactId>pass-data-client</artifactId>
     </dependency>
 
     <dependency>
@@ -32,7 +32,14 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
+    <dependency>
+      <groupId>com.github.stefanbirkner</groupId>
+      <artifactId>system-rules</artifactId>
+      <version>1.17.2</version>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
