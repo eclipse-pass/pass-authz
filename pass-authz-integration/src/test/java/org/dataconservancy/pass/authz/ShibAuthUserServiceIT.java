@@ -26,10 +26,6 @@ import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.model.User;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,7 +34,6 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertNotNull;
 
 /**
