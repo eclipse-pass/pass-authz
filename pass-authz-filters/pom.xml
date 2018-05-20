@@ -25,6 +25,10 @@
               <shadedClassifierName>shaded</shadedClassifierName>
               <relocations>
                 <relocation>
+                  <shadedPattern>org.dataconservancy.pass.auth.filters.shaded.org.elasticsearch</shadedPattern>
+                  <pattern>org.elasticsearch</pattern>
+                </relocation>
+                <relocation>
                   <shadedPattern>org.dataconservancy.pass.auth.filters.shaded.org.joda</shadedPattern>
                   <pattern>org.joda</pattern>
                 </relocation>
