@@ -128,7 +128,7 @@
           <images>
             <image>
               <alias>fcrepo</alias>
-              <name>oapass/pass-authz-fcrepo</name>
+              <name>oapass/pass-authz-fcrepo:${project.version}</name>
               <build>
                 <dockerFileDir>${project.build.testOutputDirectory}/docker</dockerFileDir>
               </build>
@@ -146,6 +146,7 @@
                   <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
                   <PASS_FEDORA_BASEURL>http://localhost:${FCREPO_PORT}/fcrepo/rest/</PASS_FEDORA_BASEURL>
                   <PASS_ELASTICSEARCH_URL>http://elasticsearch:9200</PASS_ELASTICSEARCH_URL>
+                  <AUTHZ_SHIB_USE_HEADERS>true</AUTHZ_SHIB_USE_HEADERS>
                   <AUTHZ_ALLOW_EXTERNAL_ROLES>true</AUTHZ_ALLOW_EXTERNAL_ROLES>
                 </env>
                 <ports>

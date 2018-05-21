@@ -131,6 +131,7 @@ public class PassRolesFilter implements Filter {
             }
 
             try {
+                LOG.debug("Getting user info for roles");
                 final AuthUser user = userProvider.getUser(request);
 
                 rolesDiscovered.addAll(rolesProvider.getRoles(user).stream().map(URI::toString).collect(Collectors
@@ -141,7 +142,7 @@ public class PassRolesFilter implements Filter {
 
             roles = String.join(authzRoleSeparator, rolesDiscovered);
 
-            LOG.debug("Using auth roles " + roles);
+            LOG.debug("Using auth roles '{}'", roles);
         }
 
         @Override
