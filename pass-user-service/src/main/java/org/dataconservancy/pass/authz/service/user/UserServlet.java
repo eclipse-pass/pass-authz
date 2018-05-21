@@ -96,7 +96,10 @@ public class UserServlet extends HttpServlet {
             // employeeId should never change
             // each user provider will only adjust fields for which it is authoritative
             // shib is authoritative for these
-
+            if (user.getUsername() == null || !user.getUsername().equals(shibUser.getPrincipal())) {
+                user.setUsername(shibUser.getPrincipal());
+                update = true;
+            }
             if (user.getEmail() == null || !user.getEmail().equals(shibUser.getEmail())) {
                 user.setEmail(shibUser.getEmail());
                 update = true;
@@ -121,6 +124,7 @@ public class UserServlet extends HttpServlet {
             if (shibUser.isFaculty()) {
                 LOG.info("Creating new record for new user {}", shibUser.getPrincipal());
                 user = new User();
+                user.setUsername(shibUser.getPrincipal());
                 user.setLocalKey(shibUser.getEmployeeId());
                 user.setInstitutionalId(shibUser.getInstitutionalId());
                 user.setDisplayName(shibUser.getName());

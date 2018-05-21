@@ -85,6 +85,7 @@ public class UserServletTest {
     public void setUp() throws Exception {
         USER = new AuthUser();
 
+        USER.setPrincipal("bessie@farm.com");
         USER.setName("MOOO COW");
         USER.setFaculty(true);
         USER.setInstitutionalId("cowb1");
@@ -167,6 +168,7 @@ public class UserServletTest {
 
         final User found = new User();
         found.setId(foundId);
+        found.setUsername(USER.getPrincipal());
         found.setDisplayName(USER.getName());
         found.setEmail(USER.getEmail());
         found.setInstitutionalId(USER.getInstitutionalId());
@@ -197,6 +199,7 @@ public class UserServletTest {
 
         final User found = new User();
         found.setId(foundId);
+        found.setUsername(USER.getPrincipal());
         found.setDisplayName(USER.getName());
         found.setEmail(USER.getEmail());
         found.setInstitutionalId(USER.getInstitutionalId());
@@ -227,6 +230,7 @@ public class UserServletTest {
         when(request.getHeader("host")).thenReturn("foo.org");
 
         final User found = new User();
+        found.setUsername(USER.getPrincipal());
         found.setId(foundId);
         found.setDisplayName(USER.getName());
         found.setEmail(USER.getEmail());
@@ -259,6 +263,7 @@ public class UserServletTest {
 
         final User found = new User();
         found.setId(foundId);
+        found.setUsername(USER.getPrincipal());
         found.setDisplayName(USER.getName());
         found.setEmail(USER.getEmail());
         found.setInstitutionalId(USER.getInstitutionalId());
