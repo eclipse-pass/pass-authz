@@ -49,9 +49,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SuppressWarnings("serial")
 public class UserServlet extends HttpServlet {
 
-    Logger LOG = LoggerFactory.getLogger(UserServlet.class);
+    static final Logger LOG = LoggerFactory.getLogger(UserServlet.class);
 
-    ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);
+    final ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);
 
     PassClient fedoraClient = PassClientFactory.getPassClient();
 

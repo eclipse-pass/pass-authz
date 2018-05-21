@@ -49,7 +49,7 @@ public class AuthRolesProvider {
 
     static final Logger LOG = LoggerFactory.getLogger(AuthRolesProvider.class);
 
-    public static final String ROLE_BASE = "http://dataconservancy.org/ns/pass/roles#";
+    public static final String ROLE_BASE = "http://oapass.org/ns/roles/";
 
     private final PassClient client;
 
@@ -109,7 +109,7 @@ public class AuthRolesProvider {
     }
 
     public static URI getAuthRoleURI(String domain, Role role) {
-        return URI.create(ROLE_BASE + format("%s@%s", role, domain));
+        return URI.create(ROLE_BASE + format("%s#%s", domain, role));
     }
 
     // This is a hack for fcrepo4, whereby ACLs cannot use http fedora resource URIs.
