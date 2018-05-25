@@ -195,26 +195,29 @@ public class ACLManager {
 
         URI findOrCreateACL() throws FcrepoOperationFailedException, IOException {
 
+            LOG.debug("Finding ACL for <{}>", resource);
             try (FcrepoResponse response = repo.get(resource).accept("application/n-triples").perform()) {
 
                 onErrorThrow(response, "Error looking for ACL");
-                final BufferedReader reader = new BufferedReader(new InputStreamReader(response.getBody(), UTF_8));
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getBody(), UTF_8))) {
 
-                final List<URI> acls = new ArrayList<>();
-                while (reader.ready()) {
-                    final Matcher aclFinder = aclPattern.matcher(reader.readLine());
-                    if (aclFinder.matches()) {
-                        acls.add(URI.create(aclFinder.group(1)));
+                    final List<URI> acls = new ArrayList<>();
+
+                    for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                        final Matcher aclFinder = aclPattern.matcher(line);
+                        if (aclFinder.matches()) {
+                            acls.add(URI.create(aclFinder.group(1)));
+                        }
                     }
-                }
 
-                if (acls.size() == 1) {
-                    LOG.debug("Found existing ACL <{}>", acls.get(0));
-                    return acls.get(0);
-                } else {
-                    LOG.debug("No ACL, creating one");
+                    if (acls.size() == 1) {
+                        LOG.debug("Found existing ACL <{}>", acls.get(0));
+                        return acls.get(0);
+                    } else {
+                        LOG.debug("No ACL, on <{}> creating one", resource);
 
-                    return createAcl(resource);
+                        return createAcl(resource);
+                    }
                 }
             }
         }
@@ -227,6 +230,8 @@ public class ACLManager {
                 onErrorThrow(response, "Error creating acl");
                 acl = response.getLocation();
             }
+
+            LOG.debug("Created ACL at <{}>", acl);
 
             LOG.debug("Linking ACL <{}> to <{}> via PATCH:\n{}", acl, resource, format(
                     TEMPLATE_ADD_ACL_TRIPLE, acl));
