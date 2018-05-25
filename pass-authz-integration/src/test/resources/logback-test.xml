@@ -22,5 +22,7 @@
   <root additivity="false" level="INFO">
     <appender-ref ref="STDOUT" />
   </root>
+  
+  <logger name="org.dataconservancy.pass.authz" level="DEBUG" />
 
 </configuration>
