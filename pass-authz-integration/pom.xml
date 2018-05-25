@@ -148,6 +148,7 @@
                   <PASS_ELASTICSEARCH_URL>http://elasticsearch:9200</PASS_ELASTICSEARCH_URL>
                   <AUTHZ_SHIB_USE_HEADERS>true</AUTHZ_SHIB_USE_HEADERS>
                   <AUTHZ_ALLOW_EXTERNAL_ROLES>true</AUTHZ_ALLOW_EXTERNAL_ROLES>
+                  <DEBUG_ARG>-Dlogback.configurationFile=lib/pass-logback.xml</DEBUG_ARG>
                 </env>
                 <ports>
                   <port>${FCREPO_PORT}:${FCREPO_PORT}</port>
@@ -169,7 +170,7 @@
 
             <image>
               <alias>indexer</alias>
-              <name>oapass/indexer:0.0.6-2.0-SNAPSHOT</name>
+              <name>oapass/indexer:0.0.8-2.1-SNAPSHOT</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
