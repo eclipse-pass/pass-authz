@@ -270,6 +270,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-authz-acl</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>

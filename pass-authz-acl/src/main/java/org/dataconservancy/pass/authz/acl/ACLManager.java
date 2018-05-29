@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz;
+package org.dataconservancy.pass.authz.acl;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
