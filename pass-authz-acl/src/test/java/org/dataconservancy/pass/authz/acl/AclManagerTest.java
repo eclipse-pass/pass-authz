@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz;
+package org.dataconservancy.pass.authz.acl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -27,7 +27,7 @@ import org.fcrepo.client.FcrepoClient;
 import org.fcrepo.client.FcrepoResponse;
 import org.fcrepo.client.GetBuilder;
 
-import org.dataconservancy.pass.authz.ACLManager.Builder;
+import org.dataconservancy.pass.authz.acl.ACLManager.Builder;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;

@@ -24,6 +24,8 @@ import java.util.Arrays;
 
 import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
 
+import org.dataconservancy.pass.authz.acl.ACLManager;
+
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;

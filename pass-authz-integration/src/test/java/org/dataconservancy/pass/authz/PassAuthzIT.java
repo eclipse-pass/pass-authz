@@ -28,6 +28,7 @@ import java.util.UUID;
 
 import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
 
+import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.Grant;
