@@ -181,7 +181,7 @@
                   <PI_ES_INDEX>http://elasticsearch:9200/pass/</PI_ES_INDEX>
                   <PI_FEDORA_JMS_BROKER>tcp://${FCREPO_HOST}:${FCREPO_JMS_PORT}</PI_FEDORA_JMS_BROKER>
                   <PI_FEDORA_JMS_QUEUE>fedora</PI_FEDORA_JMS_QUEUE>
-                  <PI_TYPE_PREFIX>http://example.org/pass/</PI_TYPE_PREFIX>
+                  <PI_TYPE_PREFIX>http://oapass.org/ns/pass#</PI_TYPE_PREFIX>
                   <PI_LOG_LEVEL>DEBUG</PI_LOG_LEVEL>
                 </env>
                 <links>
