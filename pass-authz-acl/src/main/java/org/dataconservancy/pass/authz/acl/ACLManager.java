@@ -18,22 +18,20 @@ package org.dataconservancy.pass.authz.acl;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.dataconservancy.pass.client.util.ConfigUtil.getSystemProperty;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.fcrepo.client.FcrepoClient;
 import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
@@ -43,22 +41,32 @@ import org.fcrepo.client.FcrepoResponse;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Creates or deletes, or modifies ACLs to reflect desired permissions.
+ *
  * @author apb@jhu.edu
  */
 public class ACLManager {
 
-    Logger LOG = LoggerFactory.getLogger(ACLManager.class);
+    static final Logger LOG = LoggerFactory.getLogger(ACLManager.class);
+
+    URI PREFER_EMBED = URI.create("http://fedora.info/definitions/v4/repository#EmbedResources");
+
+    URI PREFER_SERVER_MANAGED = URI.create("http://fedora.info/definitions/v4/repository#ServerManaged");
+
+    URI PREFER_CONTAINMENT = URI.create("http://www.w3.org/ns/ldp#PreferContainment");
+
+    URI PREDICATE_ACCESS_CONTROL = URI.create("http://www.w3.org/ns/auth/acl#accessControl");
 
     private final FcrepoClient repo;
 
     private final URI acls;
-
-    static final Pattern aclPattern = Pattern.compile(
-            ".+?\\s+<http://www.w3.org/ns/auth/acl#accessControl>\\s+<(.+?)>.+?");
 
     static final String TEMPLATE_ADD_ACL_TRIPLE =
             "INSERT {<> <http://www.w3.org/ns/auth/acl#accessControl> <%s>} WHERE {}";
@@ -88,7 +96,66 @@ public class ACLManager {
     }
 
     public Builder addPermissions(URI resource) {
-        return new Builder(resource, ADD_AUTHORIZATION);
+        return new Builder(resource, (builder, acl) -> {
+
+            final AclAnalyzer analyzer = new AclAnalyzer(getFcrepoClient(), acl);
+
+            for (final URI role : builder.allRoles()) {
+                final URI authzResource = analyzer.getAuthorizationResourceForRole(role);
+
+                if (authzResource == null) {
+                    postAuthzBody(acl, builder.getAclBody(role));
+                } else if (permissionsAreDifferent(role, builder, analyzer)) {
+                    patchAuthzBody(authzResource, builder.patchInsert(role));
+                } else {
+                    LOG.debug("No ACL update necessary");
+                }
+            }
+        });
+    }
+
+    public Builder setPermissions(URI resource) {
+        return new Builder(resource, (builder, acl) -> {
+
+            final AclAnalyzer analyzer = new AclAnalyzer(getFcrepoClient(), acl);
+
+            final Set<URI> roles = new HashSet<>();
+
+            roles.addAll(builder.allRoles());
+            roles.addAll(analyzer.getAuthRoles());
+
+            for (final URI role : roles) {
+
+                final URI authzResource = analyzer.getAuthorizationResourceForRole(role);
+
+                if (authzResource == null) {
+                    postAuthzBody(acl, builder.getAclBody(role));
+                } else if (permissionsAreDifferent(role, builder, analyzer)) {
+                    putAuthzBody(authzResource, builder.getAclBody(role));
+                } else {
+                    LOG.debug("No ACL update necessary");
+                }
+            }
+        });
+    }
+
+    public Builder setPermissionsForRoles(URI resource, Collection<URI> roles) {
+        return new Builder(resource, (builder, acl) -> {
+            final AclAnalyzer analyzer = new AclAnalyzer(getFcrepoClient(), acl);
+
+            for (final URI role : roles) {
+
+                final URI authzResource = analyzer.getAuthorizationResourceForRole(role);
+
+                if (authzResource == null) {
+                    postAuthzBody(acl, builder.getAclBody(role));
+                } else if (permissionsAreDifferent(role, builder, analyzer)) {
+                    putAuthzBody(authzResource, builder.getAclBody(role));
+                } else {
+                    LOG.debug("No ACL update necessary");
+                }
+            }
+        });
     }
 
     FcrepoClient getFcrepoClient() {
@@ -99,24 +166,17 @@ public class ACLManager {
         return repo;
     }
 
-    final BiConsumer<Builder, URI> ADD_AUTHORIZATION = (builder, acl) -> {
+    static boolean permissionsAreDifferent(URI role, Builder builder, AclAnalyzer acl) {
+        final Set<Permission> permissions = acl.getPermissionsforRole(role);
+        LOG.debug("read? (builder: {}, acl: {})", builder.read.contains(role), permissions.contains(Permission.Read));
+        LOG.debug("write? (builder: {}, acl: {})", builder.write.contains(role), permissions.contains(
+                Permission.Write));
+        return builder.read.contains(role) != permissions.contains(Permission.Read) ||
+                builder.write.contains(role) != permissions.contains(Permission.Write);
 
-        for (final URI role : builder.allRoles()) {
-            final StringBuilder auth = aclAuth(builder.resource, role);
+    }
 
-            if (builder.read.contains(role)) {
-                auth.append(READ_AUTH);
-            }
-
-            if (builder.write.contains(role)) {
-                auth.append(WRITE_AUTH);
-            }
-
-            postAuthzBody(acl, auth.toString());
-        }
-    };
-
-    private static void onErrorThrow(FcrepoResponse response, String message, Object... params) throws IOException {
+    static void onErrorThrow(FcrepoResponse response, String message, Object... params) throws IOException {
         if (response.getStatusCode() > 299) {
             try (InputStream in = response.getBody()) {
                 throw new RuntimeException(
@@ -128,8 +188,31 @@ public class ACLManager {
 
     }
 
-    private static StringBuilder aclAuth(URI toResource, URI role) {
-        return new StringBuilder(format(TEMPLATE_AUTHORIZATION, toResource, role));
+    private void patchAuthzBody(URI authz, String body) {
+
+        LOG.debug("PATCHing authz to <{}> with body\n{}", authz, body);
+        try (FcrepoResponse response = repo().patch(authz)
+                .body(IOUtils.toInputStream(body, UTF_8))
+                .perform()) {
+            onErrorThrow(response, "Error updating authorization at <%s>", authz);
+
+        } catch (FcrepoOperationFailedException | IOException e) {
+            throw new RuntimeException("Error conecting to the repository", e);
+        }
+    }
+
+    private void putAuthzBody(URI authz, String body) {
+
+        LOG.debug("PUTting authz to <{}> with body\n{}", authz, body);
+        try (FcrepoResponse response = repo().put(authz)
+                .body(IOUtils.toInputStream(body, UTF_8), "text/turtle")
+                .preferLenient()
+                .perform()) {
+            onErrorThrow(response, "Error updating authorization at <%s>", authz);
+
+        } catch (FcrepoOperationFailedException | IOException e) {
+            throw new RuntimeException("Error conecting to the repository", e);
+        }
     }
 
     private void postAuthzBody(URI acl, String body) {
@@ -196,30 +279,66 @@ public class ACLManager {
         URI findOrCreateACL() throws FcrepoOperationFailedException, IOException {
 
             LOG.debug("Finding ACL for <{}>", resource);
-            try (FcrepoResponse response = repo.get(resource).accept("application/n-triples").perform()) {
+            try (FcrepoResponse response = repo.get(resource)
+                    .accept("application/n-triples")
+                    .preferRepresentation(emptyList(), asList(PREFER_CONTAINMENT, PREFER_SERVER_MANAGED)).perform()) {
 
                 onErrorThrow(response, "Error looking for ACL");
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.getBody(), UTF_8))) {
 
-                    final List<URI> acls = new ArrayList<>();
+                final List<URI> acls;
+                final Model model = ModelFactory.createDefaultModel();
+                try (InputStream body = response.getBody()) {
+                    model.read(body, "", "NTriples");
+                    acls = model.listStatements(null,
+                            model.createProperty(PREDICATE_ACCESS_CONTROL.toString()),
+                            (RDFNode) null)
+                            .mapWith(s -> URI.create(s.getObject().asResource().toString()))
+                            .toList();
+                }
 
-                    for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                        final Matcher aclFinder = aclPattern.matcher(line);
-                        if (aclFinder.matches()) {
-                            acls.add(URI.create(aclFinder.group(1)));
-                        }
-                    }
+                if (acls.size() == 1) {
+                    LOG.debug("Found existing ACL <{}>", acls.get(0));
+                    return acls.get(0);
+                } else if (acls.isEmpty()) {
+                    LOG.debug("No ACL, on <{}> creating one", resource);
 
-                    if (acls.size() == 1) {
-                        LOG.debug("Found existing ACL <{}>", acls.get(0));
-                        return acls.get(0);
-                    } else {
-                        LOG.debug("No ACL, on <{}> creating one", resource);
-
-                        return createAcl(resource);
-                    }
+                    return createAcl(resource);
+                } else {
+                    throw new RuntimeException(format("More than one acl for resource <%s>: {%s}", resource,
+                            String.join(",", acls.stream().map(URI::toString).collect(Collectors.toList()))));
                 }
             }
+        }
+
+        String getAclBody(URI role) {
+            final StringBuilder auth = new StringBuilder(format(TEMPLATE_AUTHORIZATION, resource, role));
+
+            if (read.contains(role)) {
+                auth.append(READ_AUTH);
+            }
+
+            if (write.contains(role)) {
+                auth.append(WRITE_AUTH);
+            }
+
+            return auth.toString();
+        }
+
+        String patchInsert(URI role) {
+            final StringBuilder patch = new StringBuilder(
+                    "PREFIX acl: <http://www.w3.org/ns/auth/acl#>\n\nINSERT {\n");
+
+            if (read.contains(role)) {
+                patch.append(READ_AUTH);
+            }
+
+            if (write.contains(role)) {
+                patch.append(WRITE_AUTH);
+            }
+
+            patch.append("} WHERE {}");
+
+            return patch.toString();
         }
 
         private URI createAcl(URI resource) throws IOException, FcrepoOperationFailedException {

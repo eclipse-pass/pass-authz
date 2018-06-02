@@ -131,7 +131,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
             Assert.assertEquals(200, response.code());
         }
         
-        attempt(20, () -> assertNotNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER))));
+        attempt(30, () -> assertNotNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER))));
 
         URI id = passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER));
 

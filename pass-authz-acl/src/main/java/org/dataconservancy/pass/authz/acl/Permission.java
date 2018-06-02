@@ -16,32 +16,12 @@
 
 package org.dataconservancy.pass.authz.acl;
 
-import org.fcrepo.client.FcrepoClient;
-import org.fcrepo.client.FcrepoResponse;
-import org.fcrepo.client.GetBuilder;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
 /**
  * @author apb@jhu.edu
  */
-@RunWith(MockitoJUnitRunner.class)
-public class AclManagerTest {
-
-    @Mock
-    FcrepoResponse response;
-
-    @Mock
-    FcrepoClient client;
-
-    @Mock
-    GetBuilder get;
-
-    @Test
-    public void testsAreITs() {
-        // ACLManager is tested in ITs, due to lack of time mocking the appropriate request/responses
-    }
+public enum Permission {
+    Read,
+    Write,
+    Append,
+    Control
 }
