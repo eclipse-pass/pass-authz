@@ -1,0 +1,77 @@
+container-base: /fcrepo/rest
+role-base: http://oapass.org/ns/roles/johnshopkins.edu#
+
+containers:
+
+  - acls:
+      write:
+        - pass-backend
+
+  - contributors:
+      write:
+        - submitter
+        - pass-backend
+
+  - deposits:
+      read:
+         - admin
+      write: 
+         - pass-backend
+
+  - files:
+      read: 
+        - admin
+      append:
+        - submitter
+      write:
+        - pass-backend
+
+  - grants:
+      read:
+        - admin
+      write:
+        - pass-backend
+
+  - journals:
+      read:
+        - submitter
+      write:
+        - pass-backend
+        
+  - policies:
+      read:
+        - submitter
+      write:
+        - pass-backend
+        
+  - publishers:
+       read:
+         - submitter
+       write:
+         - pass-backend
+         
+  - repositories:
+      read:
+        - person
+      write:
+        - pass-backend
+   
+  - repositoryCopies:
+      read:
+        - submitter
+      write:
+        - pass-backend
+
+  - submissions:
+      read: 
+        - admin
+      append:
+        - submitter
+      write:
+        - pass-backend
+        
+  - users:
+     read:
+       - submitter
+     write:
+       - pass-backend

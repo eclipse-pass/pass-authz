@@ -23,6 +23,6 @@
     <appender-ref ref="STDOUT" />
   </root>
   
-  <logger name="org.dataconservancy.pass.authz" level="DEBUG" />
+  <logger name="org.dataconservancy.pass.authz" level="TRACE" />
 
 </configuration>
