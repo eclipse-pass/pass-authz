@@ -67,7 +67,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         }
 
         final PassClient passClient = PassClientFactory.getPassClient();
-        attempt(15, () -> {
+        attempt(20, () -> {
             Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER)));
         });
     }
@@ -84,9 +84,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         final PassClient passClient = PassClientFactory.getPassClient();
         URI id = passClient.createResource(newUser);
 
-        attempt(15, () -> {
-            Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", "10933511")); 
-        });
+        attempt(20, () -> Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", "10933511")));
 
         Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Bugs Bunny");
@@ -133,11 +131,9 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
             Assert.assertEquals(200, response.code());
         }
         
-        URI id = attempt(25, () -> {
-            URI found = passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER));
-            assertNotNull(found);
-            return found;
-        });
+        attempt(20, () -> assertNotNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER))));
+
+        URI id = passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER));
 
         User passUser = passClient.readResource(id, User.class);
 
