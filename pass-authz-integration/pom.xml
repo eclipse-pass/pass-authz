@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.dataconservancy.pass</groupId>
     <artifactId>pass-authz</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>pass-authz-integration</artifactId>
 
@@ -174,7 +174,7 @@
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
-                  <PI_FEDORA_USER>fedoraAdmin</PI_FEDORA_USER>
+                  <PI_FEDORA_USER>admin</PI_FEDORA_USER>
                   <PI_FEDORA_PASS>moo</PI_FEDORA_PASS>
                   <PI_FEDORA_INTERNAL_BASE>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</PI_FEDORA_INTERNAL_BASE>
                   <PI_ES_BASE>http://elasticsearch:9200/</PI_ES_BASE>
