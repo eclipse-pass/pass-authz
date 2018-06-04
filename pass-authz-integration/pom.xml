@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.dataconservancy.pass</groupId>
     <artifactId>pass-authz</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>pass-authz-integration</artifactId>
 
@@ -170,18 +170,18 @@
 
             <image>
               <alias>indexer</alias>
-              <name>oapass/indexer:0.0.8-2.1-SNAPSHOT</name>
+              <name>oapass/indexer:0.0.10-2.2-SNAPSHOT</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
-                  <PI_FEDORA_USER>fedoraAdmin</PI_FEDORA_USER>
+                  <PI_FEDORA_USER>admin</PI_FEDORA_USER>
                   <PI_FEDORA_PASS>moo</PI_FEDORA_PASS>
                   <PI_FEDORA_INTERNAL_BASE>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</PI_FEDORA_INTERNAL_BASE>
                   <PI_ES_BASE>http://elasticsearch:9200/</PI_ES_BASE>
                   <PI_ES_INDEX>http://elasticsearch:9200/pass/</PI_ES_INDEX>
                   <PI_FEDORA_JMS_BROKER>tcp://${FCREPO_HOST}:${FCREPO_JMS_PORT}</PI_FEDORA_JMS_BROKER>
                   <PI_FEDORA_JMS_QUEUE>fedora</PI_FEDORA_JMS_QUEUE>
-                  <PI_TYPE_PREFIX>http://example.org/pass/</PI_TYPE_PREFIX>
+                  <PI_TYPE_PREFIX>http://oapass.org/ns/pass#</PI_TYPE_PREFIX>
                   <PI_LOG_LEVEL>DEBUG</PI_LOG_LEVEL>
                 </env>
                 <links>
