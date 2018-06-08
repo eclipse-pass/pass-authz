@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.dataconservancy.pass</groupId>
     <artifactId>pass-authz</artifactId>
-    <version>0.0.2-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
   </parent>
   <artifactId>pass-authz-integration</artifactId>
 
@@ -161,7 +161,7 @@
                 </network>
                 <wait>
                   <http>
-                    <url>http://admin:moo@${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</url>
+                    <url>http://fedoraAdmin:moo@${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</url>
                   </http>
                   <time>120000</time>
                 </wait>
