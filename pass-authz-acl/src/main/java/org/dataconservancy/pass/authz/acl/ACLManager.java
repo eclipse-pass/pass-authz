@@ -64,7 +64,7 @@ public class ACLManager {
 
     URI PREDICATE_ACCESS_CONTROL = URI.create("http://www.w3.org/ns/auth/acl#accessControl");
 
-    private final FcrepoClient repo;
+    public final FcrepoClient repo;
 
     private final URI acls;
 
@@ -91,7 +91,7 @@ public class ACLManager {
         acls = getAclBase();
     }
 
-    private static URI getAclBase() {
+    public static URI getAclBase() {
         return URI.create(FedoraConfig.getBaseUrl() + getSystemProperty("acl.base", "acls"));
     }
 

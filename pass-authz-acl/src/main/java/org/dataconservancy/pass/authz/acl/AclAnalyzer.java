@@ -70,6 +70,8 @@ public class AclAnalyzer {
                 .preferRepresentation(asList(EMBED_RESOURCES), asList(SERVER_MANAGED)).perform()) {
 
             LOG.debug("Reading ACL {}", acl);
+
+            onErrorThrow(response, "Could not read acl {}", acl);
             model.read(response.getBody(), null, "TTL");
 
             if (LOG.isTraceEnabled()) {
