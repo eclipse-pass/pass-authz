@@ -24,6 +24,9 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.Submission;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author apb@jhu.edu
  */
@@ -34,6 +37,8 @@ public class PolicyEngine {
     private final ACLManager acls;
 
     private final URI backend;
+
+    Logger LOG = LoggerFactory.getLogger(PolicyEngine.class);
 
     public PolicyEngine(PassClient client, ACLManager manager, URI backend) {
         this.client = client;
@@ -54,7 +59,10 @@ public class PolicyEngine {
             authUsers.add(backend);
         }
 
+        LOG.info("Updating permissions of grant {}", uri);
+        LOG.debug("Granting write on grant {} to {}", uri, authUsers);
         acls.setPermissions(uri)
+                .grantRead(authUsers)
                 .grantWrite(authUsers)
                 .perform();
     }
@@ -72,7 +80,10 @@ public class PolicyEngine {
             authUsers.add(backend);
         }
 
+        LOG.info("Updating permissions of submission {}", uri);
+        LOG.debug("Granting write on submission {} to {}", uri, authUsers);
         acls.setPermissions(uri)
+                .grantRead(authUsers)
                 .grantWrite(authUsers)
                 .perform();
     }
