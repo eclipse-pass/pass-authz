@@ -57,7 +57,7 @@ public class PassAuthzIT extends FcrepoIT {
 
     static CloseableHttpClient http = getHttpClient();
 
-    static CloseableHttpClient userHttp = getAuthClient("admin", "moo");
+    static CloseableHttpClient userHttp = getAuthClient("user", "moo");
 
     @BeforeClass
     public static void addAclContainer() throws Exception {
