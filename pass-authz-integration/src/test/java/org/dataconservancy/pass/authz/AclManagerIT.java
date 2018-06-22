@@ -19,6 +19,7 @@ package org.dataconservancy.pass.authz;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -48,7 +49,7 @@ public class AclManagerIT extends FcrepoIT {
     static CloseableHttpClient http = getHttpClient();
 
     // An unprivileged user
-    static CloseableHttpClient userHttp = getAuthClient("admin", "moo");
+    static CloseableHttpClient userHttp = getAuthClient("user", "moo");
 
     ACLManager toTest = new ACLManager(new FcrepoClientBuilder().credentials("fedoraAdmin", "moo").build());
 
@@ -95,7 +96,8 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user WITHOUT the proper role can NOT read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
@@ -111,7 +113,8 @@ public class AclManagerIT extends FcrepoIT {
         // Make sure the user WITH the proper role can NOT write to the object,
         // as we haven't given write permissions yet.
         userHttp.execute(write, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
@@ -151,7 +154,8 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user WITHOUT the proper role can NOT read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
@@ -167,7 +171,8 @@ public class AclManagerIT extends FcrepoIT {
         // Make sure the user WITH the proper role can NOT write to the object,
         // as we haven't given write permissions yet.
         userHttp.execute(write, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
@@ -209,12 +214,14 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure neither can read
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
@@ -273,12 +280,14 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure neither can read
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
@@ -337,12 +346,14 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure neither can read
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
+            final int code = r.getStatusLine().getStatusCode();
+            assertTrue(code == 401 || code == 403);
             return null;
         });
 

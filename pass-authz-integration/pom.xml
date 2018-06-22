@@ -126,6 +126,56 @@
           <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
           <autoPull>true</autoPull>
           <images>
+
+            <image>
+              <alias>activemq</alias>
+              <name>oapass/activemq:20180618</name>
+              <run>
+                <namingStrategy>alias</namingStrategy>
+                <network>
+                  <mode>custom</mode>
+                  <name>pass</name>
+                  <alias>activemq</alias>
+                </network>
+              </run>
+            </image>
+
+            <image>
+              <alias>indexer</alias>
+              <name>oapass/indexer:0.0.12-2.2-SNAPSHOT</name>
+              <run>
+                <namingStrategy>alias</namingStrategy>
+                <env>
+                  <PI_FEDORA_USER>fedoraAdmin</PI_FEDORA_USER>
+                  <PI_FEDORA_PASS>moo</PI_FEDORA_PASS>
+                  <PI_FEDORA_INTERNAL_BASE>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</PI_FEDORA_INTERNAL_BASE>
+                  <PI_ES_BASE>http://elasticsearch:9200/</PI_ES_BASE>
+                  <PI_ES_INDEX>http://elasticsearch:9200/pass/</PI_ES_INDEX>
+                  <PI_FEDORA_JMS_QUEUE>Consumer.indexer.VirtualTopic.pass.authz</PI_FEDORA_JMS_QUEUE>
+                  <PI_TYPE_PREFIX>http://oapass.org/ns/pass#</PI_TYPE_PREFIX>
+                  <PI_LOG_LEVEL>DEBUG</PI_LOG_LEVEL>
+                  <SPRING_ACTIVEMQ_BROKER_URL>failover:(tcp://activemq:61616)?trackMessages=true</SPRING_ACTIVEMQ_BROKER_URL>
+                  <SPRING_ACTIVEMQ_USER>messaging</SPRING_ACTIVEMQ_USER>
+                  <SPRING_ACTIVEMQ_PASSWORD>moo</SPRING_ACTIVEMQ_PASSWORD>
+                </env>
+                <links>
+                  <link>fcrepo:localhost</link>
+                  <link>elasticsearch</link>
+                </links>
+                <volumes>
+                  <bind>./src/test/resources/docker/hosts:/etc/hosts</bind>
+                </volumes>
+                <network>
+                  <mode>custom</mode>
+                  <name>pass</name>
+                  <alias>indexer</alias>
+                </network>
+                <dependsOn>
+                  <container>activemq</container>
+                </dependsOn>
+              </run>
+            </image>
+
             <image>
               <alias>fcrepo</alias>
               <name>oapass/pass-authz-fcrepo:${project.version}</name>
@@ -140,15 +190,18 @@
                   <FCREPO_AUTH_LOG_LEVEL>DEBUG</FCREPO_AUTH_LOG_LEVEL>
                   <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
                   <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
-                  <FCREPO_JMS_PORT>${FCREPO_JMS_PORT}</FCREPO_JMS_PORT>
-                  <FCREPO_STOMP_PORT>${FCREPO_STOMP_PORT}</FCREPO_STOMP_PORT>
                   <FCREPO_JMS_BASEURL>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</FCREPO_JMS_BASEURL>
-                  <FCREPO_ACTIVEMQ_CONFIGURATION>classpath:/activemq-queue.xml</FCREPO_ACTIVEMQ_CONFIGURATION>
                   <PASS_FEDORA_BASEURL>http://localhost:${FCREPO_PORT}/fcrepo/rest/</PASS_FEDORA_BASEURL>
                   <PASS_ELASTICSEARCH_URL>http://elasticsearch:9200</PASS_ELASTICSEARCH_URL>
+                  <PASS_FEDORA_USER>fedoraAdmin</PASS_FEDORA_USER>
+                  <PASS_FEDORA_PASSWORD>moo</PASS_FEDORA_PASSWORD>
                   <AUTHZ_SHIB_USE_HEADERS>true</AUTHZ_SHIB_USE_HEADERS>
                   <AUTHZ_ALLOW_EXTERNAL_ROLES>true</AUTHZ_ALLOW_EXTERNAL_ROLES>
-                  <DEBUG_ARG>-Dlogback.configurationFile=lib/pass-logback.xml</DEBUG_ARG>
+                  <FCREPO_JMS_CONFIGURATION>classpath:/pass-jms-external.xml</FCREPO_JMS_CONFIGURATION>
+                  <FCREPO_JMS_DESTINATION>VirtualTopic.pass.authz</FCREPO_JMS_DESTINATION>
+                  <SPRING_ACTIVEMQ_BROKER_URL>failover:(tcp://activemq:61616)?trackMessages=true</SPRING_ACTIVEMQ_BROKER_URL>
+                  <SPRING_ACTIVEMQ_USER>messaging</SPRING_ACTIVEMQ_USER>
+                  <SPRING_ACTIVEMQ_PASSWORD>moo</SPRING_ACTIVEMQ_PASSWORD>
                 </env>
                 <ports>
                   <port>${FCREPO_PORT}:${FCREPO_PORT}</port>
@@ -165,37 +218,10 @@
                   </http>
                   <time>120000</time>
                 </wait>
-              </run>
-            </image>
-
-            <image>
-              <alias>indexer</alias>
-              <name>oapass/indexer:0.0.10-2.2-SNAPSHOT</name>
-              <run>
-                <namingStrategy>alias</namingStrategy>
-                <env>
-                  <PI_FEDORA_USER>admin</PI_FEDORA_USER>
-                  <PI_FEDORA_PASS>moo</PI_FEDORA_PASS>
-                  <PI_FEDORA_INTERNAL_BASE>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</PI_FEDORA_INTERNAL_BASE>
-                  <PI_ES_BASE>http://elasticsearch:9200/</PI_ES_BASE>
-                  <PI_ES_INDEX>http://elasticsearch:9200/pass/</PI_ES_INDEX>
-                  <PI_FEDORA_JMS_BROKER>tcp://${FCREPO_HOST}:${FCREPO_JMS_PORT}</PI_FEDORA_JMS_BROKER>
-                  <PI_FEDORA_JMS_QUEUE>fedora</PI_FEDORA_JMS_QUEUE>
-                  <PI_TYPE_PREFIX>http://oapass.org/ns/pass#</PI_TYPE_PREFIX>
-                  <PI_LOG_LEVEL>DEBUG</PI_LOG_LEVEL>
-                </env>
-                <links>
-                  <link>fcrepo:localhost</link>
-                  <link>elasticsearch</link>
-                </links>
-                <volumes>
-                  <bind>./src/test/resources/docker/hosts:/etc/hosts</bind>
-                </volumes>
-                <network>
-                  <mode>custom</mode>
-                  <name>pass</name>
-                  <alias>indexer</alias>
-                </network>
+                <dependsOn>
+                  <container>activemq</container>
+                  <container>indexer</container>
+                </dependsOn>
               </run>
             </image>
 
@@ -223,6 +249,9 @@
                   </http>
                   <time>120000</time>
                 </wait>
+                <dependsOn>
+                  <container>indexer</container>
+                </dependsOn>
               </run>
             </image>
 
@@ -270,7 +299,7 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
       <artifactId>pass-authz-acl</artifactId>

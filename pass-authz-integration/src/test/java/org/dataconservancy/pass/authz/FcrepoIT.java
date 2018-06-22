@@ -47,6 +47,10 @@ public abstract class FcrepoIT {
     static final String AUTH_ROLE_HEADER = "some-header";
 
     static {
+        if (System.getProperty("pass.fedora.user") == null) {
+            System.setProperty("pass.fedora.user", "fedoraAdmin");
+        }
+
         if (System.getProperty("pass.fedora.baseurl") == null) {
             System.setProperty("pass.fedora.baseurl", "http://localhost:8080/fcrepo/rest/");
         }
