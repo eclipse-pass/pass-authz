@@ -260,9 +260,12 @@ public class ACLManager {
 
         public URI perform() {
             try {
-                final URI acl = findOrCreateACL();
-                action.accept(this, acl);
-                return acl;
+                final Acl acl = findOrCreateACL();
+                action.accept(this, acl.uri);
+                if (acl.isNew) {
+                    linkAcl(acl.uri, resource);
+                }
+                return acl.uri;
 
             } catch (final Exception e) {
                 throw new RuntimeException("Error communicating with repository", e);
@@ -276,7 +279,7 @@ public class ACLManager {
             return all;
         }
 
-        URI findOrCreateACL() throws FcrepoOperationFailedException, IOException {
+        Acl findOrCreateACL() throws FcrepoOperationFailedException, IOException {
 
             LOG.debug("Finding ACL for <{}>", resource);
             try (FcrepoResponse response = repo.get(resource)
@@ -298,7 +301,7 @@ public class ACLManager {
 
                 if (acls.size() == 1) {
                     LOG.debug("Found existing ACL <{}>", acls.get(0));
-                    return acls.get(0);
+                    return new Acl(acls.get(0), false);
                 } else if (acls.isEmpty()) {
                     LOG.debug("No ACL, on <{}> creating one", resource);
 
@@ -314,11 +317,17 @@ public class ACLManager {
             final StringBuilder auth = new StringBuilder(format(TEMPLATE_AUTHORIZATION, resource, role));
 
             if (read.contains(role)) {
+                LOG.info("Granting read on <{}> to <{}>", resource, role);
                 auth.append(READ_AUTH);
+            } else {
+                LOG.info("Denying read on <{}> to <{}>", resource, role);
             }
 
             if (write.contains(role)) {
+                LOG.info("Granting write on <{}> to <{}>", resource, role);
                 auth.append(WRITE_AUTH);
+            } else {
+                LOG.info("Denying write on <{}> to <{}>", resource, role);
             }
 
             return auth.toString();
@@ -329,11 +338,17 @@ public class ACLManager {
                     "PREFIX acl: <http://www.w3.org/ns/auth/acl#>\n\nINSERT {\n");
 
             if (read.contains(role)) {
+                LOG.info("Granting read on <{}> to <{}>", resource, role);
                 patch.append(READ_AUTH);
+            } else {
+                LOG.info("Denying read on <{}> to <{}>", resource, role);
             }
 
             if (write.contains(role)) {
+                LOG.info("Granting write on <{}> to <{}>", resource, role);
                 patch.append(WRITE_AUTH);
+            } else {
+                LOG.info("Denying write on <{}> to <{}>", resource, role);
             }
 
             patch.append("} WHERE {}");
@@ -341,7 +356,7 @@ public class ACLManager {
             return patch.toString();
         }
 
-        private URI createAcl(URI resource) throws IOException, FcrepoOperationFailedException {
+        private Acl createAcl(URI resource) throws IOException, FcrepoOperationFailedException {
             final URI acl;
             try (FcrepoResponse response = repo.post(acls)
                     .body(this.getClass().getResourceAsStream("/acl.ttl"), "text/turtle")
@@ -352,13 +367,28 @@ public class ACLManager {
 
             LOG.debug("Created ACL at <{}>", acl);
 
+            return new Acl(acl, true);
+        }
+
+        private void linkAcl(URI acl, URI resource) throws IOException, FcrepoOperationFailedException {
             LOG.debug("Linking ACL <{}> to <{}> via PATCH:\n{}", acl, resource, format(
                     TEMPLATE_ADD_ACL_TRIPLE, acl));
 
             try (FcrepoResponse response = repo.patch(resource)
                     .body(toInputStream(format(TEMPLATE_ADD_ACL_TRIPLE, acl), UTF_8)).perform()) {
                 onErrorThrow(response, "Error linking to acl <%s> from <%s>", acl, resource);
-                return acl;
+            }
+        }
+
+        private class Acl {
+
+            public final URI uri;
+
+            public final boolean isNew;
+
+            public Acl(URI uri, boolean isNew) {
+                this.uri = uri;
+                this.isNew = isNew;
             }
         }
     }

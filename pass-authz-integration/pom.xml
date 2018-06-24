@@ -12,6 +12,8 @@
     <fcrepo.cxtPath>fcrepo</fcrepo.cxtPath>
     <FCREPO_HOST>localhost</FCREPO_HOST>
     <ES_HOST>localhost</ES_HOST>
+    <activemq.user>messaging</activemq.user>
+    <activemq.password>moo</activemq.password>
   </properties>
 
 
@@ -21,8 +23,8 @@
       <properties>
         <ES_PORT>9200</ES_PORT>
         <FCREPO_PORT>8080</FCREPO_PORT>
-        <FCREPO_JMS_PORT>61616</FCREPO_JMS_PORT>
-        <FCREPO_STOMP_PORT>61613</FCREPO_STOMP_PORT>
+        <JMS_PORT>61616</JMS_PORT>
+        <STOMP_PORT>61613</STOMP_PORT>
       </properties>
     </profile>
   </profiles>
@@ -41,6 +43,11 @@
             <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
+            </goals>
+          </execution>
+          <execution>
+            <goals>
+              <goal>properties</goal>
             </goals>
           </execution>
         </executions>
@@ -84,10 +91,9 @@
             </goals>
             <configuration>
               <portNames>
-                <portName>ES_PORT</portName>
                 <portName>FCREPO_PORT</portName>
-                <portName>FCREPO_JMS_PORT</portName>
-                <portName>FCREPO_STOMP_PORT</portName>
+                <portName>JMS_PORT</portName>
+                <portName>STOMP_PORT</portName>
                 <portName>ES_PORT</portName>
               </portNames>
             </configuration>
@@ -110,11 +116,17 @@
           <systemPropertyVariables>
             <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
             <fcrepo.cxtPath>${fcrepo.cxtPath}</fcrepo.cxtPath>
-            <FCREPO_JMS_PORT>${FCREPO_JMS_PORT}</FCREPO_JMS_PORT>
-            <FCREPO_STOMP_PORT>${FCREPO_STOMP_PORT}</FCREPO_STOMP_PORT>
             <project.basedir>${project.basedir}</project.basedir>
             <pass.fedora.baseurl>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</pass.fedora.baseurl>
             <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
+            <jms.brokerUrl>failover:(tcp://localhost:${JMS_PORT})?trackMessages=true</jms.brokerUrl>
+            <authz.listener.jar>${org.dataconservancy.pass:pass-authz-tools:jar:exe}</authz.listener.jar>
+            <pass.authz.queue>Consumer.authz.VirtualTopic.pass.authz</pass.authz.queue>
+            <jms.username>${activemq.user}</jms.username>
+            <jms.password>${activemq.password}</jms.password>
+            <pass.backend.role>http://oapass.org/ns/roles/johnshopkins.edu#pass-backend</pass.backend.role>
+            <pass.grantadmin.role>http://oapass.org/ns/roles/johnshopkins.edu#admin</pass.grantadmin.role>
+            <pass.submitter.role>http://oapass.org/ns/roles/johnshopkins.edu#submitter</pass.submitter.role>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -132,6 +144,10 @@
               <name>oapass/activemq:20180618</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
+                <ports>
+                  <port>${JMS_PORT}:61616</port>
+                  <port>${STOMP_PORT}:61613</port>
+                </ports>
                 <network>
                   <mode>custom</mode>
                   <name>pass</name>
@@ -155,8 +171,8 @@
                   <PI_TYPE_PREFIX>http://oapass.org/ns/pass#</PI_TYPE_PREFIX>
                   <PI_LOG_LEVEL>DEBUG</PI_LOG_LEVEL>
                   <SPRING_ACTIVEMQ_BROKER_URL>failover:(tcp://activemq:61616)?trackMessages=true</SPRING_ACTIVEMQ_BROKER_URL>
-                  <SPRING_ACTIVEMQ_USER>messaging</SPRING_ACTIVEMQ_USER>
-                  <SPRING_ACTIVEMQ_PASSWORD>moo</SPRING_ACTIVEMQ_PASSWORD>
+                  <SPRING_ACTIVEMQ_USER>${activemq.user}</SPRING_ACTIVEMQ_USER>
+                  <SPRING_ACTIVEMQ_PASSWORD>${activemq.password}</SPRING_ACTIVEMQ_PASSWORD>
                 </env>
                 <links>
                   <link>fcrepo:localhost</link>
@@ -322,6 +338,21 @@
       <type>jar</type>
       <classifier>shaded</classifier>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-authz-tools</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-authz-tools</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <classifier>exe</classifier>
     </dependency>
 
     <dependency>

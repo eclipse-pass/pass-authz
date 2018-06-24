@@ -22,6 +22,9 @@ import javax.jms.ConnectionFactory;
 
 import org.dataconservancy.pass.authz.acl.PolicyEngine;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author apb@jhu.edu
  */
@@ -35,14 +38,20 @@ public class AuthzListener {
 
     private final PolicyEngine aclPolicies;
 
-    public AuthzListener(ConnectionFactory jmsFactory, PolicyEngine policyEngine) {
+    private final String queueName;
+
+    Logger LOG = LoggerFactory.getLogger(AuthzListener.class);
+
+    public AuthzListener(ConnectionFactory jmsFactory, PolicyEngine policyEngine, String queueName) {
         this.factory = jmsFactory;
         this.aclPolicies = policyEngine;
+        this.queueName = queueName;
     }
 
     public void listen() {
         try (JMSClient client = new JMSClient(factory)) {
-            client.listen("authz", msg -> {
+            LOG.info("Listening on queue {}", queueName);
+            client.listen(queueName, msg -> {
                 try {
                     final FedoraMessage fm = FedoraMessageConverter.convert(msg);
 
@@ -51,15 +60,28 @@ public class AuthzListener {
 
                         if (types.contains(SUBMISSION_TYPE)) {
                             aclPolicies.updateSubmission(fm.getResourceURI());
+                            LOG.debug("Handling Submission message for {} ", fm.getAction());
                         } else if (types.contains(GRANT_TYPE)) {
+                            LOG.debug("Handling Grant message for {}", fm.getAction());
                             aclPolicies.updateGrant(fm.getResourceURI());
+                        } else {
+                            LOG.debug("Ignoring message with irrelevant types ", types);
                         }
+                    } else {
+                        LOG.debug("Ignoring irelevant action {}", fm.getAction());
                     }
 
                 } catch (final Exception e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Error listening for messages", e);
                 }
             });
+
+            try {
+                Thread.currentThread().join();
+            } catch (final InterruptedException e) {
+                LOG.info("Interrupted");
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
