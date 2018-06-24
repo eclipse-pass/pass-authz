@@ -36,34 +36,53 @@ public class PolicyEngine {
 
     private final ACLManager acls;
 
-    private final URI backend;
+    private URI backendRole;
+
+    private URI grantAdminRole;
 
     Logger LOG = LoggerFactory.getLogger(PolicyEngine.class);
 
-    public PolicyEngine(PassClient client, ACLManager manager, URI backend) {
+    public PolicyEngine(PassClient client, ACLManager manager) {
         this.client = client;
         this.acls = manager;
-        this.backend = backend;
+    }
+
+    public void setBackendRole(URI backendRole) {
+        LOG.info("Using backend role: " + backendRole);
+        this.backendRole = backendRole;
+    }
+
+    public void setAdminRole(URI adminRole) {
+        LOG.info("Using grant admin role " + adminRole);
+        this.grantAdminRole = adminRole;
     }
 
     // PIs and Co-PIs can append to grants, as can the backend
     public void updateGrant(URI uri) {
         final Grant grant = client.readResource(uri, Grant.class);
 
-        final Set<URI> authUsers = new HashSet<>();
+        final Set<URI> authReaders = new HashSet<>();
+        final Set<URI> authWriters = new HashSet<>();
+
         if (grant.getPi() != null) {
-            authUsers.add(grant.getPi());
+            authReaders.add(grant.getPi());
         }
-        authUsers.addAll(grant.getCoPis());
-        if (backend != null) {
-            authUsers.add(backend);
+        authReaders.addAll(grant.getCoPis());
+
+        if (backendRole != null) {
+            authReaders.add(backendRole);
+            authWriters.add(backendRole);
         }
 
-        LOG.info("Updating permissions of grant {}", uri);
-        LOG.debug("Granting write on grant {} to {}", uri, authUsers);
+        if (grantAdminRole != null) {
+            authReaders.add(grantAdminRole);
+        }
+
+        LOG.debug("Granting write on grant {} to {}", uri, authWriters);
+        LOG.debug("Granting read on grant {} to {}", uri, authReaders);
         acls.setPermissions(uri)
-                .grantRead(authUsers)
-                .grantWrite(authUsers)
+                .grantRead(authReaders)
+                .grantWrite(authWriters)
                 .perform();
     }
 
@@ -71,20 +90,33 @@ public class PolicyEngine {
     public void updateSubmission(URI uri) {
         final Submission submission = client.readResource(uri, Submission.class);
 
-        final Set<URI> authUsers = new HashSet<>();
+        final Set<URI> authReaders = new HashSet<>();
+        final Set<URI> authWriters = new HashSet<>();
+
         if (submission.getUser() != null) {
-            authUsers.add(submission.getUser());
+            authReaders.add(submission.getUser());
+
+            // If a submission is "submitted=true", then it's frozen.
+            if (submission.getSubmitted() == null || !submission.getSubmitted()) {
+                // Not frozen, allow writes
+                authWriters.add(submission.getUser());
+            }
         }
 
-        if (backend != null) {
-            authUsers.add(backend);
+        if (backendRole != null) {
+            authReaders.add(backendRole);
+            authWriters.add(backendRole);
         }
 
-        LOG.info("Updating permissions of submission {}", uri);
-        LOG.debug("Granting write on submission {} to {}", uri, authUsers);
+        if (grantAdminRole != null) {
+            authReaders.add(grantAdminRole);
+        }
+
+        LOG.debug("Granding read of submission {} to {}", authReaders);
+        LOG.debug("Granting write on submission {} to {}", uri, authWriters);
         acls.setPermissions(uri)
-                .grantRead(authUsers)
-                .grantWrite(authUsers)
+                .grantRead(authReaders)
+                .grantWrite(authWriters)
                 .perform();
     }
 }

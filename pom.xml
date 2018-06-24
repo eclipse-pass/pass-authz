@@ -27,6 +27,7 @@
     <elasticsearch.version>6.2.3</elasticsearch.version>
     <slf4j.version>1.7.25</slf4j.version>
     <apache.log.api>2.9.1</apache.log.api>
+    <activemq.version>5.14.4</activemq.version>
     <json.version>20180130</json.version>
 
     <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
@@ -148,6 +149,12 @@
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
+      
+      <dependency>
+        <groupId>org.apache.activemq</groupId>
+        <artifactId>activemq-client</artifactId>
+        <version>${activemq.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>junit</groupId>
@@ -197,12 +204,6 @@
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-to-slf4j</artifactId>
         <version>${apache.log.api}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>${logback.version}</version>
       </dependency>
 
       <dependency>

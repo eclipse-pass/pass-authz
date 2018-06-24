@@ -88,14 +88,14 @@ public abstract class FcrepoIT {
         }
     }
 
-    void attempt(final int times, final Runnable it) {
+    static void attempt(final int times, final Runnable it) {
         attempt(times, () -> {
             it.run();
             return null;
         });
     }
 
-    <T> T attempt(final int times, final Callable<T> it) {
+    static <T> T attempt(final int times, final Callable<T> it) {
 
         Throwable caught = null;
 

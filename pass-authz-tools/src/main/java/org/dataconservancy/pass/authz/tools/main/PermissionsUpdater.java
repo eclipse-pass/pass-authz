@@ -38,6 +38,8 @@ public class PermissionsUpdater {
 
     static final URI PASS_BACKEND_ROLE = URI.create("http://oapass.org/ns/roles/johnshopkins.edu#pass-backend");
 
+    static final URI PASS_GRANTADMIN_ROLE = URI.create("http://oapass.org/ns/roles/johnshopkins.edu#admin");
+
     static final Logger LOG = LoggerFactory.getLogger(PermissionsUpdater.class);
 
     static final ExecutorService exe = Executors.newCachedThreadPool();
@@ -48,7 +50,9 @@ public class PermissionsUpdater {
         final ACLManager manager = new ACLManager();
         final PassClient client = PassClientFactory.getPassClient();
 
-        final PolicyEngine authzPolicy = new PolicyEngine(client, manager, PASS_BACKEND_ROLE);
+        final PolicyEngine authzPolicy = new PolicyEngine(client, manager);
+        authzPolicy.setBackendRole(PASS_BACKEND_ROLE);
+        authzPolicy.setAdminRole(PASS_GRANTADMIN_ROLE);
 
         final ContainerVisitor crawler = new ContainerVisitor();
 
