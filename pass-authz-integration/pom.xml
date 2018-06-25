@@ -120,7 +120,7 @@
             <pass.fedora.baseurl>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</pass.fedora.baseurl>
             <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
             <jms.brokerUrl>failover:(tcp://localhost:${JMS_PORT})?trackMessages=true</jms.brokerUrl>
-            <authz.listener.jar>${org.dataconservancy.pass:pass-authz-tools:jar:exe}</authz.listener.jar>
+            <authz.listener.jar>${org.dataconservancy.pass:pass-authz-tools:jar:listener-exe}</authz.listener.jar>
             <pass.authz.queue>Consumer.authz.VirtualTopic.pass.authz</pass.authz.queue>
             <jms.username>${activemq.user}</jms.username>
             <jms.password>${activemq.password}</jms.password>
@@ -352,7 +352,7 @@
       <artifactId>pass-authz-tools</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-      <classifier>exe</classifier>
+      <classifier>listener-exe</classifier>
     </dependency>
 
     <dependency>
