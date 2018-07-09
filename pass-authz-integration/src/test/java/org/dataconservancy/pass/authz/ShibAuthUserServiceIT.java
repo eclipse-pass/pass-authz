@@ -64,6 +64,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         Request get = buildShibRequest(shibHeaders);
         try (Response response = httpClient.newCall(get).execute()) {
             Assert.assertEquals(401, response.code());
+            Assert.assertEquals("Unauthorized", response.body().string());
         }
 
         final PassClient passClient = PassClientFactory.getPassClient();

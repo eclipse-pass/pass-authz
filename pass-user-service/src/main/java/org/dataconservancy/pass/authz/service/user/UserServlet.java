@@ -152,7 +152,10 @@ public class UserServlet extends HttpServlet {
             }
         } else {
             LOG.info("{} not authorized", shibUser.getPrincipal());
-            response.setStatus(401);
+            try (Writer out = response.getWriter()) {
+                response.setStatus(401);
+                out.append("Unauthorized");
+            }
         }
     }
 
