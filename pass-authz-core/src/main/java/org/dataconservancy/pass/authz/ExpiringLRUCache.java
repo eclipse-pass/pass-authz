@@ -98,7 +98,12 @@ public class ExpiringLRUCache<K, V> {
                 }, expiry.toMillis(), TimeUnit.MILLISECONDS);
             }
         }
-        return doGet(result);
+
+        V value = doGet(result);
+        if (value==null) {
+            remove(key);
+        }        
+        return value;
     }
 
     private void remove(K key) {
