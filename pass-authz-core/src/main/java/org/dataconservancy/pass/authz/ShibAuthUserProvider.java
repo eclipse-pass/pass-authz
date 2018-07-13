@@ -128,7 +128,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             LOG.debug("Looking up User based in employeeId '{}'", employeeId);
             try {
                 id = userCache.getOrDo(employeeId,
-                        () -> passClient.findByAttribute(User.class, "localKey", employeeId));
+                        () -> findUserId(employeeId));
                 LOG.debug("User resource for {} is {}", employeeId, id);
             } catch (final Exception e) {
                 LOG.warn("Error looking up user with employee id " + employeeId,
@@ -164,6 +164,35 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         return user;
     }
 
+    /**
+     * Checks for User record by employeeId. This depends on the user being indexed, 
+     * so will retry a number of times before returning null to make sure there is time for indexing 
+     * of a new user to happen.
+     * @param employeeId
+     * @return
+     */
+    private URI findUserId(String employeeId) {
+        URI userId = null;
+
+        final int RETRIES = 5;
+        for (int tries = 0; tries < RETRIES; tries++) {
+            userId = passClient.findByAttribute(User.class, "localKey", employeeId);
+            if (userId!=null) {
+                return userId;
+            } else {
+                try {
+                    LOG.debug("Could not find User record, waiting and trying again {}", employeeId);
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    LOG.warn("Thread was interrupted while waiting to retry employee id {} lookup.", employeeId);
+                }
+            }                
+        }
+        LOG.warn("User with employee id {} was not found before timeout", employeeId);
+        return null;
+    }
+    
     private <T> T getShibAttr(HttpServletRequest request, String name, Function<String, T> transform) {
         final T value = transform(ofNullable(request.getAttribute(name))
                 .map(Object::toString)

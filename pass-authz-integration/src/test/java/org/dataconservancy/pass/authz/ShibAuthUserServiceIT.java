@@ -59,7 +59,10 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "HUNTER@jhu.edu;MILLIONAIRE@jhu.edu");
         shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "08675309");
 
-        final OkHttpClient httpClient = new OkHttpClient();
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.connectTimeout(60, TimeUnit.SECONDS);
+        builder.readTimeout(60, TimeUnit.SECONDS);
+        OkHttpClient httpClient = builder.build();
 
         Request get = buildShibRequest(shibHeaders);
         try (Response response = httpClient.newCall(get).execute()) {
@@ -95,7 +98,10 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "SOCIOPATH@jhu.edu;FACULTY@jhu.edu");
         shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "10933511");
 
-        final OkHttpClient httpClient = new OkHttpClient();
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.connectTimeout(60, TimeUnit.SECONDS);
+        builder.readTimeout(60, TimeUnit.SECONDS);
+        OkHttpClient httpClient = builder.build();
 
         Request get = buildShibRequest(shibHeaders);
         try (Response response = httpClient.newCall(get).execute()) {
@@ -125,7 +131,10 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         final PassClient passClient = PassClientFactory.getPassClient();
         Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER)));
 
-        final OkHttpClient httpClient = new OkHttpClient();
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.connectTimeout(60, TimeUnit.SECONDS);
+        builder.readTimeout(60, TimeUnit.SECONDS);
+        OkHttpClient httpClient = builder.build();
 
         Request get = buildShibRequest(shibHeaders);
         try (Response response = httpClient.newCall(get).execute()) {
