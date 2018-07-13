@@ -163,6 +163,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         return user;
     }
+    
 
     /**
      * Checks for User record by employeeId. This depends on the user being indexed, 
@@ -172,20 +173,18 @@ public class ShibAuthUserProvider implements AuthUserProvider {
      * @return
      */
     private URI findUserId(String employeeId) {
-        URI userId = null;
-
         final int RETRIES = 5;
         for (int tries = 0; tries < RETRIES; tries++) {
-            userId = passClient.findByAttribute(User.class, "localKey", employeeId);
+            URI userId = passClient.findByAttribute(User.class, "localKey", employeeId);
             if (userId!=null) {
                 return userId;
             } else {
                 try {
-                    LOG.debug("Could not find User record, waiting and trying again {}", employeeId);
+                    LOG.debug("Could not find User record for employee {}, waiting and trying again (try #{})", employeeId, tries);
                     Thread.sleep(1000);
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
-                    LOG.warn("Thread was interrupted while waiting to retry employee id {} lookup.", employeeId);
+                    LOG.warn("Thread was interrupted while waiting to retry employee {} lookup.", employeeId);
                 }
             }                
         }
