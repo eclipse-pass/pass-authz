@@ -128,7 +128,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             LOG.debug("Looking up User based in employeeId '{}'", employeeId);
             try {
                 id = userCache.getOrDo(employeeId,
-                        () -> passClient.findByAttribute(User.class, "localKey", employeeId));
+                        () -> findUserId(employeeId));
                 LOG.debug("User resource for {} is {}", employeeId, id);
             } catch (final Exception e) {
                 LOG.warn("Error looking up user with employee id " + employeeId,
@@ -163,7 +163,36 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         return user;
     }
+    
 
+    /**
+     * Checks for User record by employeeId. This depends on the user being indexed, 
+     * so will retry a number of times before returning null to make sure there is time for indexing 
+     * of a new user to happen. Note that RETRIES is set to 5, this is based on current configuration 
+     * of index refresh rate at 1 second
+     * @param employeeId
+     * @return
+     */
+    private URI findUserId(String employeeId) {
+        final int RETRIES = 5;
+        for (int tries = 0; tries < RETRIES; tries++) {
+            URI userId = passClient.findByAttribute(User.class, "localKey", employeeId);
+            if (userId!=null) {
+                return userId;
+            } else {
+                try {
+                    LOG.debug("Could not find User record for employee {}, waiting and trying again (try #{})", employeeId, tries);
+                    Thread.sleep(1000);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    LOG.warn("Thread was interrupted while waiting to retry employee {} lookup.", employeeId);
+                }
+            }                
+        }
+        LOG.warn("User with employee id {} was not found before timeout", employeeId);
+        return null;
+    }
+    
     private <T> T getShibAttr(HttpServletRequest request, String name, Function<String, T> transform) {
         final T value = transform(ofNullable(request.getAttribute(name))
                 .map(Object::toString)
