@@ -168,7 +168,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     /**
      * Checks for User record by employeeId. This depends on the user being indexed, 
      * so will retry a number of times before returning null to make sure there is time for indexing 
-     * of a new user to happen.
+     * of a new user to happen. Note that RETRIES is set to 5, this is based on current configuration 
+     * of index refresh rate at 1 second
      * @param employeeId
      * @return
      */
