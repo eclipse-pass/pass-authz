@@ -17,7 +17,6 @@
 package org.dataconservancy.pass.authz;
 
 import static java.util.Arrays.asList;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
@@ -167,69 +166,12 @@ public class PolicyListenerIT extends FcrepoIT {
         listnerProcess.destroy();
     }
 
-    // Verify that a grant PI can create a submission to a grant, but a non-PI can't.
-    @Test
-    public void grantPiSubmissionPermissionsTest() throws Exception {
-
-        final Grant g = new Grant();
-        g.setPi(user1.getId());
-        final Grant grant = client.createAndReadResource(g, Grant.class);
-
-        final URI grantid = grant.getId();
-
-        // Wait for it to have ACL
-        attempt(30, () -> {
-            assertHasACL(grantid);
-        });
-
-        // Verify that the PI can create a submission
-        attempt(10, () -> {
-            tryCeateSubmission(user1, grant, SC_CREATED);
-        });
-
-        // Verify that someone else CANNOT create a submission
-        tryCeateSubmission(user2, grant, SC_BAD_REQUEST);
-    }
-
-    // Verify that a co-PI can create a submission to a grant, but a non-co-PI can't
-    @Test
-    public void grantCoPiSubmissionPermissionsTest() {
-        final Grant g = new Grant();
-        g.getCoPis().add(user1.getId());
-        final Grant grant = client.createAndReadResource(g, Grant.class);
-
-        final URI grantid = grant.getId();
-
-        // Wait for it to have ACL
-        attempt(30, () -> {
-            assertHasACL(grantid);
-        });
-
-        // Verify that the co-PI can create a submission
-        attempt(10, () -> {
-            tryCeateSubmission(user1, grant, SC_CREATED);
-        });
-
-        // Verify that someone else CANNOT create a submission
-        tryCeateSubmission(user2, grant, SC_BAD_REQUEST);
-
-        // But the backend can!
-        tryCeateSubmission(BACKEND, grant, SC_CREATED);
-    }
-
     // Verify that a user cannot alter another user's submission
     @Test
     public void submissionOnlyEditableByCreatorTest() {
         final Grant g = new Grant();
         g.setPi(user1.getId());
         final Grant grant = client.createAndReadResource(g, Grant.class);
-
-        final URI grantid = grant.getId();
-
-        // Wait for it to have ACL
-        attempt(30, () -> {
-            assertHasACL(grantid);
-        });
 
         // Wait until the submission is successfully created
         final Submission submission = attempt(10, () -> {
@@ -256,13 +198,6 @@ public class PolicyListenerIT extends FcrepoIT {
         g.setPi(user1.getId());
         final Grant grant = client.createAndReadResource(g, Grant.class);
 
-        final URI grantid = grant.getId();
-
-        // Wait for it to have ACL
-        attempt(30, () -> {
-            assertHasACL(grantid);
-        });
-
         // Verify that the PI can create a submission, but this time
         // set submitted=true
         final Submission submission = attempt(10, () -> {
@@ -280,70 +215,52 @@ public class PolicyListenerIT extends FcrepoIT {
 
     }
 
-    // Verify that a grant admin can read grants, but regular user can't
+    // Verify that a completed submission can be read by anybody
     @Test
-    public void grantReadPermissionTest() {
+    public void readCompleteSubmissionByEverybodyTest() {
         final Grant g = new Grant();
         g.setPi(user1.getId());
         final Grant grant = client.createAndReadResource(g, Grant.class);
 
-        final URI grantid = grant.getId();
-
-        // Wait for it to have ACL
-        attempt(30, () -> {
-            assertHasACL(grantid);
+        // Create a submission
+        final Submission submission = attempt(10, () -> {
+            return tryCeateSubmission(user1, grant, SC_CREATED, true);
         });
 
-        // Verify that the PI can read
-        tryRead(user1, grant, SC_OK);
-
-        // Verify that a random user can't read
-        tryRead(user2, grant, SC_FORBIDDEN);
-
-        // Verify that a grant admin can read
-        tryRead(userAdmin, grant, SC_OK);
-
-        // Verify that backends can read
-        tryRead(BACKEND, grant, SC_OK);
-    }
-
-    // Verify that a grant admin can read submissions, but a regular user can't.
-    @Test
-    public void submissionReadPermissionTest() {
-        final Grant g = new Grant();
-        g.setPi(user1.getId());
-        final Grant grant = client.createAndReadResource(g, Grant.class);
-
-        final URI grantid = grant.getId();
-
-        // Wait for it to have ACL
-        attempt(30, () -> {
-            assertHasACL(grantid);
-        });
-
-        // Create the submission
-        final Submission submission = tryCeateSubmission(user1, grant, SC_CREATED);
-
-        // Verify that the PI can read
-        tryRead(user1, submission, SC_OK);
-
-        // Wait for it to have ACL
-        attempt(30, () -> {
+        // Wait until it has an ACL
+        attempt(10, () -> {
             assertHasACL(submission.getId());
         });
 
-        // Verify that the PI can read
-        attempt(10, () -> tryRead(user1, submission, SC_OK));
-
-        // Verify that a random user can't read
-        attempt(10, () -> tryRead(user2, submission, SC_FORBIDDEN));
-
-        // Verify that a grant admin can read
+        // Verify that the user, other submitters, grant admins, and backend can read
+        tryRead(user1, submission, SC_OK);
+        tryRead(user2, submission, SC_OK);
         tryRead(userAdmin, submission, SC_OK);
+        tryRead(BACKEND, submission, SC_OK);
+    }
 
-        // Verify that backends can read
-        tryRead(BACKEND, userAdmin, SC_OK);
+    // Verify that an incomplete submission can be read by anybody
+    @Test
+    public void readIncompleteSubmissionByEverybodyTest() {
+        final Grant g = new Grant();
+        g.setPi(user1.getId());
+        final Grant grant = client.createAndReadResource(g, Grant.class);
 
+        // Create a submission
+        final Submission submission = attempt(10, () -> {
+            return tryCeateSubmission(user1, grant, SC_CREATED, false);
+        });
+
+        // Wait until it has an ACL
+        attempt(10, () -> {
+            assertHasACL(submission.getId());
+        });
+
+        // Verify that the user, other submitters, grant admins, and backend can read
+        tryRead(user1, submission, SC_OK);
+        tryRead(user2, submission, SC_OK);
+        tryRead(userAdmin, submission, SC_OK);
+        tryRead(BACKEND, submission, SC_OK);
     }
 
     static Submission tryCeateSubmission(User authUser, Grant grant, int expectedResponseCode,

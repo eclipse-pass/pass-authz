@@ -40,6 +40,8 @@ public class PermissionsUpdater {
 
     static final URI PASS_GRANTADMIN_ROLE = URI.create("http://oapass.org/ns/roles/johnshopkins.edu#admin");
 
+    static final URI PASS_SUBMITTER_ROLE = URI.create("http://oapass.org/ns/roles/johnshopkins.edu#submitter");
+
     static final Logger LOG = LoggerFactory.getLogger(PermissionsUpdater.class);
 
     static final ExecutorService exe = Executors.newCachedThreadPool();
@@ -53,6 +55,7 @@ public class PermissionsUpdater {
         final PolicyEngine authzPolicy = new PolicyEngine(client, manager);
         authzPolicy.setBackendRole(PASS_BACKEND_ROLE);
         authzPolicy.setAdminRole(PASS_GRANTADMIN_ROLE);
+        authzPolicy.setSubmitterRole(PASS_SUBMITTER_ROLE);
 
         final ContainerVisitor crawler = new ContainerVisitor();
 
@@ -61,11 +64,7 @@ public class PermissionsUpdater {
                 "submissions"),
                 authzPolicy::updateSubmission));
 
-        LOG.info("Visiting grants");
-        final Future<Integer> grants = exe.submit(() -> crawler.visit(URI.create(FedoraConfig.getBaseUrl() +
-                "grants"), authzPolicy::updateGrant));
-
-        LOG.info("Updated {} submissions and {} grants", submissions.get(), grants.get());
+        LOG.info("Updated {} submissions", submissions.get());
 
     }
 }
