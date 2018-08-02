@@ -38,6 +38,7 @@ containers:
   - grants:
       read:
         - admin
+        - submitter
       write:
         - pass-backend
 
