@@ -51,6 +51,7 @@ public class AuthzListenerService {
         final PolicyEngine policies = new PolicyEngine(client, manager);
         policies.setBackendRole(ofNullable(getValue("pass.backend.role")).map(URI::create).orElse(null));
         policies.setAdminRole(ofNullable(getValue("pass.grantadmin.role")).map(URI::create).orElse(null));
+        policies.setSubmitterRole(ofNullable(getValue("pass.submitter.role")).map(URI::create).orElse(null));
 
         final AuthzListener listener = new AuthzListener(buildConnectionFactory(), policies, queue);
 

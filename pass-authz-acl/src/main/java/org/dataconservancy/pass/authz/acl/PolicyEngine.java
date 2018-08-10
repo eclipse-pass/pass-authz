@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.dataconservancy.pass.client.PassClient;
-import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.Submission;
 
 import org.slf4j.Logger;
@@ -38,6 +37,8 @@ public class PolicyEngine {
 
     private URI backendRole;
 
+    private URI submitterRole;
+
     private URI grantAdminRole;
 
     Logger LOG = LoggerFactory.getLogger(PolicyEngine.class);
@@ -45,6 +46,11 @@ public class PolicyEngine {
     public PolicyEngine(PassClient client, ACLManager manager) {
         this.client = client;
         this.acls = manager;
+    }
+
+    public void setSubmitterRole(URI submitterRole) {
+        LOG.info("Using submitter role: " + submitterRole);
+        this.submitterRole = submitterRole;
     }
 
     public void setBackendRole(URI backendRole) {
@@ -55,35 +61,6 @@ public class PolicyEngine {
     public void setAdminRole(URI adminRole) {
         LOG.info("Using grant admin role " + adminRole);
         this.grantAdminRole = adminRole;
-    }
-
-    // PIs and Co-PIs can append to grants, as can the backend
-    public void updateGrant(URI uri) {
-        final Grant grant = client.readResource(uri, Grant.class);
-
-        final Set<URI> authReaders = new HashSet<>();
-        final Set<URI> authWriters = new HashSet<>();
-
-        if (grant.getPi() != null) {
-            authReaders.add(grant.getPi());
-        }
-        authReaders.addAll(grant.getCoPis());
-
-        if (backendRole != null) {
-            authReaders.add(backendRole);
-            authWriters.add(backendRole);
-        }
-
-        if (grantAdminRole != null) {
-            authReaders.add(grantAdminRole);
-        }
-
-        LOG.debug("Granting write on grant {} to {}", uri, authWriters);
-        LOG.debug("Granting read on grant {} to {}", uri, authReaders);
-        acls.setPermissions(uri)
-                .grantRead(authReaders)
-                .grantWrite(authWriters)
-                .perform();
     }
 
     // Grant write on submissions to the user and backend
@@ -110,6 +87,10 @@ public class PolicyEngine {
 
         if (grantAdminRole != null) {
             authReaders.add(grantAdminRole);
+        }
+
+        if (submitterRole != null) {
+            authReaders.add(submitterRole);
         }
 
         LOG.debug("Granding read of submission {} to {}", authReaders);
