@@ -80,7 +80,11 @@ public class AuthRolesProvider {
         }
 
         if (authUser.getId() == null) {
-            LOG.info("Authenticated user {} does not have a PASS User resource yet", authUser.getPrincipal());
+            if (authUser.getPrincipal() != null) {
+                LOG.info("Authenticated user {} does not have a PASS User resource yet", authUser.getPrincipal());
+            } else {
+                LOG.debug("No principal provided, skipping lookup for roles");
+            }
             return roles;
         }
 
@@ -102,6 +106,8 @@ public class AuthRolesProvider {
                 roles.add(getAuthRoleURI(domain, role));
             }
         }
+
+        LOG.debug("Found roles for {}: {}", authUser.getPrincipal(), roles);
 
         roles.addAll(addFedoraHack(user.getId()));
 

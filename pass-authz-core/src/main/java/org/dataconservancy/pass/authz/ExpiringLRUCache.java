@@ -53,6 +53,8 @@ public class ExpiringLRUCache<K, V> {
 
     private final Map<K, Future<V>> cache;
 
+    private final String name;
+
     /**
      * Create a cache of the desired size expiration duration for entries.
      *
@@ -60,13 +62,16 @@ public class ExpiringLRUCache<K, V> {
      * @param expiry How long each entry may live in the cache;
      */
     public ExpiringLRUCache(final int capacity, final Duration expiry) {
+
+        name = Thread.currentThread().getStackTrace()[2].getClassName();
+
         cache = new LinkedHashMap<K, Future<V>>(capacity) {
 
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, Future<V>> eldest) {
 
                 if (size() > capacity) {
-                    LOG.info("Cache full, removing oldest entry; {}", eldest.getKey());
+                    LOG.info("[{}] Cache full, removing oldest entry; {}", name, eldest.getKey());
                     return true;
                 }
                 return false;
@@ -86,23 +91,38 @@ public class ExpiringLRUCache<K, V> {
     public V getOrDo(K key, Callable<V> generator) {
 
         final Future<V> result;
+        boolean cached = true;
         synchronized (cache) {
 
             if (cache.containsKey(key)) {
                 result = cache.get(key);
+                cached = true;
             } else {
-                result = runner.submit(generator);
+                cached = false;
+                result = runner.submit(() -> {
+                    final V value = generator.call();
+                    LOG.debug("[{}] Calculated value for {} as {}", name, key, value);
+                    return value;
+                });
                 cache.put(key, result);
                 scheduler.schedule(() -> {
+                    LOG.info("[{}] Expiring cached value for {}", name, key);
                     remove(key);
                 }, expiry.toMillis(), TimeUnit.MILLISECONDS);
             }
         }
 
-        V value = doGet(result);
-        if (value==null) {
+        final V value = doGet(result);
+        if (value == null) {
+            LOG.info("[{}] Value for key {} is null, refusing to cache it", name, key);
             remove(key);
-        }        
+        } else {
+            if (cached) {
+                LOG.debug("[{}] Returning cached value for {}: {}", name, key, value);
+            } else {
+                LOG.debug("[{}] Return calculated value for {}: {}", name, key, value);
+            }
+        }
         return value;
     }
 
