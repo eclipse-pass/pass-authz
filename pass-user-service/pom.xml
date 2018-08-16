@@ -20,14 +20,21 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    
+    <dependency>
       <groupId>org.dataconservancy.pass</groupId>
       <artifactId>pass-authz-core</artifactId>
       <version>${project.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
       <artifactId>pass-data-client</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
