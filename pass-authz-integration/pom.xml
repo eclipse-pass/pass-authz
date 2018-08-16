@@ -55,6 +55,16 @@
           <artifactItems>
             <artifactItem>
               <groupId>org.dataconservancy.pass</groupId>
+              <artifactId>pass-authz-core</artifactId>
+              <version>${project.version}</version>
+              <type>jar</type>
+              <overWrite>false</overWrite>
+              <classifier>shaded</classifier>
+              <outputDirectory>${project.build.testOutputDirectory}/docker</outputDirectory>
+              <destFileName>pass-authz-core-shaded.jar</destFileName>
+            </artifactItem>
+            <artifactItem>
+              <groupId>org.dataconservancy.pass</groupId>
               <artifactId>pass-user-service</artifactId>
               <version>${project.version}</version>
               <type>war</type>
@@ -67,7 +77,6 @@
               <artifactId>pass-authz-filters</artifactId>
               <version>${project.version}</version>
               <type>jar</type>
-              <classifier>shaded</classifier>
               <overWrite>false</overWrite>
               <outputDirectory>${project.build.testOutputDirectory}/docker</outputDirectory>
               <destFileName>pass-authz-filters-shaded.jar</destFileName>
@@ -313,6 +322,7 @@
       <groupId>org.dataconservancy.pass</groupId>
       <artifactId>pass-authz-core</artifactId>
       <version>${project.version}</version>
+      <classifier>shaded</classifier>
       <scope>test</scope>
     </dependency>
 
@@ -336,7 +346,6 @@
       <artifactId>pass-authz-filters</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
-      <classifier>shaded</classifier>
       <scope>test</scope>
     </dependency>
 

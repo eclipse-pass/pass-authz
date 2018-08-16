@@ -27,11 +27,13 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -42,7 +44,6 @@ import org.dataconservancy.pass.authz.AuthRolesProvider;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.authz.LogUtil;
-import org.dataconservancy.pass.authz.ShibAuthUserProvider;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 
@@ -70,7 +71,23 @@ public class PassRolesFilter implements Filter {
 
     final String authzRoleSeparator = ofNullable(getValue(PROP_HEADER_SEPARATOR)).orElse(",");
 
-    AuthUserProvider userProvider;
+    Function<ServletContext, AuthUserProvider> authUserProviderFactory = (sc) -> {
+        final ServletContext userServiceContext = sc.getContext(
+                "/pass-user-service");
+
+        if (userServiceContext == null) {
+            throw new RuntimeException("Could not access the user service context");
+        }
+
+        final AuthUserProvider provider = (AuthUserProvider) userServiceContext.getAttribute("authUserProvider");
+
+        if (provider == null) {
+            throw new RuntimeException("Cannot get authUserProvider from /pass-user-service");
+        }
+
+        return provider;
+
+    };
 
     AuthRolesProvider rolesProvider;
 
@@ -78,7 +95,6 @@ public class PassRolesFilter implements Filter {
         LogUtil.adjustLogLevels();
 
         final PassClient fedoraClient = PassClientFactory.getPassClient();
-        userProvider = new ShibAuthUserProvider(fedoraClient);
         rolesProvider = new AuthRolesProvider(fedoraClient);
     }
 
@@ -132,7 +148,7 @@ public class PassRolesFilter implements Filter {
 
             try {
                 LOG.debug("Getting user info for roles");
-                final AuthUser user = userProvider.getUser(request);
+                final AuthUser user = authUserProviderFactory.apply(request.getServletContext()).getUser(request);
 
                 rolesDiscovered.addAll(rolesProvider.getRoles(user).stream().map(URI::toString).collect(Collectors
                         .toList()));

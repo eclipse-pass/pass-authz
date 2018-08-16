@@ -83,7 +83,7 @@ public class PassRolesFilterTest {
         authUser = new AuthUser();
         toTest = new PassRolesFilter();
         toTest.rolesProvider = rolesProvider;
-        toTest.userProvider = userProvider;
+        toTest.authUserProviderFactory = (s) -> userProvider;
 
         when(userProvider.getUser(any(HttpServletRequest.class))).thenReturn(authUser);
         when(rolesProvider.getRoles(eq(authUser))).thenReturn(roles);

@@ -21,6 +21,8 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -59,6 +61,13 @@ public class UserServlet extends HttpServlet {
 
     static {
         LogUtil.adjustLogLevels();
+    }
+
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+
+        getServletContext().setAttribute("authUserProvider", provider);
     }
 
     /**
