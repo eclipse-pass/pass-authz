@@ -102,13 +102,15 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         boolean isFaculty = false;
 
-        if (LOG.isDebugEnabled()) {
+        if (LOG.isDebugEnabled() && request != null) {
 
             LOG.debug("Request headers: ");
             final Enumeration<String> headerNames = request.getHeaderNames();
-            while (headerNames.hasMoreElements()) {
-                final String name = headerNames.nextElement();
-                LOG.debug("   " + name + ": " + request.getHeader(name));
+            if (headerNames != null) {
+                while (headerNames.hasMoreElements()) {
+                    final String name = headerNames.nextElement();
+                    LOG.debug("   " + name + ": " + request.getHeader(name));
+                }
             }
         }
 
@@ -162,8 +164,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                 user.setId(id);
                 LOG.debug("User resource for {} is {}", employeeId, id);
             } catch (final Exception e) {
-                LOG.warn("Error looking up user with employee id " + employeeId,
-                        e);
+                throw new RuntimeException("Error while looking up user by localKey" + employeeId, e);
             }
         } else {
             LOG.debug("No shibboleth employee id; skipping user lookup ");

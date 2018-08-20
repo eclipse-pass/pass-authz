@@ -155,7 +155,7 @@ public class ExpiringLRUCache<K, V> {
             }
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            return null;
+            throw new RuntimeException("Read from cache was interrupted");
         }
     }
 }
