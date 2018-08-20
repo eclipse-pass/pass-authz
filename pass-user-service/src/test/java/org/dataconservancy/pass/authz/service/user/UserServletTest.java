@@ -29,6 +29,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -67,9 +68,6 @@ public class UserServletTest {
     private HttpServletResponse response;
 
     @Mock
-    private AuthUserProvider provider;
-
-    @Mock
     PassClient client;
 
     @Captor
@@ -94,19 +92,37 @@ public class UserServletTest {
 
         output = new StringWriter();
         when(response.getWriter()).thenReturn(new PrintWriter(output));
-        when(provider.getUser(any())).thenReturn(USER);
 
         servlet = new UserServlet();
-        servlet.provider = provider;
+        servlet.provider = new AuthUserProvider() {
+
+            @Override
+            public AuthUser getUser(HttpServletRequest request) {
+                return USER;
+            }
+        };
         servlet.fedoraClient = client;
     }
 
     @Test
     public void newUserTest() throws Exception {
 
+        USER.setId(null);
         final URI newUserId = URI.create("MOO");
 
-        when(client.createResource(any())).thenReturn(URI.create("MOO"));
+        final AtomicReference<User> createdByUserService = new AtomicReference<>();
+
+        // Capture the User the user service tries to create, and assign it an ID.
+        when(client.createResource(any())).thenAnswer(i -> {
+
+            final User givenUserToCreate = i.getArgument(0);
+            givenUserToCreate.setId(newUserId);
+            createdByUserService.set(givenUserToCreate);
+            return newUserId;
+        });
+
+        // Return the User created by the user service.
+        when(client.readResource(eq(newUserId), eq(User.class))).thenAnswer(i -> createdByUserService.get());
 
         servlet.doGet(request, response);
 

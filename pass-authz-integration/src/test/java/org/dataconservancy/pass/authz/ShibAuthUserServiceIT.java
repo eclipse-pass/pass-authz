@@ -20,7 +20,12 @@ import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
@@ -30,12 +35,16 @@ import org.dataconservancy.pass.model.User;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertNotNull;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author apb@jhu.edu
@@ -48,6 +57,16 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
     private static final String SHIB_UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
     private static final String SHIB_SCOPED_AFFILIATION_HEADER = "Affiliation";
     private static final String SHIB_EMPLOYEE_NUMBER_HEADER = "Employeenumber";
+    
+    private final ObjectMapper mapper = new ObjectMapper();
+    
+    final PassClient passClient = PassClientFactory.getPassClient();
+    
+    OkHttpClient httpClient = new OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build();
+
 
     @Test
     public void testGivenUserDoesNotExistNotFacultyReturns401() throws Exception {
@@ -59,11 +78,6 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "HUNTER;MILLIONAIRE");
         shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "HUNTER@jhu.edu;MILLIONAIRE@jhu.edu");
         shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "08675309");
-
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        builder.connectTimeout(60, TimeUnit.SECONDS);
-        builder.readTimeout(60, TimeUnit.SECONDS);
-        OkHttpClient httpClient = builder.build();
 
         Request get = buildShibRequest(shibHeaders);
         try (Response response = httpClient.newCall(get).execute()) {
@@ -99,11 +113,6 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "SOCIOPATH@jhu.edu;FACULTY@jhu.edu");
         shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "10933511");
 
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        builder.connectTimeout(60, TimeUnit.SECONDS);
-        builder.readTimeout(60, TimeUnit.SECONDS);
-        OkHttpClient httpClient = builder.build();
-
         Request get = buildShibRequest(shibHeaders);
         try (Response response = httpClient.newCall(get).execute()) {
             Assert.assertEquals(200, response.code());
@@ -129,22 +138,15 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
         shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "10020030");
 
-        final PassClient passClient = PassClientFactory.getPassClient();
         Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER)));
-
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        builder.connectTimeout(60, TimeUnit.SECONDS);
-        builder.readTimeout(60, TimeUnit.SECONDS);
-        OkHttpClient httpClient = builder.build();
 
         Request get = buildShibRequest(shibHeaders);
         try (Response response = httpClient.newCall(get).execute()) {
             Assert.assertEquals(200, response.code());
         }
         
-        attempt(30, () -> assertNotNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER))));
-
-        URI id = passClient.findByAttribute(User.class, "localKey", shibHeaders.get(SHIB_EMPLOYEE_NUMBER_HEADER));
+        URI id = attempt(30, () -> Optional.ofNullable(passClient.findByAttribute(User.class, "localKey", shibHeaders
+                .get(SHIB_EMPLOYEE_NUMBER_HEADER))).orElseThrow(() -> new NullPointerException("Did not find result from localKey search")));
 
         User passUser = passClient.readResource(id, User.class);
 
@@ -152,6 +154,54 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         Assert.assertEquals(shibHeaders.get(SHIB_MAIL_HEADER), passUser.getEmail());
         Assert.assertEquals("dduck1", passUser.getInstitutionalId());
 
+    }
+    
+    /* Makes sure that only one new user is created in the fase of multiple cuncurrent requests */
+    @Test
+    public void testConcurrentNewUser() throws Exception {
+        final ExecutorService exe = Executors.newFixedThreadPool(8);
+
+        final Map<String, String> shibHeaders = new HashMap<>();
+        shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Wot Gorilla");
+        shibHeaders.put(SHIB_MAIL_HEADER, "gorilla@jhu.edu");
+        shibHeaders.put(SHIB_EPPN_HEADER, "wotg1@jhu.edu");
+        shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "TARGET;FACULTY");
+        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
+        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "89248104");
+
+        final List<Future<User>> results = new ArrayList<>();
+
+        final Request get = buildShibRequest(shibHeaders);
+        try (Response response = httpClient.newCall(get).execute()) {
+            Assert.assertEquals(200, response.code());
+        }
+        for (int i = 0; i < 8; i++) {
+            results.add(exe.submit(() -> {
+                try (Response response = httpClient.newCall(get).execute()) {
+                    Assert.assertEquals(200, response.code());
+                    return mapper.reader().treeToValue(mapper.readTree(response.body().string()), User.class);
+                }
+            }));
+        }
+
+        final Set<URI> created = results.stream()
+                .map(f -> {
+                    try {
+                        return f.get();
+                    } catch (final Exception e) {
+                        throw new RuntimeException();
+                    }
+                })
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        Assert.assertEquals(1, created.size());
+        attempt(20, () -> {
+            Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(
+                    SHIB_EMPLOYEE_NUMBER_HEADER)));
+        });
+
+        exe.shutdown();
     }
 
     private Request buildShibRequest(Map<String,String> headers) throws MalformedURLException {

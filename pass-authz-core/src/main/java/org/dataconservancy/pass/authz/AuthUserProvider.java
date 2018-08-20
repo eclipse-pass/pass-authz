@@ -16,12 +16,45 @@
 
 package org.dataconservancy.pass.authz;
 
+import java.util.function.Function;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**
+ * Provides details about authenticated users given an http request.
+ *
  * @author apb@jhu.edu
  */
 public interface AuthUserProvider {
 
-    public AuthUser getUser(HttpServletRequest request);
+    /**
+     * Get theauthenticated user from the current http request.
+     * <p>
+     * Inspects the http request for the current user/principal, and provides information about that user
+     * <p>
+     *
+     * @param request the curent http request.
+     * @return
+     */
+    AuthUser getUser(HttpServletRequest request);
+
+    /**
+     * Get the authenticated user, and filter the result before returning. *
+     * <p>
+     * Inspects the http request for the current user/principal, and provides information about that user. Invokes the
+     * provided function to map/transform/inspect the authenticated user. The primary use case is filter for "create
+     * if not present".
+     * <p>
+     *
+     * @param request
+     * @param filterWhenDone
+     * @return
+     */
+    public default AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> filterWhenDone) {
+        if (filterWhenDone != null) {
+            return filterWhenDone.apply(getUser(request));
+        } else {
+            return getUser(request);
+        }
+    }
 }
