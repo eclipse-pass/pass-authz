@@ -172,33 +172,10 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         return user;
     }
 
-    /**
-     * Checks for User record by employeeId. This depends on the user being indexed, so will retry a number of times
-     * before returning null to make sure there is time for indexing of a new user to happen. Note that RETRIES is set
-     * to 5, this is based on current configuration of index refresh rate at 1 second
-     *
-     * @param employeeId
-     * @return
-     */
     private URI findUserId(String employeeId) {
-        final int RETRIES = 1;
-        for (int tries = 0; tries < RETRIES; tries++) {
-            final URI userId = passClient.findByAttribute(User.class, "localKey", employeeId);
-            if (userId != null) {
-                return userId;
-            } else if (tries + 1 < RETRIES) { // Don't bother delay on the final one
-                try {
-                    LOG.debug("Could not find User record for employee {}, waiting and trying again (try #{})",
-                            employeeId, tries);
-                    Thread.sleep(1000);
-                } catch (final InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    LOG.warn("Thread was interrupted while waiting to retry employee {} lookup.", employeeId);
-                }
-            }
-        }
-        LOG.info("User with employee id {} was not found before timeout", employeeId);
-        return null;
+
+        return passClient.findByAttribute(User.class, "localKey", employeeId);
+
     }
 
     private <T> T getShibAttr(HttpServletRequest request, String name, Function<String, T> transform) {
