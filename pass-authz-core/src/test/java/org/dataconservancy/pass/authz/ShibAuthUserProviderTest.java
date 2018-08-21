@@ -26,7 +26,12 @@ import static org.dataconservancy.pass.authz.ShibAuthUserProvider.UNSCOPED_AFFIL
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+
+import java.net.URI;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -55,6 +60,9 @@ public class ShibAuthUserProviderTest {
 
     @Mock
     private PassClient client;
+
+    @Mock
+    ExpiringLRUCache<String, URI> mockCache;
 
     @Before
     public void allowShibHeaders() {
@@ -247,6 +255,35 @@ public class ShibAuthUserProviderTest {
         assertNull(user.getInstitutionalId());
         assertNull(user.getName());
         assertNull(user.getPrincipal());
+    }
+
+    @Test
+    public void errorFromCacheGetTest() {
+
+        final String displayName = "Bessie Cow";
+        final String emailAddress = "bessie@farm.com";
+        final String eppn = "bcow666@jhu.edu";
+        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
+        final String employeeId = "12345678";
+
+        when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
+        when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
+        when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
+        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+
+        final RuntimeException theException = new RuntimeException();
+
+        when(mockCache.getOrDo(eq(employeeId), any())).thenThrow(theException);
+
+        final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client, mockCache);
+
+        try {
+            underTest.getUser(request);
+            fail("Should have thrown an exception!");
+        } catch (final Exception e) {
+            assertEquals(theException, e.getCause());
+        }
     }
 
 }

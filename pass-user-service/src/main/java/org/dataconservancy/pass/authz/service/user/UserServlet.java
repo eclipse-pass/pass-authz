@@ -84,8 +84,26 @@ public class UserServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
 
-        final AuthUser shibUser = provider.getUser(request);
-        URI id = shibUser.getId();
+        final AuthUser shibUser = provider.getUser(request, authUser -> {
+            // Create if warranted
+            if (authUser.getId() == null && authUser.isFaculty()) {
+                final User user = new User();
+                user.setUsername(authUser.getPrincipal());
+                user.setLocalKey(authUser.getEmployeeId());
+                user.setInstitutionalId(authUser.getInstitutionalId());
+                user.setDisplayName(authUser.getName());
+                user.setEmail(authUser.getEmail());
+                user.getRoles().add(User.Role.SUBMITTER);;
+                authUser.setId(fedoraClient.createResource(user));
+                LOG.info("Created new User resource <{}> for {} ({})", authUser.getId(), user.getLocalKey(), user
+                        .getInstitutionalId());
+                return authUser;
+            } else {
+                return authUser;
+            }
+        });
+
+        final URI id = shibUser.getId();
 
         final User user;
 
@@ -129,22 +147,8 @@ public class UserServlet extends HttpServlet {
                 fedoraClient.updateResource(user);
             }
 
-        } else {// no id, so we add new user to repository if eligible
-            if (shibUser.isFaculty()) {
-                LOG.info("Creating new record for new user {}", shibUser.getPrincipal());
-                user = new User();
-                user.setUsername(shibUser.getPrincipal());
-                user.setLocalKey(shibUser.getEmployeeId());
-                user.setInstitutionalId(shibUser.getInstitutionalId());
-                user.setDisplayName(shibUser.getName());
-                user.setEmail(shibUser.getEmail());
-                user.getRoles().add(User.Role.SUBMITTER);
-                id = fedoraClient.createResource(user);
-                user.setId(id);
-            } else {
-                LOG.warn("{} is not faculty, go away!", shibUser.getPrincipal());
-                user = null;
-            }
+        } else {// no id, so they're not allowed in
+            user = null;
         }
 
         // at this point, any eligible person will have an up to date User object in Fedora

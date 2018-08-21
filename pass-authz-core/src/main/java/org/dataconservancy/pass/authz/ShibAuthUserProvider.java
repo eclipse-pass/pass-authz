@@ -85,6 +85,11 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         userCache = cache;
     }
 
+    @Override
+    public AuthUser getUser(HttpServletRequest request) {
+        return getUser(request, (u) -> u);
+    }
+
     /**
      * This method reads the shib headers and uses the values to populate an {@link AuthUser} object, which is
      * consumed by the {@code UserServlet} to build a {@code User} object for the back-end storage system.
@@ -93,17 +98,19 @@ public class ShibAuthUserProvider implements AuthUserProvider {
      * @return the populated AuthUser
      */
     @Override
-    public AuthUser getUser(HttpServletRequest request) {
+    public AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> doAfter) {
 
         boolean isFaculty = false;
 
-        if (LOG.isDebugEnabled()) {
+        if (LOG.isDebugEnabled() && request != null) {
 
             LOG.debug("Request headers: ");
             final Enumeration<String> headerNames = request.getHeaderNames();
-            while (headerNames.hasMoreElements()) {
-                final String name = headerNames.nextElement();
-                LOG.debug("   " + name + ": " + request.getHeader(name));
+            if (headerNames != null) {
+                while (headerNames.hasMoreElements()) {
+                    final String name = headerNames.nextElement();
+                    LOG.debug("   " + name + ": " + request.getHeader(name));
+                }
             }
         }
 
@@ -123,22 +130,6 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             }
         }
 
-        URI id = null;
-        if (employeeId != null) {
-            LOG.debug("Looking up User based in employeeId '{}'", employeeId);
-            try {
-                id = userCache.getOrDo(employeeId,
-                        () -> findUserId(employeeId));
-                LOG.debug("User resource for {} is {}", employeeId, id);
-            } catch (final Exception e) {
-                LOG.warn("Error looking up user with employee id " + employeeId,
-                        e);
-            }
-        } else {
-            LOG.debug("No shibboleth employee id; skipping user lookup ");
-            id = null;
-        }
-
         final AuthUser user = new AuthUser();
         user.setEmployeeId(employeeId);
         user.setName(displayName);
@@ -147,7 +138,6 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             user.setInstitutionalId(institutionalId.toLowerCase());// this is our normal format
         }
         user.setFaculty(isFaculty);
-        user.setId(id);
         user.setPrincipal(getShibAttr(request, EPPN_HEADER, s -> s));
 
         ofNullable(user.getPrincipal())
@@ -161,38 +151,34 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                         .map(sa -> sa.split("@")[1])
                         .collect(toSet()));
 
+        if (employeeId != null) {
+            LOG.debug("Looking up User based in employeeId '{}'", employeeId);
+            try {
+                final URI id = userCache.getOrDo(employeeId,
+                        () -> {
+                            user.setId(findUserId(employeeId));
+                            final AuthUser filtered = doAfter.apply(user);
+                            return filtered.getId();
+                        });
+
+                user.setId(id);
+                LOG.debug("User resource for {} is {}", employeeId, id);
+            } catch (final Exception e) {
+                throw new RuntimeException("Error while looking up user by localKey" + employeeId, e);
+            }
+        } else {
+            LOG.debug("No shibboleth employee id; skipping user lookup ");
+        }
+
         return user;
     }
-    
 
-    /**
-     * Checks for User record by employeeId. This depends on the user being indexed, 
-     * so will retry a number of times before returning null to make sure there is time for indexing 
-     * of a new user to happen. Note that RETRIES is set to 5, this is based on current configuration 
-     * of index refresh rate at 1 second
-     * @param employeeId
-     * @return
-     */
     private URI findUserId(String employeeId) {
-        final int RETRIES = 5;
-        for (int tries = 0; tries < RETRIES; tries++) {
-            URI userId = passClient.findByAttribute(User.class, "localKey", employeeId);
-            if (userId!=null) {
-                return userId;
-            } else {
-                try {
-                    LOG.debug("Could not find User record for employee {}, waiting and trying again (try #{})", employeeId, tries);
-                    Thread.sleep(1000);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    LOG.warn("Thread was interrupted while waiting to retry employee {} lookup.", employeeId);
-                }
-            }                
-        }
-        LOG.warn("User with employee id {} was not found before timeout", employeeId);
-        return null;
+
+        return passClient.findByAttribute(User.class, "localKey", employeeId);
+
     }
-    
+
     private <T> T getShibAttr(HttpServletRequest request, String name, Function<String, T> transform) {
         final T value = transform(ofNullable(request.getAttribute(name))
                 .map(Object::toString)

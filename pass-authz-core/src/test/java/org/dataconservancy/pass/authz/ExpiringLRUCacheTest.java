@@ -18,8 +18,13 @@ package org.dataconservancy.pass.authz;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
@@ -81,6 +86,65 @@ public class ExpiringLRUCacheTest {
         assertEquals(1, toTest.getOrDo(KEY1, () -> executionCount.incrementAndGet()).intValue());
 
         assertEquals(1, executionCount.get());
+
+    }
+
+    @Test
+    public void doNotCacheNullValuesTest() {
+        final ExpiringLRUCache<String, Integer> toTest = new ExpiringLRUCache<>(10, Duration.ofSeconds(10));
+
+        final AtomicInteger executionCount = new AtomicInteger(0);
+
+        toTest.getOrDo(KEY1, () -> {
+            executionCount.incrementAndGet();
+            return null;
+        });
+        toTest.getOrDo(KEY1, () -> {
+            executionCount.incrementAndGet();
+            return null;
+        });
+
+        assertEquals(2, executionCount.get());
+    }
+
+    @Test
+    public void exceptionTest() {
+        final ExpiringLRUCache<String, Integer> toTest = new ExpiringLRUCache<>(10, Duration.ofSeconds(10));
+
+        final Exception theException = new RuntimeException();
+
+        try {
+            toTest.getOrDo(KEY1, () -> {
+                throw theException;
+            });
+            fail("Should have thrown an exception");
+        } catch (final Exception e) {
+            assertEquals(theException, e);
+        }
+    }
+
+    @Test
+    public void interruptionTest() throws Exception {
+        final ExecutorService exe = Executors.newCachedThreadPool();
+        final ExpiringLRUCache<String, Integer> toTest = new ExpiringLRUCache<>(10, Duration.ofSeconds(30));
+
+        final CountDownLatch executionLatch = new CountDownLatch(1);
+        final Future<Integer> result =
+                exe.submit(() -> toTest.getOrDo(KEY1, () -> {
+                    executionLatch.countDown();
+                    Thread.sleep(30000);
+                    return 1;
+                }));
+
+        executionLatch.await();
+        toTest.runner.shutdownNow();
+
+        try {
+            result.get();
+            fail("Should have failed with an exception");
+        } catch (final Exception e) {
+            // Expected;
+        }
 
     }
 }
