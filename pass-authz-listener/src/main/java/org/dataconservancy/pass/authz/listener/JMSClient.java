@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz.tools;
+package org.dataconservancy.pass.authz.listener;
 
 import java.util.ArrayList;
 import java.util.Collections;

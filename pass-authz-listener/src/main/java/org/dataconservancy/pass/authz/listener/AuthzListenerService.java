@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz.tools.main;
+package org.dataconservancy.pass.authz.listener;
 
 import static java.util.Optional.ofNullable;
 import static org.dataconservancy.pass.authz.ConfigUtil.getValue;
@@ -26,7 +26,6 @@ import javax.jms.ConnectionFactory;
 
 import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.authz.acl.PolicyEngine;
-import org.dataconservancy.pass.authz.tools.AuthzListener;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 

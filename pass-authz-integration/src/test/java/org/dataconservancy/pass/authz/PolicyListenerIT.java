@@ -101,7 +101,7 @@ public class PolicyListenerIT extends FcrepoIT {
                 .withEnv("PASS_AUTHZ_QUEUE", System.getProperty("pass.authz.queue"))
                 .withEnv("JMS_USERNAME", System.getProperty("jms.username"))
                 .withEnv("JMS_PASSWORD", System.getProperty("jms.password"))
-                .withEnv("LOG.org.dataconservancy.pass,authz", "DEBUG")
+                .withEnv("LOG.org.dataconservancy.pass.authz", "DEBUG")
                 .onOutputLine(s -> {
                     if (s.contains("Listening")) {
                         ready.set(true);
