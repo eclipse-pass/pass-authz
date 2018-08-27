@@ -62,7 +62,7 @@ The only configuration these tools need are standard PASS java client [propertie
 
 For example:
 
-    java -Dpass.fedora.baseurl=http://example.org/fcrepo/rest -Dpass.fedora.user=fedoraAdmin -Dpass.fedora.password=pass -jar pass-authz-tools-0.1.2-SNAPSHOT-individual-permissions-exe.jar
+    java -Dpass.fedora.baseurl=http://example.org/fcrepo/rest -Dpass.fedora.user=fedoraAdmin -Dpass.fedora.password=pass -jar pass-authz-tools-${version}-SNAPSHOT-individual-permissions-exe.jar
 
 ## pass-user-service
 
