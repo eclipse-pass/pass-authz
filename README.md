@@ -96,7 +96,7 @@ All roles are designated with a baseURI
 
 ... followed by the authorization domain (identical to Shibboleth auth domain)
 
-   http://oapass.org/ns/roles/johnshopkins.edu
+    http://oapass.org/ns/roles/johnshopkins.edu
 
 ... then have a specific role name as a fragment
 
