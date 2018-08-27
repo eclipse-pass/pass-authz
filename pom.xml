@@ -3,15 +3,16 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.dataconservancy.pass</groupId>
   <artifactId>pass-authz</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
     <module>pass-authz-core</module>
     <module>pass-authz-integration</module>
     <module>pass-user-service</module>
-    <module>pass-authz-filters</module>
+    <module>pass-authz-roles</module>
     <module>pass-authz-acl</module>
     <module>pass-authz-tools</module>
+    <module>pass-authz-listener</module>
   </modules>
 
   <properties>

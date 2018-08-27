@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz.filter;
+package org.dataconservancy.pass.authz.roles;
 
-import static org.dataconservancy.pass.authz.filter.PassRolesFilter.PROP_ALLOW_EXTERNAL_ROLES;
+import static org.dataconservancy.pass.authz.roles.PassRolesFilter.PROP_ALLOW_EXTERNAL_ROLES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.dataconservancy.pass.authz.AuthRolesProvider;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
+import org.dataconservancy.pass.authz.roles.PassRolesFilter;
 
 import org.junit.Before;
 import org.junit.Test;

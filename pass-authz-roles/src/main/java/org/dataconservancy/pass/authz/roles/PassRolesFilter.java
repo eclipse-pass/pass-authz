@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz.filter;
+package org.dataconservancy.pass.authz.roles;
 
 import static java.util.Optional.ofNullable;
 import static org.dataconservancy.pass.authz.ConfigUtil.getValue;

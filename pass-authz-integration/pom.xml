@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.dataconservancy.pass</groupId>
     <artifactId>pass-authz</artifactId>
-    <version>0.1.2-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
   </parent>
   <artifactId>pass-authz-integration</artifactId>
 
@@ -74,12 +74,12 @@
             </artifactItem>
             <artifactItem>
               <groupId>org.dataconservancy.pass</groupId>
-              <artifactId>pass-authz-filters</artifactId>
+              <artifactId>pass-authz-roles</artifactId>
               <version>${project.version}</version>
               <type>jar</type>
               <overWrite>false</overWrite>
               <outputDirectory>${project.build.testOutputDirectory}/docker</outputDirectory>
-              <destFileName>pass-authz-filters-shaded.jar</destFileName>
+              <destFileName>pass-authz-roles.jar</destFileName>
             </artifactItem>
           </artifactItems>
           <outputDirectory>${project.build.directory}/wars</outputDirectory>
@@ -129,7 +129,7 @@
             <pass.fedora.baseurl>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</pass.fedora.baseurl>
             <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
             <jms.brokerUrl>failover:(tcp://localhost:${JMS_PORT})?trackMessages=true</jms.brokerUrl>
-            <authz.listener.jar>${org.dataconservancy.pass:pass-authz-tools:jar:listener-exe}</authz.listener.jar>
+            <authz.listener.jar>${org.dataconservancy.pass:pass-authz-listener:jar:exe}</authz.listener.jar>
             <pass.authz.queue>Consumer.authz.VirtualTopic.pass.authz</pass.authz.queue>
             <jms.username>${activemq.user}</jms.username>
             <jms.password>${activemq.password}</jms.password>
@@ -343,7 +343,7 @@
 
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
-      <artifactId>pass-authz-filters</artifactId>
+      <artifactId>pass-authz-roles</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
       <scope>test</scope>
@@ -358,10 +358,10 @@
     
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
-      <artifactId>pass-authz-tools</artifactId>
+      <artifactId>pass-authz-listener</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-      <classifier>listener-exe</classifier>
+      <classifier>exe</classifier>
     </dependency>
 
     <dependency>
