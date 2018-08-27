@@ -6,7 +6,7 @@
     <artifactId>pass-authz</artifactId>
     <version>0.1.2-SNAPSHOT</version>
   </parent>
-  <artifactId>pass-authz-filters</artifactId>
+  <artifactId>pass-authz-roles</artifactId>
 
   <dependencies>
 

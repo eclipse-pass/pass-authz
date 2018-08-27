@@ -74,12 +74,12 @@
             </artifactItem>
             <artifactItem>
               <groupId>org.dataconservancy.pass</groupId>
-              <artifactId>pass-authz-filters</artifactId>
+              <artifactId>pass-authz-roles</artifactId>
               <version>${project.version}</version>
               <type>jar</type>
               <overWrite>false</overWrite>
               <outputDirectory>${project.build.testOutputDirectory}/docker</outputDirectory>
-              <destFileName>pass-authz-filters-shaded.jar</destFileName>
+              <destFileName>pass-authz-roles.jar</destFileName>
             </artifactItem>
           </artifactItems>
           <outputDirectory>${project.build.directory}/wars</outputDirectory>
@@ -343,7 +343,7 @@
 
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
-      <artifactId>pass-authz-filters</artifactId>
+      <artifactId>pass-authz-roles</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
       <scope>test</scope>
