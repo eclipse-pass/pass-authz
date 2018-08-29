@@ -17,6 +17,7 @@
 package org.dataconservancy.pass.authz.service.user;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,13 +34,12 @@ import org.dataconservancy.pass.authz.LogUtil;
 import org.dataconservancy.pass.authz.ShibAuthUserProvider;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
+import org.dataconservancy.pass.client.PassJsonAdapter;
+import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.model.User;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * This class gets an {@link AuthUser} object from the {@link ShibAuthUserProvider} and creates {@link User} to be
@@ -53,7 +53,7 @@ public class UserServlet extends HttpServlet {
 
     static final Logger LOG = LoggerFactory.getLogger(UserServlet.class);
 
-    final ObjectMapper mapper = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);
+    PassJsonAdapter json = new PassJsonAdapterBasic();
 
     PassClient fedoraClient = PassClientFactory.getPassClient();
 
@@ -159,8 +159,8 @@ public class UserServlet extends HttpServlet {
 
             rewriteUri(user, request);
 
-            try (Writer out = response.getWriter()) {
-                mapper.writerWithDefaultPrettyPrinter().writeValue(out, user);
+            try (OutputStream out = response.getOutputStream()) {
+                out.write(json.toJson(user, true));
                 response.setStatus(200);
             }
         } else {
