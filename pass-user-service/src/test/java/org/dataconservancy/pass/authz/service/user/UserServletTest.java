@@ -25,12 +25,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -75,7 +77,7 @@ public class UserServletTest {
 
     AuthUser USER;
 
-    StringWriter output;
+    ByteArrayOutputStream output;
 
     UserServlet servlet;
 
@@ -90,8 +92,26 @@ public class UserServletTest {
         USER.setEmail("bessie@farm.com");
         USER.setEmployeeId("08675309");
 
-        output = new StringWriter();
-        when(response.getWriter()).thenReturn(new PrintWriter(output));
+        output = new ByteArrayOutputStream();
+
+        when(response.getOutputStream()).thenReturn(new ServletOutputStream() {
+
+            @Override
+            public void write(int b) throws IOException {
+                output.write(b);
+
+            }
+
+            @Override
+            public void setWriteListener(WriteListener writeListener) {
+                // don't care
+            }
+
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+        });
 
         servlet = new UserServlet();
         servlet.provider = new AuthUserProvider() {
@@ -126,7 +146,8 @@ public class UserServletTest {
 
         servlet.doGet(request, response);
 
-        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
+        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
+                User.class);
 
         assertEquals(newUserId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
@@ -158,7 +179,8 @@ public class UserServletTest {
 
         servlet.doGet(request, response);
 
-        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
+        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
+                User.class);
 
         assertEquals(foundId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
@@ -194,7 +216,8 @@ public class UserServletTest {
 
         servlet.doGet(request, response);
 
-        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
+        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
+                User.class);
 
         assertEquals(foundId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
@@ -225,7 +248,8 @@ public class UserServletTest {
 
         servlet.doGet(request, response);
 
-        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
+        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
+                User.class);
 
         assertNotEquals(foundId, fromServlet.getId());
         assertTrue(fromServlet.getId().toString().contains("https"));
@@ -257,7 +281,8 @@ public class UserServletTest {
 
         servlet.doGet(request, response);
 
-        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
+        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
+                User.class);
 
         assertNotEquals(foundId, fromServlet.getId());
         assertTrue(fromServlet.getId().toString().startsWith("http://foo.org/moo"));
@@ -289,7 +314,8 @@ public class UserServletTest {
 
         servlet.doGet(request, response);
 
-        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(output.toString()), User.class);
+        final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
+                User.class);
 
         assertEquals(foundId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
