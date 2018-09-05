@@ -84,92 +84,107 @@ public class UserServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
 
+        LOG.debug("Servicing new request");
+
         final AuthUser shibUser = provider.getUser(request, authUser -> {
-            // Create if warranted
+
+            LOG.debug("Entering critical section");
+
+            // This is the critical section of the user service.
+            // If we need to create a user, do it. Otherwise update.
             if (authUser.getId() == null && authUser.isFaculty()) {
-                final User user = new User();
-                user.setUsername(authUser.getPrincipal());
-                user.setLocalKey(authUser.getEmployeeId());
-                user.setInstitutionalId(authUser.getInstitutionalId());
-                user.setDisplayName(authUser.getName());
-                user.setEmail(authUser.getEmail());
-                user.getRoles().add(User.Role.SUBMITTER);;
-                authUser.setId(fedoraClient.createResource(user));
-                LOG.info("Created new User resource <{}> for {} ({})", authUser.getId(), user.getLocalKey(), user
-                        .getInstitutionalId());
-                return authUser;
-            } else {
-                return authUser;
+                LOG.debug("Creating new user");
+                return createUser(authUser);
+            } else if (authUser.getId() != null) {
+                LOG.debug("Updating user");
+                return updateUser(authUser);
             }
+
+            LOG.debug("Exiting critical section");
+            return authUser;
+
         });
 
-        final URI id = shibUser.getId();
+        // At this point, any eligible person will have an up to date User object in Fedora
+        // if the person is not eligible, the shib user ID will be null
 
-        final User user;
-
-        // does the user already exist in the repository?
-        if (id != null) {
-            LOG.info("User {} found at {}", shibUser.getPrincipal(), id);
-
-            user = fedoraClient.readResource(id, User.class);
-
-            if (user == null) {
-                LOG.warn("Resource {} does not exist, this should never happen", shibUser.getId());
-                response.setStatus(500);
-                return;
-            }
-            boolean update = false;
-
-            // employeeId should never change
-            // each user provider will only adjust fields for which it is authoritative
-            // shib is authoritative for these
-            if (user.getUsername() == null || !user.getUsername().equals(shibUser.getPrincipal())) {
-                user.setUsername(shibUser.getPrincipal());
-                update = true;
-            }
-            if (user.getEmail() == null || !user.getEmail().equals(shibUser.getEmail())) {
-                user.setEmail(shibUser.getEmail());
-                update = true;
-            }
-            if (user.getDisplayName() == null || !user.getDisplayName().equals(shibUser.getName())) {
-                user.setDisplayName(shibUser.getName());
-                update = true;
-            }
-            if (user.getInstitutionalId() == null || !user.getInstitutionalId().equals(shibUser
-                    .getInstitutionalId())) {
-                user.setInstitutionalId(shibUser.getInstitutionalId());
-                update = true;
-            }
-
-            if (update) {
-                LOG.info("User record for {} in repository is out of date, updating {} ", shibUser.getPrincipal(),
-                        user.getId());
-                fedoraClient.updateResource(user);
-            }
-
-        } else {// no id, so they're not allowed in
-            user = null;
-        }
-
-        // at this point, any eligible person will have an up to date User object in Fedora
-        // and the up to date User object and valid id here
-        // if the person is not eligible, id and user will be null
-
-        if (id != null && user != null) {
-
-            rewriteUri(user, request);
-
-            try (OutputStream out = response.getOutputStream()) {
-                out.write(json.toJson(user, true));
-                response.setStatus(200);
-            }
-        } else {
+        if (shibUser.getId() == null) {
             LOG.info("{} not authorized", shibUser.getPrincipal());
             try (Writer out = response.getWriter()) {
                 response.setStatus(401);
                 out.append("Unauthorized");
             }
+        } else {
+            final User user = shibUser.getUser();
+            rewriteUri(user, request);
+
+            LOG.debug("Successfully returning User data for {}", user.getId());
+            try (OutputStream out = response.getOutputStream()) {
+                out.write(json.toJson(user, true));
+                response.setStatus(200);
+            }
         }
+    }
+
+    private AuthUser createUser(AuthUser authUser) {
+        final User user = new User();
+        user.setUsername(authUser.getPrincipal());
+        user.setLocalKey(authUser.getEmployeeId());
+        user.setInstitutionalId(authUser.getInstitutionalId());
+        user.setDisplayName(authUser.getName());
+        user.setEmail(authUser.getEmail());
+        user.getRoles().add(User.Role.SUBMITTER);
+
+        authUser.setUser(fedoraClient.createAndReadResource(user, User.class));
+        authUser.setId(authUser.getUser().getId());
+
+        LOG.info("Created new User resource <{}> for {} ({})", authUser.getId(), user.getLocalKey(), user
+                .getInstitutionalId());
+        return authUser;
+    }
+
+    private AuthUser updateUser(AuthUser shibUser) {
+        final User user = fedoraClient.readResource(shibUser.getId(), User.class);
+
+        if (user == null) {
+            throw new RuntimeException(String.format("Resource %s does not exist, this should never happen", shibUser
+                    .getId()));
+        }
+
+        LOG.debug("Found existing user {}", shibUser.getId());
+
+        boolean update = false;
+
+        // employeeId should never change
+        // each user provider will only adjust fields for which it is authoritative
+        // shib is authoritative for these
+        if (user.getUsername() == null || !user.getUsername().equals(shibUser.getPrincipal())) {
+            user.setUsername(shibUser.getPrincipal());
+            update = true;
+        }
+        if (user.getEmail() == null || !user.getEmail().equals(shibUser.getEmail())) {
+            user.setEmail(shibUser.getEmail());
+            update = true;
+        }
+        if (user.getDisplayName() == null || !user.getDisplayName().equals(shibUser.getName())) {
+            user.setDisplayName(shibUser.getName());
+            update = true;
+        }
+        if (user.getInstitutionalId() == null || !user.getInstitutionalId().equals(shibUser
+                .getInstitutionalId())) {
+            user.setInstitutionalId(shibUser.getInstitutionalId());
+            update = true;
+        }
+
+        if (update) {
+            LOG.info("User record for {} in repository is out of date, updating {} ", shibUser.getPrincipal(),
+                    user.getId());
+            fedoraClient.updateResource(user);
+        } else {
+            LOG.info("User record {} in repository is up to date, NOT updating", user.getId());
+        }
+        shibUser.setUser(user);
+        return shibUser;
     }
 
     private void rewriteUri(User user, HttpServletRequest request) {

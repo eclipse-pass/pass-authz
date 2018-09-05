@@ -24,6 +24,7 @@ import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.UNSCOPED_AFFILIATION_HEADER;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -31,11 +32,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import java.net.URI;
+import java.util.function.Function;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.model.User;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -62,7 +64,10 @@ public class ShibAuthUserProviderTest {
     private PassClient client;
 
     @Mock
-    ExpiringLRUCache<String, URI> mockCache;
+    ExpiringLRUCache<String, User> mockCache;
+
+    @Mock
+    Function<AuthUser, AuthUser> doAfter;
 
     @Before
     public void allowShibHeaders() {
@@ -284,6 +289,61 @@ public class ShibAuthUserProviderTest {
         } catch (final Exception e) {
             assertEquals(theException, e.getCause());
         }
+    }
+
+    @Test
+    public void filterAddsUserTest() {
+        final String displayName = "Bessie Cow";
+        final String emailAddress = "bessie@farm.com";
+        final String eppn = "bcow666@jhu.edu";
+        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
+        final String employeeId = "12345678";
+
+        when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
+        when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
+        when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
+        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+
+        final User foundUser = new User();
+
+        when(doAfter.apply(any())).thenAnswer(i -> {
+            final AuthUser u = i.getArgument(0);
+            u.setId(u.getId());
+            u.setUser(foundUser);
+            return u;
+        });
+
+        final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
+        final AuthUser authUser = underTest.getUser(request, doAfter);
+        assertNotNull(underTest.userCache.get(employeeId));
+
+        assertEquals(foundUser, authUser.getUser());
+    }
+
+    @Test
+    public void filterDoesNotAddUserTest() {
+        final String displayName = "Bessie Cow";
+        final String emailAddress = "bessie@farm.com";
+        final String eppn = "bcow666@jhu.edu";
+        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
+        final String employeeId = "12345678";
+
+        when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
+        when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
+        when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
+        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+
+        when(doAfter.apply(any())).thenAnswer(i -> {
+            final AuthUser u = i.getArgument(0);
+            return u;
+        });
+
+        final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
+        final AuthUser authUser = underTest.getUser(request, doAfter);
+        assertNotNull(authUser);
+        assertNull(underTest.userCache.get(employeeId));
     }
 
 }
