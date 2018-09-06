@@ -277,7 +277,7 @@ public class PolicyListenerIT extends FcrepoIT {
 
         final Submission submission = new Submission();
         submission.setGrants(asList(grant.getId()));
-        submission.setUser(authUser.getId());
+        submission.setSubmitter(authUser.getId());
 
         if (isSubmitted.length > 0 && isSubmitted[0]) {
             submission.setSubmitted(true);

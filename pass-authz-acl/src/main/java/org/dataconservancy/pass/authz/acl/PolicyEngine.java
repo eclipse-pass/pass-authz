@@ -16,6 +16,8 @@
 
 package org.dataconservancy.pass.authz.acl;
 
+import static java.util.Optional.ofNullable;
+
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
@@ -70,14 +72,12 @@ public class PolicyEngine {
         final Set<URI> authReaders = new HashSet<>();
         final Set<URI> authWriters = new HashSet<>();
 
-        if (submission.getUser() != null) {
-            authReaders.add(submission.getUser());
+        // If a submission is "submitted=true", then it's frozen.
+        if (submission.getSubmitted() == null || !submission.getSubmitted()) {
 
-            // If a submission is "submitted=true", then it's frozen.
-            if (submission.getSubmitted() == null || !submission.getSubmitted()) {
-                // Not frozen, allow writes
-                authWriters.add(submission.getUser());
-            }
+            // Not frozen, allow writes to preparers and submitters
+            ofNullable(submission.getSubmitter()).ifPresent(authWriters::add);
+            submission.getPreparers().forEach(authWriters::add);
         }
 
         if (backendRole != null) {
