@@ -243,6 +243,6 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
     private static void assertIsjsonld(byte[] body) {
         final Model model = ModelFactory.createDefaultModel();
         model.read(new ByteArrayInputStream(body), null, "JSON-LD");
-        Assert.assertTrue(model.listStatements().toList().size() > 3);
+        Assert.assertTrue(new String(body), model.listStatements().toList().size() > 3);
     }
 }

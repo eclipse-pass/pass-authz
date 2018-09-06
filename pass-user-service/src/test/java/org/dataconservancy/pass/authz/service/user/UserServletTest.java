@@ -29,7 +29,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
@@ -130,19 +129,12 @@ public class UserServletTest {
         USER.setId(null);
         final URI newUserId = URI.create("MOO");
 
-        final AtomicReference<User> createdByUserService = new AtomicReference<>();
-
-        // Capture the User the user service tries to create, and assign it an ID.
-        when(client.createResource(any())).thenAnswer(i -> {
-
+        // Return the User created by the user service.
+        when(client.createAndReadResource(any(), eq(User.class))).thenAnswer(i -> {
             final User givenUserToCreate = i.getArgument(0);
             givenUserToCreate.setId(newUserId);
-            createdByUserService.set(givenUserToCreate);
-            return newUserId;
+            return givenUserToCreate;
         });
-
-        // Return the User created by the user service.
-        when(client.readResource(eq(newUserId), eq(User.class))).thenAnswer(i -> createdByUserService.get());
 
         servlet.doGet(request, response);
 
@@ -155,7 +147,7 @@ public class UserServletTest {
         assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
         assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
 
-        verify(client).createResource(userCaptor.capture());
+        verify(client).createAndReadResource(userCaptor.capture(), eq(User.class));
 
         final User created = userCaptor.getValue();
         assertEquals(USER.getName(), created.getDisplayName());

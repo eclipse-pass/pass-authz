@@ -20,6 +20,8 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.dataconservancy.pass.model.User;
+
 /**
  * @author apb@jhu.edu
  * @author jrm@jhu.edu
@@ -27,16 +29,26 @@ import java.util.Set;
 public class AuthUser {
 
     private String name;
+
     private String email;
+
     private String institutionalId;
+
     private String employeeId;
+
     private URI id;
+
     private boolean isFaculty;
+
     private String principal;
-    private Set<String> domains = new HashSet<>();
+
+    private final Set<String> domains = new HashSet<>();
+
+    private User user;
 
     /**
      * the durable local key for the user
+     *
      * @return the employee's id
      */
     public String getEmployeeId() {
@@ -45,15 +57,16 @@ public class AuthUser {
 
     /**
      * st the user's employee id, the durable local key
+     *
      * @param employeeId the durable local key
      */
     public void setEmployeeId(String employeeId) {
         this.employeeId = employeeId;
     }
 
-
     /**
      * boolean indicating whether a person has faculty status
+     *
      * @return the boolean
      */
     public boolean isFaculty() {
@@ -62,6 +75,7 @@ public class AuthUser {
 
     /**
      * set a boolean indicating whether the person has facuty status
+     *
      * @param faculty boolean indicating whether the user has a faculty affiliation
      */
     public void setFaculty(boolean faculty) {
@@ -70,6 +84,7 @@ public class AuthUser {
 
     /**
      * Get the user's email address
+     *
      * @return the email address
      */
     public String getEmail() {
@@ -78,6 +93,7 @@ public class AuthUser {
 
     /**
      * Set the user's email address
+     *
      * @param email the user's email address
      */
     public void setEmail(String email) {
@@ -86,6 +102,7 @@ public class AuthUser {
 
     /**
      * Get the institutional id for this user (for JHU it's the Jhed Id)
+     *
      * @return the institutional id
      */
     public String getInstitutionalId() {
@@ -94,6 +111,7 @@ public class AuthUser {
 
     /**
      * Set the institutional id for this user
+     *
      * @param institutionalId (for JHU it's the Jhed Id)
      */
     public void setInstitutionalId(String institutionalId) {
@@ -102,6 +120,7 @@ public class AuthUser {
 
     /**
      * Get the repository id for the user which was assigned to this person's User object by the repository
+     *
      * @return the repository id
      */
     public URI getId() {
@@ -110,6 +129,7 @@ public class AuthUser {
 
     /**
      * Set the id for the user which was assigned to this person's User object by the repository
+     *
      * @param id - the repository id
      */
     public void setId(URI id) {
@@ -118,6 +138,7 @@ public class AuthUser {
 
     /**
      * Get the display name
+     *
      * @return the display name
      */
     public String getName() {
@@ -126,41 +147,55 @@ public class AuthUser {
 
     /**
      * Set the display name for the user
+     *
      * @param name - the display name
      */
     public void setName(String name) {
         this.name = name;
     }
-    
-    /** 
+
+    /**
      * Get all domains in which the user has affiliation..
      * <p>
-     * The domain qualifies the username (eppn, in shib), and scoped 
-     * affiliations.  Typically, it is the institution (e.g. jonhshopkins.edu)
+     * The domain qualifies the username (eppn, in shib), and scoped affiliations. Typically, it is the institution
+     * (e.g. jonhshopkins.edu)
      * </p>
+     *
      * @return Set of all domains, or empty if none;
      */
     public Set<String> getDomains() {
         return domains;
     }
-    
-    /** Get the user's principal, identifying them in their authorization domain.
+
+    /**
+     * Get the user's principal, identifying them in their authorization domain.
      * <p>
      * In shib terms, this is eppn;
      * </p>
+     *
      * @return
      */
     public String getPrincipal() {
         return principal;
     }
-    
-    /** Set the user's principal.
-     * 
+
+    /**
+     * Set the user's principal.
+     *
      * @param principal
      */
     public void setPrincipal(String principal) {
         this.principal = principal;
     }
-   
-}
 
+    /** associate a User resource with this AuthUser. */
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    /** Get the associated User resource, if defined/provided. May be null. */
+    public User getUser() {
+        return user;
+    }
+
+}

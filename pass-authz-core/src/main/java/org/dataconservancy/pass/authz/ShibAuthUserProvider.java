@@ -69,7 +69,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
     final PassClient passClient;
 
-    final ExpiringLRUCache<String, URI> userCache;
+    final ExpiringLRUCache<String, User> userCache;
 
     boolean useShibHeaders = ofNullable(getValue(CONFIG_SHIB_USE_HEADERS)).map(Boolean::valueOf).orElse(false);
 
@@ -80,7 +80,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         userCache = new ExpiringLRUCache<>(100, Duration.ofMinutes(10));
     }
 
-    public ShibAuthUserProvider(PassClient client, ExpiringLRUCache<String, URI> cache) {
+    public ShibAuthUserProvider(PassClient client, ExpiringLRUCache<String, User> cache) {
         this.passClient = client;
         userCache = cache;
     }
@@ -130,39 +130,63 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             }
         }
 
-        final AuthUser user = new AuthUser();
-        user.setEmployeeId(employeeId);
-        user.setName(displayName);
-        user.setEmail(emailAddress);
+        final AuthUser authUser = new AuthUser();
+        authUser.setEmployeeId(employeeId);
+        authUser.setName(displayName);
+        authUser.setEmail(emailAddress);
         if (institutionalId != null) {
-            user.setInstitutionalId(institutionalId.toLowerCase());// this is our normal format
+            authUser.setInstitutionalId(institutionalId.toLowerCase());// this is our normal format
         }
-        user.setFaculty(isFaculty);
-        user.setPrincipal(getShibAttr(request, EPPN_HEADER, s -> s));
+        authUser.setFaculty(isFaculty);
+        authUser.setPrincipal(getShibAttr(request, EPPN_HEADER, s -> s));
 
-        ofNullable(user.getPrincipal())
+        ofNullable(authUser.getPrincipal())
                 .filter(s -> s.contains("@"))
                 .map(s -> s.split("@")[1])
-                .ifPresent(user.getDomains()::add);
+                .ifPresent(authUser.getDomains()::add);
 
-        user.getDomains().addAll(stream(ofNullable(getShibAttr(request, SCOPED_AFFILIATION_HEADER, s -> s.split(";")))
-                .orElse(new String[0]))
-                        .filter(sa -> sa.contains("@"))
-                        .map(sa -> sa.split("@")[1])
-                        .collect(toSet()));
+        authUser.getDomains().addAll(stream(ofNullable(getShibAttr(request, SCOPED_AFFILIATION_HEADER, s -> s.split(
+                ";")))
+                        .orElse(new String[0]))
+                                .filter(sa -> sa.contains("@"))
+                                .map(sa -> sa.split("@")[1])
+                                .collect(toSet()));
 
         if (employeeId != null) {
             LOG.debug("Looking up User based in employeeId '{}'", employeeId);
             try {
-                final URI id = userCache.getOrDo(employeeId,
+                authUser.setUser(userCache.getOrDo(employeeId,
                         () -> {
-                            user.setId(findUserId(employeeId));
-                            final AuthUser filtered = doAfter.apply(user);
-                            return filtered.getId();
-                        });
 
-                user.setId(id);
-                LOG.debug("User resource for {} is {}", employeeId, id);
+                            // Critical section, only executed for a cache miss.
+                            //
+                            // We look to see if the user exists, then execute any
+                            // doAfter filters in the critical section
+                            // (e.g. User service creating or updating users).
+                            // If the doAter filter has populated the User field, then
+                            // cache it. Otherwise, don't cache anything.
+
+                            authUser.setId(findUserId(employeeId));
+                            final AuthUser filtered = doAfter.apply(authUser);
+
+                            if (filtered.getUser() != null) {
+
+                                // Return the User, it'll be cached.
+                                LOG.debug("doAfter filter supplied a User resource");
+                                return filtered.getUser();
+                            } else {
+
+                                // Return null so that this entry is not cached.
+                                LOG.debug("doAfter filter did NOT supply a User resource");
+                                return null;
+                            }
+                        }));
+
+                // Populate the authUser ID for Users resulting from cache hits.
+                if (authUser.getUser() != null) {
+                    authUser.setId(authUser.getUser().getId());
+                }
+                LOG.debug("User resource for {} is {}", employeeId, authUser.getId());
             } catch (final Exception e) {
                 throw new RuntimeException("Error while looking up user by localKey" + employeeId, e);
             }
@@ -170,7 +194,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             LOG.debug("No shibboleth employee id; skipping user lookup ");
         }
 
-        return user;
+        return authUser;
     }
 
     private URI findUserId(String employeeId) {
