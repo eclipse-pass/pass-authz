@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.dataconservancy.pass</groupId>
     <artifactId>pass-authz</artifactId>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
   </parent>
   <artifactId>pass-authz-integration</artifactId>
 
@@ -167,7 +167,7 @@
 
             <image>
               <alias>indexer</alias>
-              <name>oapass/indexer:0.0.12-2.2-SNAPSHOT</name>
+              <name>oapass/indexer:0.0.14-3.0-SNAPSHOT</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
