@@ -23,10 +23,9 @@ import java.util.concurrent.Future;
 
 import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.authz.acl.PolicyEngine;
-import org.dataconservancy.pass.authz.tools.ContainerVisitor;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
-import org.dataconservancy.pass.client.fedora.FedoraConfig;
+import org.dataconservancy.pass.model.Submission;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,6 @@ public class PermissionsUpdater {
 
     public static void main(String[] args) throws Exception {
 
-        System.setProperty("pass.fedora.user", "fedoraAdmin");
         final ACLManager manager = new ACLManager();
         final PassClient client = PassClientFactory.getPassClient();
 
@@ -57,12 +55,9 @@ public class PermissionsUpdater {
         authzPolicy.setAdminRole(PASS_GRANTADMIN_ROLE);
         authzPolicy.setSubmitterRole(PASS_SUBMITTER_ROLE);
 
-        final ContainerVisitor crawler = new ContainerVisitor();
-
         LOG.info("Visiting submissions...");
-        final Future<Integer> submissions = exe.submit(() -> crawler.visit(URI.create(FedoraConfig.getBaseUrl() +
-                "submissions"),
-                authzPolicy::updateSubmission));
+        final Future<Integer> submissions = exe.submit(() -> client.processAllEntities(authzPolicy::updateSubmission,
+                Submission.class));
 
         LOG.info("Updated {} submissions", submissions.get());
 
