@@ -26,7 +26,7 @@ Configuration environment variables:
 * `AUTHZ_ALLOW_EXTERNAL_ROLES` (Boolean, default `false`).  Normally, the `pass-authz-roles` is the sole provider of roles.  Any pre-existing values in the role header will be erased.  Set to true to pass through any roles already defined in the http request (insecure, but helpful for debugging)
 * `AUTHZ_HEADER_NAME` (String, default `pass-roles`).  HTTP header name to populate with a list of roles.  This is the manner by which roles are provided to Fedora
 * `AUTHZ_HEADER_SEPARATOR` (String, default `,`).  Separator string/character for the list of URIs in the roles http header.
-* `AUTHZ_SHIB_USE_HEADERS` (String, default `false`).  If true, will look for shibboleth attributes in http headers.  By default, it expects shib headers to be provided as request attributes (i.e. environment variables, via the AJP protocol`).
+* `AUTHZ_SHIB_USE_HEADERS` (String, default `false`).  If true, will look for shibboleth attributes in http headers.  By default, it expects shib headers to be provided as request attributes (i.e. environment variables, via the AJP protocol).
 
 ### pass-authz-listener
 
@@ -113,7 +113,7 @@ The User service is an http servlet, intended to be deployed in the same servlet
 Configuration environment variables:
 
 * Standard pass client environment variables (`PASS_FEDORA_*`, `PASS_ELASTICSEARCH_*`).
-* `AUTHZ_SHIB_USE_HEADERS` (String, default `false`).  If true, will look for shibboleth attributes in http headers.  By default, it expects shib headers to be provided as request attributes (i.e. environment variables, via the AJP protocol`).
+* `AUTHZ_SHIB_USE_HEADERS` (String, default `false`).  If true, will look for shibboleth attributes in http headers.  By default, it expects shib headers to be provided as request attributes (i.e. environment variables, via the AJP protocol).
 
 ### Developer notes
 
