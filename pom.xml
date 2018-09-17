@@ -13,10 +13,12 @@
     <module>pass-authz-acl</module>
     <module>pass-authz-tools</module>
     <module>pass-authz-listener</module>
+    <module>pass-authz-usertoken</module>
   </modules>
 
   <properties>
 
+    <commons-codec.version>1.11</commons-codec.version>
     <fcrepo.version>4.7.5</fcrepo.version>
     <jackson.version>2.9.5</jackson.version>
     <javax.servlet.version>3.1.0</javax.servlet.version>
@@ -205,6 +207,12 @@
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-to-slf4j</artifactId>
         <version>${apache.log.api}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>${commons-codec.version}</version>
       </dependency>
 
       <dependency>
