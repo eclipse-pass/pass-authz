@@ -31,6 +31,7 @@ public class Key {
 
     static final Base32 base32 = new Base32();
 
+    /* Internal constructor, given 16-byte key array */
     Key(byte[] bytes) {
         if (!(bytes.length == 16)) {
             throw new IllegalArgumentException("Key must be 16 bytes (128 bits) long, but was given " + bytes.length);
@@ -42,7 +43,7 @@ public class Key {
     /**
      * Decode a key from a base32 encoded string.
      *
-     * @param key The encoded key string.
+     * @param key The encoded key string, expected ultimately have originated from {@link Key#toString()}
      * @return The resulting Key.
      */
     public static Key fromString(String key) {

@@ -34,6 +34,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.commons.codec.binary.Base32;
 
 /**
+ * Internal class for encrypting/decrypting tokens.
+ *
  * @author apb@jhu.edu
  */
 class Codec {

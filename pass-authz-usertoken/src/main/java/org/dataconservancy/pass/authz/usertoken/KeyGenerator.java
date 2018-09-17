@@ -16,33 +16,19 @@
 
 package org.dataconservancy.pass.authz.usertoken;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
 /**
+ * Simple key generator application
+ *
  * @author apb@jhu.edu
  */
-public class CodecTest {
+public class KeyGenerator {
 
-    final Codec codec = new Codec(Key.generate());
-
-    @Test
-    public void roundTripTest() {
-
-        final String TEXT = "Hello there";
-
-        assertEquals(TEXT, codec.decrypt(codec.encrypt(TEXT)));
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void badDataTest() {
-        codec.decrypt("NOOO");
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void truncatedDataTest() {
-        final String encrypted = codec.encrypt("Hello");
-        codec.decrypt(encrypted.substring(0, encrypted.length() - 1));
+    /**
+     * Generate a key, encode, and print to stdout.
+     *
+     * @param args Ignored.
+     */
+    public static void main(String[] args) {
+        System.out.println(Key.generate().toString().replaceAll("=", ""));
     }
 }

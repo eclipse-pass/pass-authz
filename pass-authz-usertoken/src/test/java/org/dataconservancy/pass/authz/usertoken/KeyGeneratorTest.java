@@ -16,33 +16,26 @@
 
 package org.dataconservancy.pass.authz.usertoken;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.SystemOutRule;
 
 /**
  * @author apb@jhu.edu
  */
-public class CodecTest {
+public class KeyGeneratorTest {
 
-    final Codec codec = new Codec(Key.generate());
+    @Rule
+    public final SystemOutRule captureSystemOut = new SystemOutRule().enableLog();
 
     @Test
-    public void roundTripTest() {
+    public void keyTest() {
+        KeyGenerator.main(null);
 
-        final String TEXT = "Hello there";
-
-        assertEquals(TEXT, codec.decrypt(codec.encrypt(TEXT)));
+        // Make sure we can read the resulting key, and use it with the codec
+        assertNotNull(new Codec(Key.fromString(captureSystemOut.getLog())).encrypt("Does the key work?"));
     }
 
-    @Test(expected = RuntimeException.class)
-    public void badDataTest() {
-        codec.decrypt("NOOO");
-    }
-
-    @Test(expected = RuntimeException.class)
-    public void truncatedDataTest() {
-        final String encrypted = codec.encrypt("Hello");
-        codec.decrypt(encrypted.substring(0, encrypted.length() - 1));
-    }
 }
