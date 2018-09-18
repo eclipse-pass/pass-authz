@@ -92,6 +92,14 @@ containers:
         - submitter
       write:
         - pass-backend
+
+  - submissionEvents:
+      read:
+        - admin
+      append:
+        - submitter
+      write:
+        - pass-backend
         
   - users:
      read:
