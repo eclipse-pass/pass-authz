@@ -24,16 +24,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.EntityUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 
@@ -44,14 +41,14 @@ public class ContainerPermissionsIT extends FcrepoIT {
 
     static CloseableHttpClient client = getHttpClient();
 
+    @Ignore
     @Test
     public void createResourcesIT() throws Exception {
         final RepositoryCrawler crawler = new RepositoryCrawler();
 
-        // Delete everything!!
-
-        final int numContainers = crawler.visit(URI.create(FedoraConfig.getBaseUrl()), ContainerPermissionsIT::delete,
-                IGNORE_ROOT, SKIP_NONE.or(depth(1)));
+        // Delete everything, except ACLS on the root (but DO delete the acls container)
+        final int numContainers = crawler.visit(URI.create(FedoraConfig.getBaseUrl()), FcrepoIT::deleteCompletely,
+                IGNORE_ROOT.or(s -> s.id.toString().contains("acl")), SKIP_NONE.or(depth(1)));
         assertTrue(numContainers > 0);
 
         // Make sure we deleted
@@ -76,30 +73,4 @@ public class ContainerPermissionsIT extends FcrepoIT {
         }, IGNORE_ROOT, SKIP_NONE) >= numContainers);
 
     }
-
-    static void delete(URI resource) {
-        try (CloseableHttpResponse resp = client.execute(new HttpDelete(resource))) {
-            if (resp.getStatusLine().getStatusCode() > 299) {
-                throw new RuntimeException("Could not delete resource: " + resource + "; \n" + EntityUtils.toString(
-                        resp.getEntity()));
-            } else {
-                EntityUtils.consume(resp.getEntity());
-
-                final HttpDelete deleteTombstone = new HttpDelete(resource.toString() +
-                        "/fcr:tombstone");
-                try (CloseableHttpResponse tomb = client.execute(deleteTombstone)) {
-                    if (tomb.getStatusLine().getStatusCode() > 299) {
-                        throw new RuntimeException("Could not delete tombstone: " + deleteTombstone.getURI() +
-                                " ;\n" + EntityUtils.toString(resp
-                                        .getEntity()));
-                    } else {
-                        EntityUtils.consume(tomb.getEntity());
-                    }
-                }
-            }
-        } catch (final IOException e) {
-            throw new RuntimeException("Could not delete resource", e);
-        }
-    }
-
 }

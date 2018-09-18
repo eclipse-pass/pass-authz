@@ -199,7 +199,12 @@
                 </network>
                 <dependsOn>
                   <container>activemq</container>
+                  <container>fcrepo</container>
+                  <container>elasticsearch</container>
                 </dependsOn>
+                <wait>
+                  <time>10000</time>
+                </wait>
               </run>
             </image>
 
@@ -247,7 +252,6 @@
                 </wait>
                 <dependsOn>
                   <container>activemq</container>
-                  <container>indexer</container>
                 </dependsOn>
               </run>
             </image>
@@ -276,9 +280,6 @@
                   </http>
                   <time>120000</time>
                 </wait>
-                <dependsOn>
-                  <container>indexer</container>
-                </dependsOn>
               </run>
             </image>
 

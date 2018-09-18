@@ -16,6 +16,9 @@
 
 package org.dataconservancy.pass.authz;
 
+import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Ignore.IGNORE_CONTAINERS;
+import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.SKIP_ACLS;
+import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.depth;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -23,15 +26,19 @@ import java.net.URI;
 import java.util.concurrent.Callable;
 
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
+import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.junit.AfterClass;
 
 /**
  * @author apb@jhu.edu
@@ -45,6 +52,8 @@ public abstract class FcrepoIT {
             System.getProperty("FCREPO_PORT", "8080")));
 
     static final String AUTH_ROLE_HEADER = "some-header";
+
+    static final CloseableHttpClient client = getAuthClient(FedoraConfig.getUserName(), FedoraConfig.getPassword());
 
     static {
         if (System.getProperty("pass.fedora.user") == null) {
@@ -60,9 +69,45 @@ public abstract class FcrepoIT {
         }
     }
 
+    @AfterClass
+    public static void cleanUp() {
+        new RepositoryCrawler().visit(URI.create(FedoraConfig.getBaseUrl()), FcrepoIT::deleteCompletely,
+                IGNORE_CONTAINERS.or(s -> s.id.toString().contains("acl")), SKIP_ACLS.or(depth(2)));
+    }
+
+    static void deleteCompletely(URI resource) {
+        System.out.println("Deleting completely " + resource);
+        System.out.println("Should it be skipped? " + resource.toString().matches(".+/acls[/.+*|$]"));
+        try (CloseableHttpResponse resp = client.execute(new HttpDelete(resource))) {
+            if (resp.getStatusLine().getStatusCode() == 404) {
+                System.out.println("Resource already deleted:" + resource);
+                EntityUtils.consume(resp.getEntity());
+            } else if (resp.getStatusLine().getStatusCode() > 299) {
+                throw new RuntimeException("Could not delete resource: " + resource + "; \n" + EntityUtils.toString(
+                        resp.getEntity()));
+            } else {
+                EntityUtils.consume(resp.getEntity());
+
+                final HttpDelete deleteTombstone = new HttpDelete(resource.toString() +
+                        "/fcr:tombstone");
+                try (CloseableHttpResponse tomb = client.execute(deleteTombstone)) {
+                    if (tomb.getStatusLine().getStatusCode() > 299) {
+                        throw new RuntimeException("Could not delete tombstone: " + deleteTombstone.getURI() +
+                                " ;\n" + EntityUtils.toString(resp
+                                        .getEntity()));
+                    } else {
+                        EntityUtils.consume(tomb.getEntity());
+                    }
+                }
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException("Could not delete resource", e);
+        }
+    }
+
     /* Get a client with default/system username and password (fedoraAdmin) */
     static CloseableHttpClient getHttpClient() {
-        return getAuthClient(FedoraConfig.getUserName(), FedoraConfig.getPassword());
+        return client;
     }
 
     /* Get a client with specific username and password */
@@ -114,5 +159,11 @@ public abstract class FcrepoIT {
             }
         }
         throw new RuntimeException("Failed executing task", caught);
+    }
+
+    public static void main(String[] args) {
+        final String in =
+                "[main] INFO org.dataconservancy.pass.indexer.FedoraIndexerService - Started listening on jms queue Consumer.indexer.VirtualTopic.pass.authz";
+        System.out.println(in.matches(".*?Started listening.*"));
     }
 }
