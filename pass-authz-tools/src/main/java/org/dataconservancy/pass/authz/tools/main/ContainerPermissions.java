@@ -16,6 +16,7 @@
 
 package org.dataconservancy.pass.authz.tools.main;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Optional.ofNullable;
 import static org.dataconservancy.pass.authz.acl.ACLManager.getAclBase;
 
@@ -26,9 +27,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.fcrepo.client.FcrepoClient;
+import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
 import org.fcrepo.client.FcrepoResponse;
 
 import org.dataconservancy.pass.authz.acl.ACLManager;
+import org.dataconservancy.pass.client.fedora.FedoraConfig;
+
+import org.apache.commons.io.IOUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,7 +52,7 @@ public class ContainerPermissions {
     static URI roleBase;
 
     public static void main(String[] args) throws Exception {
-        System.setProperty("pass.fedora.user", "fedoraAdmin");
+
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
         final ObjectNode root = (ObjectNode) mapper.reader().readTree(ContainerPermissions.class.getResourceAsStream(
@@ -54,7 +60,9 @@ public class ContainerPermissions {
 
         final ACLManager manager = new ACLManager();
 
-        containerBase = ofNullable(root.get("container-base").asText()).map(URI::create).orElse(null);
+        final FcrepoClient client = getFcrepoClient();
+
+        containerBase = URI.create(ofNullable(FedoraConfig.getBaseUrl()).orElse(root.get("container-base").asText()));
         roleBase = ofNullable(root.get("role-base").asText()).map(URI::create).orElse(null);
 
         try (FcrepoResponse response = manager.repo.head(getAclBase()).perform()) {
@@ -80,6 +88,20 @@ public class ContainerPermissions {
             System.out.println("      read:  " + readers);
             System.out.println("    append:  " + getRoles(permissions.get("append")));
             System.out.println("     write:  " + getRoles(permissions.get("write")));
+
+            // Create container if not present.
+            try (FcrepoResponse response = client.head(container).perform()) {
+                if (response.getStatusCode() == 404) {
+                    try (FcrepoResponse putResponse = client.put(container).perform()) {
+                        if (!(putResponse.getStatusCode() < 299)) {
+                            System.out.println(IOUtils.toString(putResponse.getBody(), UTF_8));
+                        } else {
+                            System.out.println("Created new resource " + IOUtils.toString(putResponse.getBody(),
+                                    UTF_8));
+                        }
+                    }
+                }
+            }
 
             manager.setPermissions(container)
                     .grantRead(new ArrayList<>(readers))
@@ -119,6 +141,10 @@ public class ContainerPermissions {
         } else {
             return URI.create(path);
         }
+    }
+
+    private static FcrepoClient getFcrepoClient() {
+        return new FcrepoClientBuilder().credentials(FedoraConfig.getUserName(), FedoraConfig.getPassword()).build();
     }
 
 }
