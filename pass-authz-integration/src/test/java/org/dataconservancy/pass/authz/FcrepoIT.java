@@ -160,10 +160,4 @@ public abstract class FcrepoIT {
         }
         throw new RuntimeException("Failed executing task", caught);
     }
-
-    public static void main(String[] args) {
-        final String in =
-                "[main] INFO org.dataconservancy.pass.indexer.FedoraIndexerService - Started listening on jms queue Consumer.indexer.VirtualTopic.pass.authz";
-        System.out.println(in.matches(".*?Started listening.*"));
-    }
 }

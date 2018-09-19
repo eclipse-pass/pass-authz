@@ -20,7 +20,6 @@ import static org.dataconservancy.pass.authz.JarRunner.jar;
 import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Ignore.IGNORE_ROOT;
 import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.SKIP_NONE;
 import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.depth;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -30,7 +29,6 @@ import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 
@@ -41,19 +39,14 @@ public class ContainerPermissionsIT extends FcrepoIT {
 
     static CloseableHttpClient client = getHttpClient();
 
-    @Ignore
     @Test
     public void createResourcesIT() throws Exception {
         final RepositoryCrawler crawler = new RepositoryCrawler();
 
         // Delete everything, except ACLS on the root (but DO delete the acls container)
-        final int numContainers = crawler.visit(URI.create(FedoraConfig.getBaseUrl()), FcrepoIT::deleteCompletely,
+        final int numDeleted = crawler.visit(URI.create(FedoraConfig.getBaseUrl()), FcrepoIT::deleteCompletely,
                 IGNORE_ROOT.or(s -> s.id.toString().contains("acl")), SKIP_NONE.or(depth(1)));
-        assertTrue(numContainers > 0);
-
-        // Make sure we deleted
-        assertEquals(0, crawler.visit(URI.create(FedoraConfig.getBaseUrl()), (uri) -> {
-        }, IGNORE_ROOT, SKIP_NONE));
+        assertTrue(numDeleted > 0);
 
         // Now run the jar
         final Process runner = jar(new File(System.getProperty("authz.containerPermissions.jar").toString()))
@@ -70,7 +63,7 @@ public class ContainerPermissionsIT extends FcrepoIT {
         });
 
         assertTrue(crawler.visit(URI.create(FedoraConfig.getBaseUrl()), (uri) -> {
-        }, IGNORE_ROOT, SKIP_NONE) >= numContainers);
+        }, IGNORE_ROOT, SKIP_NONE) >= numDeleted);
 
     }
 }
