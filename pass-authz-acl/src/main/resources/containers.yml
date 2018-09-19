@@ -35,6 +35,13 @@ containers:
       write:
         - pass-backend
 
+  - funders:
+      read: 
+        - admin
+        - submitter
+      write:
+        - pass-backend
+
   - grants:
       read:
         - admin
@@ -87,6 +94,14 @@ containers:
 
   - submissions:
       read: 
+        - admin
+      append:
+        - submitter
+      write:
+        - pass-backend
+
+  - submissionEvents:
+      read:
         - admin
       append:
         - submitter

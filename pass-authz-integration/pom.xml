@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -130,6 +131,7 @@
             <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
             <jms.brokerUrl>failover:(tcp://localhost:${JMS_PORT})?trackMessages=true</jms.brokerUrl>
             <authz.listener.jar>${org.dataconservancy.pass:pass-authz-listener:jar:exe}</authz.listener.jar>
+            <authz.containerPermissions.jar>${org.dataconservancy.pass:pass-authz-tools:jar:container-permissions-exe}</authz.containerPermissions.jar>
             <pass.authz.queue>Consumer.authz.VirtualTopic.pass.authz</pass.authz.queue>
             <jms.username>${activemq.user}</jms.username>
             <jms.password>${activemq.password}</jms.password>
@@ -197,7 +199,12 @@
                 </network>
                 <dependsOn>
                   <container>activemq</container>
+                  <container>fcrepo</container>
+                  <container>elasticsearch</container>
                 </dependsOn>
+                <wait>
+                  <time>10000</time>
+                </wait>
               </run>
             </image>
 
@@ -245,7 +252,6 @@
                 </wait>
                 <dependsOn>
                   <container>activemq</container>
-                  <container>indexer</container>
                 </dependsOn>
               </run>
             </image>
@@ -274,9 +280,6 @@
                   </http>
                   <time>120000</time>
                 </wait>
-                <dependsOn>
-                  <container>indexer</container>
-                </dependsOn>
               </run>
             </image>
 
@@ -355,13 +358,21 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.dataconservancy.pass</groupId>
       <artifactId>pass-authz-listener</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
       <classifier>exe</classifier>
+    </dependency>
+
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-authz-tools</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <classifier>container-permissions-exe</classifier>
     </dependency>
 
     <dependency>

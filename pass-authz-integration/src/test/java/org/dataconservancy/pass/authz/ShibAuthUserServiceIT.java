@@ -37,9 +37,9 @@ import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.model.User;
 
-import org.apache.activemq.util.ByteArrayInputStream;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.fusesource.hawtbuf.ByteArrayInputStream;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -110,7 +110,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         final PassClient passClient = PassClientFactory.getPassClient();
         final URI id = passClient.createResource(newUser);
 
-        attempt(20, () -> Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", "10933511")));
+        attempt(60, () -> Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", "10933511")));
 
         final Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Bugs Bunny");
@@ -162,7 +162,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
             assertIsjsonld(body);
         }
 
-        final URI id = attempt(30, () -> Optional.ofNullable(passClient.findByAttribute(User.class, "localKey",
+        final URI id = attempt(60, () -> Optional.ofNullable(passClient.findByAttribute(User.class, "localKey",
                 shibHeaders
                         .get(SHIB_EMPLOYEE_NUMBER_HEADER))).orElseThrow(() -> new NullPointerException(
                                 "Did not find result from localKey search")));
@@ -216,7 +216,7 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
                 .collect(Collectors.toSet());
 
         Assert.assertEquals(1, created.size());
-        attempt(20, () -> {
+        attempt(60, () -> {
             Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(
                     SHIB_EMPLOYEE_NUMBER_HEADER)));
         });
