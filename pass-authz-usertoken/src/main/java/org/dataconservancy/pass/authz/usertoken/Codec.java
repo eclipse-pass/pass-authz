@@ -100,7 +100,7 @@ class Codec {
         try {
             byteBuffer.get(iv);
         } catch (final BufferUnderflowException e) {
-            throw new RuntimeException("Encountered encrypted data that is likely corrupt", e);
+            throw new BadTokenException("Encountered encrypted data that is likely corrupt", e);
         }
 
         // Get the encrypted bytes
@@ -113,13 +113,13 @@ class Codec {
             cipher = Cipher.getInstance("AES/GCM/NoPadding");
         } catch (final Exception e) {
             // Should never happen unless the JVM's libs don't support the spec
-            throw new RuntimeException("Error initializing token cipher");
+            throw new BadTokenException("Error initializing token cipher");
         }
 
         try {
             cipher.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
         } catch (final InvalidAlgorithmParameterException e) {
-            throw new RuntimeException("Encountered encrypted data that is likely corrupt", e);
+            throw new BadTokenException("Encountered encrypted data that is likely corrupt", e);
         } catch (final InvalidKeyException e) {
             throw new RuntimeException("Bad decryption key", e);
         }
@@ -127,7 +127,7 @@ class Codec {
         try {
             return new String(cipher.doFinal(cipherText));
         } catch (BadPaddingException | IllegalBlockSizeException e) {
-            throw new RuntimeException("Encountered encrypted data that is likely corrupt", e);
+            throw new BadTokenException("Encountered encrypted data that is likely corrupt", e);
         }
     }
 }

@@ -27,6 +27,8 @@ import org.apache.commons.codec.binary.Base32;
  */
 public class Key {
 
+    public static final String USER_TOKEN_KEY_PROPERTY = "pass.user.token.key";
+
     final byte[] bytes;
 
     static final Base32 base32 = new Base32();

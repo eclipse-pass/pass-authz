@@ -16,17 +16,14 @@
 
 package org.dataconservancy.pass.authz;
 
-import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Ignore.IGNORE_CONTAINERS;
-import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.SKIP_ACLS;
-import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.depth;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Callable;
 
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
-import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -71,8 +68,7 @@ public abstract class FcrepoIT {
 
     @AfterClass
     public static void cleanUp() {
-        new RepositoryCrawler().visit(URI.create(FedoraConfig.getBaseUrl()), FcrepoIT::deleteCompletely,
-                IGNORE_CONTAINERS.or(s -> s.id.toString().contains("acl")), SKIP_ACLS.or(depth(2)));
+        PassClientFactory.getPassClient().processAllEntities(FcrepoIT::deleteCompletely);
     }
 
     static void deleteCompletely(URI resource) {

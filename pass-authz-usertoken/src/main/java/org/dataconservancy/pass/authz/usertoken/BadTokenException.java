@@ -16,33 +16,19 @@
 
 package org.dataconservancy.pass.authz.usertoken;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
 /**
  * @author apb@jhu.edu
  */
-public class CodecTest {
+public class BadTokenException extends RuntimeException {
 
-    final Codec codec = new Codec(Key.generate());
+    private static final long serialVersionUID = 1L;
 
-    @Test
-    public void roundTripTest() {
-
-        final String TEXT = "Hello there";
-
-        assertEquals(TEXT, codec.decrypt(codec.encrypt(TEXT)));
+    public BadTokenException(String message) {
+        super(message);
     }
 
-    @Test(expected = BadTokenException.class)
-    public void badDataTest() {
-        codec.decrypt("NOOO");
+    public BadTokenException(String message, Throwable e) {
+        super(message, e);
     }
 
-    @Test(expected = BadTokenException.class)
-    public void truncatedDataTest() {
-        final String encrypted = codec.encrypt("Hello");
-        codec.decrypt(encrypted.substring(0, encrypted.length() - 1));
-    }
 }

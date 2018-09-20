@@ -75,11 +75,11 @@ public class ConfigUtil {
         return key.replaceFirst("^" + prefix, "").replaceFirst(".", "");
     }
 
-    static String toPropName(String name) {
+    public static String toPropName(String name) {
         return name.toLowerCase().replace('_', '.');
     }
 
-    static String toEnvName(String name) {
+    public static String toEnvName(String name) {
         return name.toUpperCase().replace('.', '_');
     }
 }

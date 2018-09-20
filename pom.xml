@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.dataconservancy.pass</groupId>
@@ -31,6 +32,7 @@
     <slf4j.version>1.7.25</slf4j.version>
     <apache.log.api>2.9.1</apache.log.api>
     <activemq.version>5.14.4</activemq.version>
+    <system.rules.version>1.18.0</system.rules.version>
     <json.version>20180130</json.version>
 
     <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
@@ -152,7 +154,7 @@
         <artifactId>jackson-databind</artifactId>
         <version>${jackson.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-client</artifactId>
@@ -208,7 +210,7 @@
         <artifactId>log4j-to-slf4j</artifactId>
         <version>${apache.log.api}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
@@ -233,6 +235,13 @@
             <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>com.github.stefanbirkner</groupId>
+        <artifactId>system-rules</artifactId>
+        <version>${system.rules.version}</version>
+        <scope>test</scope>
       </dependency>
 
     </dependencies>
