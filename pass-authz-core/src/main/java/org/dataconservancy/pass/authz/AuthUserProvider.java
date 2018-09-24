@@ -1,4 +1,5 @@
 /*
+
  * Copyright 2017 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +37,9 @@ public interface AuthUserProvider {
      * @param request the curent http request.
      * @return
      */
-    AuthUser getUser(HttpServletRequest request);
+    public default AuthUser getUser(HttpServletRequest request) {
+        return getUser(request, a -> a, true);
+    }
 
     /**
      * Get the authenticated user, and filter the result before returning. *
@@ -48,13 +51,11 @@ public interface AuthUserProvider {
      *
      * @param request
      * @param filterWhenDone
+     * @param allowCached If true, then the implementation may return a cached result (this potentially NOT executing
+     *        the function). Otherwise, if false, the implementation MAY cache the result. But if it does, it MUST
+     *        cache the result AFTER having applied the provided function.
      * @return
      */
-    public default AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> filterWhenDone) {
-        if (filterWhenDone != null) {
-            return filterWhenDone.apply(getUser(request));
-        } else {
-            return getUser(request);
-        }
-    }
+    public AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> filterWhenDone,
+            boolean allowCached);
 }

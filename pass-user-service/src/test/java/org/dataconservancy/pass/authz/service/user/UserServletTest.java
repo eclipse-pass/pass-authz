@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.UUID;
+import java.util.function.Function;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
@@ -37,6 +40,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
+import org.dataconservancy.pass.authz.usertoken.Key;
+import org.dataconservancy.pass.authz.usertoken.TokenFactory;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
@@ -69,6 +74,9 @@ public class UserServletTest {
     private HttpServletResponse response;
 
     @Mock
+    private AuthUserProvider userProvider;
+
+    @Mock
     PassClient client;
 
     @Captor
@@ -79,6 +87,10 @@ public class UserServletTest {
     ByteArrayOutputStream output;
 
     UserServlet servlet;
+
+    Key key = Key.generate();
+
+    TokenFactory tokenFactory = new TokenFactory(key);
 
     @Before
     public void setUp() throws Exception {
@@ -91,7 +103,21 @@ public class UserServletTest {
         USER.setEmail("bessie@farm.com");
         USER.setEmployeeId("08675309");
 
+        final User user = new User();
+        user.setId(URI.create("http://example.org:2020/" + UUID.randomUUID().toString()));
+        user.setUsername(USER.getPrincipal());
+        user.setDisplayName(USER.getName());
+        user.setEmail(USER.getEmail());
+        user.setInstitutionalId(USER.getInstitutionalId());
+        user.setLocalKey(USER.getEmployeeId());
+        user.setRoles(Arrays.asList(Role.ADMIN));
+        USER.setUser(user);
+        USER.setId(user.getId());
+        when(client.readResource(eq(user.getId()), eq(User.class))).thenReturn(user);
+
         output = new ByteArrayOutputStream();
+
+        // when(response.getWriter()).thenReturn(new PrintWriter(output));
 
         when(response.getOutputStream()).thenReturn(new ServletOutputStream() {
 
@@ -112,14 +138,14 @@ public class UserServletTest {
             }
         });
 
-        servlet = new UserServlet();
-        servlet.provider = new AuthUserProvider() {
+        when(userProvider.getUser(any(), any(), anyBoolean())).thenAnswer(i -> {
+            final Function<AuthUser, AuthUser> criticalSection = i.getArgument(1);
+            return criticalSection.apply(USER);
+        });
 
-            @Override
-            public AuthUser getUser(HttpServletRequest request) {
-                return USER;
-            }
-        };
+        servlet = new UserServlet();
+        servlet.tokenService = new TokenService(tokenFactory, client);
+        servlet.provider = userProvider;
         servlet.fedoraClient = client;
     }
 
@@ -192,26 +218,13 @@ public class UserServletTest {
 
     @Test
     public void noUpdatesNeededTest() throws Exception {
-        final URI foundId = URI.create("http://example.org/moo!");
-
-        USER.setId(foundId);
-
-        final User found = new User();
-        found.setId(foundId);
-        found.setUsername(USER.getPrincipal());
-        found.setDisplayName(USER.getName());
-        found.setEmail(USER.getEmail());
-        found.setInstitutionalId(USER.getInstitutionalId());
-        found.setLocalKey(USER.getEmployeeId());
-        found.setRoles(Arrays.asList(Role.ADMIN));
-        when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
 
         servlet.doGet(request, response);
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
                 User.class);
 
-        assertEquals(foundId, fromServlet.getId());
+        assertEquals(USER.getUser().getId(), fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
@@ -255,29 +268,16 @@ public class UserServletTest {
 
     @Test
     public void hostSubstitutionTest() throws Exception {
-        final URI foundId = URI.create("http://example.org:2020/moo!");
-
-        USER.setId(foundId);
 
         when(request.getHeader("host")).thenReturn("foo.org");
-
-        final User found = new User();
-        found.setUsername(USER.getPrincipal());
-        found.setId(foundId);
-        found.setDisplayName(USER.getName());
-        found.setEmail(USER.getEmail());
-        found.setInstitutionalId(USER.getInstitutionalId());
-        found.setLocalKey(USER.getEmployeeId());
-        found.setRoles(Arrays.asList(Role.ADMIN));
-        when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
 
         servlet.doGet(request, response);
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
                 User.class);
 
-        assertNotEquals(foundId, fromServlet.getId());
-        assertTrue(fromServlet.getId().toString().startsWith("http://foo.org/moo"));
+        assertNotEquals(USER.getId(), fromServlet.getId());
+        assertTrue(fromServlet.getId().toString().startsWith("http://foo.org/"));
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
@@ -288,28 +288,15 @@ public class UserServletTest {
 
     @Test
     public void sameHostSubstitutionTest() throws Exception {
-        final URI foundId = URI.create("http://example.org:2020/moo!");
 
-        USER.setId(foundId);
-
-        when(request.getHeader("host")).thenReturn("example.org:2020");
-
-        final User found = new User();
-        found.setId(foundId);
-        found.setUsername(USER.getPrincipal());
-        found.setDisplayName(USER.getName());
-        found.setEmail(USER.getEmail());
-        found.setInstitutionalId(USER.getInstitutionalId());
-        found.setLocalKey(USER.getEmployeeId());
-        found.setRoles(Arrays.asList(Role.ADMIN));
-        when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
+        when(request.getHeader("host")).thenReturn(USER.getId().getAuthority());
 
         servlet.doGet(request, response);
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
                 User.class);
 
-        assertEquals(foundId, fromServlet.getId());
+        assertEquals(USER.getId(), fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());

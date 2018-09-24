@@ -315,7 +315,7 @@ public class ShibAuthUserProviderTest {
         });
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
-        final AuthUser authUser = underTest.getUser(request, doAfter);
+        final AuthUser authUser = underTest.getUser(request, doAfter, true);
         assertNotNull(underTest.userCache.get(employeeId));
 
         assertEquals(foundUser, authUser.getUser());
@@ -341,7 +341,7 @@ public class ShibAuthUserProviderTest {
         });
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
-        final AuthUser authUser = underTest.getUser(request, doAfter);
+        final AuthUser authUser = underTest.getUser(request, doAfter, true);
         assertNotNull(authUser);
         assertNull(underTest.userCache.get(employeeId));
     }

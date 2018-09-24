@@ -89,12 +89,27 @@ public class ExpiringLRUCache<K, V> {
      * @return The cached or generated value.
      */
     public V getOrDo(K key, Callable<V> generator) {
+        return getOrDo(key, generator, false);
+    }
+
+    /**
+     * Call a generator to populate the cache, regardless of whether there is already a cached value or not.
+     *
+     * @param key
+     * @param generator
+     * @return
+     */
+    public V doAndCache(K key, Callable<V> generator) {
+        return getOrDo(key, generator, true);
+    }
+
+    private V getOrDo(K key, Callable<V> generator, boolean forceGenerate) {
 
         final Future<V> result;
         boolean cached = true;
         synchronized (cache) {
 
-            if (cache.containsKey(key)) {
+            if (cache.containsKey(key) && !forceGenerate) {
                 result = cache.get(key);
                 cached = true;
             } else {

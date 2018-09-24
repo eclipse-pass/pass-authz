@@ -52,7 +52,6 @@ class TokenService {
     public TokenService() {
         tokenFactory = ofNullable(getSystemProperty(USER_TOKEN_KEY_PROPERTY, null)).map(TokenFactory::new).orElse(
                 null);
-        System.out.println("TokenFactory is " + tokenFactory);
         client = PassClientFactory.getPassClient();
     }
 
