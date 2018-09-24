@@ -75,30 +75,6 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
             .build();
 
     @Test
-    public void testGivenUserDoesNotExistNotFacultyReturns401() throws Exception {
-
-        final Map<String, String> shibHeaders = new HashMap<>();
-        shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Elmer Fudd");
-        shibHeaders.put(SHIB_MAIL_HEADER, "elmer@jhu.edu");
-        shibHeaders.put(SHIB_EPPN_HEADER, "efudd1@jhu.edu");
-        shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "HUNTER;MILLIONAIRE");
-        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "HUNTER@jhu.edu;MILLIONAIRE@jhu.edu");
-        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "08675309");
-
-        final Request get = buildShibRequest(shibHeaders);
-        try (Response response = httpClient.newCall(get).execute()) {
-            Assert.assertEquals(401, response.code());
-            Assert.assertEquals("Unauthorized", response.body().string());
-        }
-
-        final PassClient passClient = PassClientFactory.getPassClient();
-        attempt(20, () -> {
-            Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(
-                    SHIB_EMPLOYEE_NUMBER_HEADER)));
-        });
-    }
-
-    @Test
     public void testGivenUserDoesExistReturns200() throws Exception {
 
         final User newUser = new User();

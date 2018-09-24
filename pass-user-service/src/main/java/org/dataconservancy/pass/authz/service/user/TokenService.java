@@ -62,11 +62,11 @@ class TokenService {
 
     Token fromQueryString(String token) {
 
-        if (tokenFactory == null) {
-            throw new BadTokenException("Server is not set up to process user tokens, please do not provide one");
-        } else if (token == null) {
+        if (token == null) {
             LOG.debug("No query string, therefore no user token");
             return null;
+        } else if (tokenFactory == null) {
+            throw new BadTokenException("Server is not set up to process user tokens, please do not provide one");
         }
 
         final URI uri = URI.create("?" + token);
