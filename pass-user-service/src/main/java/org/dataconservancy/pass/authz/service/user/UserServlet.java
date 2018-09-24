@@ -101,21 +101,22 @@ public class UserServlet extends HttpServlet {
 
                 // This is the critical section of the user service.
                 // If we need to create a user, do it. Otherwise update.
-                if (authUser.getId() == null && authUser.isFaculty()) {
+                final AuthUser u;
+                if (authUser.getId() == null) {
                     LOG.debug("Creating new user");
-                    return createUser(authUser);
-                } else if (authUser.getId() != null) {
+                    u = createUser(authUser);
+                } else {
                     LOG.debug("Updating user");
-                    return updateUser(authUser);
+                    u = updateUser(authUser);
                 }
 
                 // If there is a user token, apply it to the submission.
                 if (usertoken != null) {
-                    applyUserToken(usertoken, authUser.getUser());
+                    applyUserToken(usertoken, u.getUser());
                 }
 
                 LOG.debug("Exiting critical section");
-                return authUser;
+                return u;
 
             }, usertoken == null);
         } catch (final BadTokenException e) {

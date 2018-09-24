@@ -65,7 +65,7 @@ class TokenService {
         if (tokenFactory == null) {
             throw new BadTokenException("Server is not set up to process user tokens, please do not provide one");
         } else if (token == null) {
-            LOG.debug("No query stream, therefore no user token");
+            LOG.debug("No query string, therefore no user token");
             return null;
         }
 
