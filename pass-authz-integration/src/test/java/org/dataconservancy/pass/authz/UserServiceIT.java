@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Johns Hopkins University
+ * Copyright 2018 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ public class UserServiceIT extends FcrepoIT {
         }
     }
 
-    /* Makes sure that only one new user is created in the fase of multiple concurrent requests */
+    /* Makes sure that only one new user is created in the face of multiple concurrent requests */
     @Test
     public void testConcurrentNewUser() throws Exception {
         final ExecutorService exe = Executors.newFixedThreadPool(8);

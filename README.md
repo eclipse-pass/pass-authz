@@ -105,7 +105,7 @@ Likewise, it's possible to decode URIs containing encoded tokens
 
 ## pass-user-service
 
-The User service is an http servlet, intended to be deployed in the same servlet container in Fedora, which serves three functions:
+The User service is an http servlet, intended to be deployed in the same servlet container as Fedora, which serves three functions:
 
 1. Find the `User` resource that corresponds to the authenticated user making the request.  This is essential for Ember to discover the indentity of the logged-in user.  It achieves this by examining the headers that are present as attributes released by Shibboleth, then querying the repository based on that.
 2. Create new `User`s if there is  `User` corresponding to the authenticated requester.
