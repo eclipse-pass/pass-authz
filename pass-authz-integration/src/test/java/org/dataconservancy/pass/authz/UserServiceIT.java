@@ -16,6 +16,9 @@
 
 package org.dataconservancy.pass.authz;
 
+import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
+
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -27,14 +30,20 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.dataconservancy.pass.authz.acl.ACLManager;
+import org.dataconservancy.pass.authz.usertoken.Key;
+import org.dataconservancy.pass.authz.usertoken.Token;
+import org.dataconservancy.pass.authz.usertoken.TokenFactory;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.PassJsonAdapter;
 import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
-import org.dataconservancy.pass.client.fedora.FedoraConfig;
+import org.dataconservancy.pass.client.util.ConfigUtil;
+import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.User;
 
 import org.apache.jena.rdf.model.Model;
@@ -46,12 +55,13 @@ import org.junit.Test;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
  * @author apb@jhu.edu
  */
-public class ShibAuthUserServiceIT extends FcrepoIT {
+public class UserServiceIT extends FcrepoIT {
 
     private static final String SHIB_DISPLAYNAME_HEADER = "Displayname";
 
@@ -152,6 +162,84 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
 
     }
 
+    @Test
+    public void tokenAfterLoginTest() throws Exception {
+
+        // This will first visit the user service without a token (to create a User), then later on invoke the user
+        // service with a token.
+        doTokenTest(true);
+    }
+
+    @Test
+    public void tokenTest() throws Exception {
+
+        // Simply invoke the user service with a token from the start.
+        doTokenTest(false);
+    }
+
+    private void doTokenTest(boolean loginFirst) throws Exception {
+        final Map<String, String> shibHeaders = new HashMap<>();
+        shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Daffy Duck");
+        shibHeaders.put(SHIB_MAIL_HEADER, "daffy@jhu.edu");
+        shibHeaders.put(SHIB_EPPN_HEADER, "dduck1@jhu.edu");
+        shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "TARGET;STAFF");
+        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;STAFF@jhmi.edu");
+        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, Integer.toString(ThreadLocalRandom.current().nextInt(1000,
+                99999)));
+
+        Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(
+                SHIB_EMPLOYEE_NUMBER_HEADER)));
+
+        final URI MAILTO_PLACEHOLDER = URI.create("mailto:Daffy%20Duck%20%3Cdduck%40gmail.com%3E");
+
+        // First, add a new submission, and make it writable by someone else;
+        final Submission submission = new Submission();
+        submission.setSubmitter(MAILTO_PLACEHOLDER);
+        final URI SUBMISSION_URI = passClient.createResource(submission);
+        new ACLManager().setPermissions(SUBMISSION_URI).grantWrite(asList(URI.create(
+                "http://example.org/nobody"))).perform();
+
+        // Next, if desired try to log in to the user service first, without a token. This will create a User.
+        if (loginFirst) {
+            try (Response response = httpClient.newCall(buildShibRequest(shibHeaders)).execute()) {
+                final byte[] body = response.body().bytes();
+                json.toModel(body, User.class);
+                Assert.assertEquals(200, response.code());
+                assertIsjsonld(body);
+            }
+        }
+
+        // We're going to use this request (an empty POST) to test whether we can write to a submission or not.
+        final Request tryWrite = buildShibRequest(new Request.Builder()
+                .post(RequestBody.create(null, "")),
+                shibHeaders, SUBMISSION_URI, null);
+
+        // Then, verify that a user the user can't write
+        try (Response response = httpClient.newCall(tryWrite).execute()) {
+            assertEquals(403, response.code());
+            response.body().bytes();
+        }
+
+        // Next, give the user service a token.
+        final Token token = new TokenFactory(ConfigUtil.getSystemProperty(Key.USER_TOKEN_KEY_PROPERTY,
+                "BETKPFHWGGDIEWIIYKYQ33LUS4"))
+                        .forPassResource(SUBMISSION_URI).withReference(MAILTO_PLACEHOLDER);
+
+        final Request userServiceWithToken = buildShibRequest(shibHeaders, token);
+        try (Response response = httpClient.newCall(userServiceWithToken).execute()) {
+            final byte[] body = response.body().bytes();
+            Assert.assertEquals(new String(body), 200, response.code());
+            json.toModel(body, User.class);
+            assertIsjsonld(body);
+        }
+
+        // Lastly, verify that a user the user can now write
+        try (Response response = httpClient.newCall(tryWrite).execute()) {
+            assertEquals("Failed writing to " + SUBMISSION_URI, 201, response.code());
+            response.body().bytes();
+        }
+    }
+
     /* Makes sure that only one new user is created in the fase of multiple concurrent requests */
     @Test
     public void testConcurrentNewUser() throws Exception {
@@ -200,10 +288,21 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
         exe.shutdown();
     }
 
-    private Request buildShibRequest(Map<String, String> headers) throws MalformedURLException {
-        final String fedora_credentials = Credentials.basic(FedoraConfig.getUserName(), FedoraConfig.getPassword());
-        return new Request.Builder().url(USER_SERVICE_URI.toURL())
-                .header("Authorization", fedora_credentials)
+    private Request buildShibRequest(Request.Builder builder, Map<String, String> headers, URI uri, Token token)
+            throws MalformedURLException {
+
+        final URI requestUri;
+
+        if (token != null) {
+            requestUri = token.addTo(uri);
+        } else {
+            requestUri = uri;
+        }
+
+        // Add the shib headers, and use a non-privileged Tomcat account to bypass Tomcat auth, yet be subject to the
+        // roles filter and fcrepo auth.
+        return builder.url(requestUri.toURL())
+                .header("Authorization", Credentials.basic("user", "moo"))
                 .header(SHIB_DISPLAYNAME_HEADER, headers.get(SHIB_DISPLAYNAME_HEADER))
                 .header(SHIB_MAIL_HEADER, headers.get(SHIB_MAIL_HEADER))
                 .header(SHIB_EPPN_HEADER, headers.get(SHIB_EPPN_HEADER))
@@ -211,6 +310,15 @@ public class ShibAuthUserServiceIT extends FcrepoIT {
                 .header(SHIB_SCOPED_AFFILIATION_HEADER, headers.get(SHIB_SCOPED_AFFILIATION_HEADER))
                 .header(SHIB_EMPLOYEE_NUMBER_HEADER, headers.get(SHIB_EMPLOYEE_NUMBER_HEADER))
                 .build();
+    }
+
+    private Request buildShibRequest(Map<String, String> headers) throws MalformedURLException {
+        return buildShibRequest(new Request.Builder(),
+                headers, USER_SERVICE_URI, null);
+    }
+
+    private Request buildShibRequest(Map<String, String> headers, Token token) throws MalformedURLException {
+        return buildShibRequest(new Request.Builder(), headers, USER_SERVICE_URI, token);
     }
 
     // Just make sure a body is parseable as jsonld, we really don't care what's in it, just that it has some

@@ -31,11 +31,14 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 /**
  * @author apb@jhu.edu
@@ -63,6 +66,23 @@ public abstract class FcrepoIT {
 
         if (System.getProperty("pass.elasticsearch.url") == null) {
             System.setProperty("pass.elasticsearch.url", "http://localhost:9200/pass/");
+        }
+    }
+
+    @BeforeClass
+    public static void addAclContainer() throws Exception {
+        final HttpPut put = new HttpPut(FCREPO_BASE_URI + System.getProperty("acl.base", "acls"));
+        final HttpHead head = new HttpHead(put.getURI());
+
+        final int code = client.execute(head, r -> {
+            return r.getStatusLine().getStatusCode();
+        });
+
+        if (code == 404) {
+            client.execute(put, r -> {
+                assertSuccess(r);
+                return URI.create(r.getFirstHeader("Location").getValue());
+            });
         }
     }
 

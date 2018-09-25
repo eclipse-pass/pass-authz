@@ -23,6 +23,7 @@
     <fcrepo.version>4.7.5</fcrepo.version>
     <jackson.version>2.9.5</jackson.version>
     <javax.servlet.version>3.1.0</javax.servlet.version>
+    <jena.version>3.8.0</jena.version>
     <junit.version>4.12</junit.version>
     <logback.version>1.2.3</logback.version>
     <mockito.version>2.18.0</mockito.version>
@@ -159,6 +160,12 @@
         <groupId>org.apache.activemq</groupId>
         <artifactId>activemq-client</artifactId>
         <version>${activemq.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.jena</groupId>
+        <artifactId>jena-arq</artifactId>
+        <version>${jena.version}</version>
       </dependency>
 
       <dependency>

@@ -30,6 +30,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.function.Function;
@@ -344,6 +346,32 @@ public class ShibAuthUserProviderTest {
         final AuthUser authUser = underTest.getUser(request, doAfter, true);
         assertNotNull(authUser);
         assertNull(underTest.userCache.get(employeeId));
+    }
+
+    @Test
+    public void forceComputationTest() {
+        final String displayName = "Bessie Cow";
+        final String emailAddress = "bessie@farm.com";
+        final String eppn = "bcow666@jhu.edu";
+        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
+        final String employeeId = "12345678";
+
+        when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
+        when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
+        when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
+        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+
+        when(doAfter.apply(any())).thenAnswer(i -> {
+            final AuthUser u = i.getArgument(0);
+            return u;
+        });
+
+        final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client, mockCache);
+        final AuthUser authUser = underTest.getUser(request, doAfter, false);
+        assertNotNull(authUser);
+        verify(mockCache, times(1)).doAndCache(eq(employeeId), any());
+        verify(mockCache, times(0)).getOrDo(any(), any());
     }
 
 }

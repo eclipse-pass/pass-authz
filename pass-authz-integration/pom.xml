@@ -15,6 +15,7 @@
     <ES_HOST>localhost</ES_HOST>
     <activemq.user>messaging</activemq.user>
     <activemq.password>moo</activemq.password>
+    <pass.user.token.key>BETKPFHWGGDIEWIIYKYQ33LUS4</pass.user.token.key>
   </properties>
 
 
@@ -138,6 +139,7 @@
             <pass.backend.role>http://oapass.org/ns/roles/johnshopkins.edu#pass-backend</pass.backend.role>
             <pass.grantadmin.role>http://oapass.org/ns/roles/johnshopkins.edu#admin</pass.grantadmin.role>
             <pass.submitter.role>http://oapass.org/ns/roles/johnshopkins.edu#submitter</pass.submitter.role>
+            <pass.user.token.key>${pass.user.token.key}</pass.user.token.key>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -227,6 +229,7 @@
                   <PASS_ELASTICSEARCH_URL>http://elasticsearch:9200</PASS_ELASTICSEARCH_URL>
                   <PASS_FEDORA_USER>fedoraAdmin</PASS_FEDORA_USER>
                   <PASS_FEDORA_PASSWORD>moo</PASS_FEDORA_PASSWORD>
+                  <PASS_USER_TOKEN_KEY>${pass.user.token.key}</PASS_USER_TOKEN_KEY>
                   <AUTHZ_SHIB_USE_HEADERS>true</AUTHZ_SHIB_USE_HEADERS>
                   <AUTHZ_ALLOW_EXTERNAL_ROLES>true</AUTHZ_ALLOW_EXTERNAL_ROLES>
                   <FCREPO_JMS_CONFIGURATION>classpath:/pass-jms-external.xml</FCREPO_JMS_CONFIGURATION>
@@ -373,6 +376,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
       <classifier>container-permissions-exe</classifier>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-authz-usertoken</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
