@@ -250,11 +250,13 @@ public class ACLManager {
 
         public Builder grantWrite(Collection<URI> roles) {
             write.addAll(roles);
+            read.addAll(roles);
             return this;
         }
 
         public Builder grantAppend(Collection<URI> roles) {
             write.addAll(roles);
+            read.addAll(roles);
             return this;
         }
 
@@ -361,7 +363,7 @@ public class ACLManager {
             try (FcrepoResponse response = repo.post(acls)
                     .body(this.getClass().getResourceAsStream("/acl.ttl"), "text/turtle")
                     .perform()) {
-                onErrorThrow(response, "Error creating acl");
+                onErrorThrow(response, "Error creating acl by POSTing to " + acls);
                 acl = response.getLocation();
             }
 

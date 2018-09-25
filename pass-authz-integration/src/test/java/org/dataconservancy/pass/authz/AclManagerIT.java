@@ -29,11 +29,8 @@ import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
 import org.dataconservancy.pass.authz.acl.ACLManager;
 
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -52,23 +49,6 @@ public class AclManagerIT extends FcrepoIT {
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
 
     ACLManager toTest = new ACLManager(new FcrepoClientBuilder().credentials("fedoraAdmin", "moo").build());
-
-    @BeforeClass
-    public static void addAclContainer() throws Exception {
-        final HttpPut put = new HttpPut(FCREPO_BASE_URI + System.getProperty("acl.base", "acls"));
-        final HttpHead head = new HttpHead(put.getURI());
-
-        final int code = http.execute(head, r -> {
-            return r.getStatusLine().getStatusCode();
-        });
-
-        if (code == 404) {
-            http.execute(put, r -> {
-                assertSuccess(r);
-                return URI.create(r.getFirstHeader("Location").getValue());
-            });
-        }
-    }
 
     @Test
     public void addAndUpdateAclTest() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Johns Hopkins University
+ * Copyright 2018 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.authz.LogUtil;
 import org.dataconservancy.pass.authz.ShibAuthUserProvider;
+import org.dataconservancy.pass.authz.usertoken.BadTokenException;
+import org.dataconservancy.pass.authz.usertoken.Token;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.PassJsonAdapter;
@@ -59,6 +61,8 @@ public class UserServlet extends HttpServlet {
 
     AuthUserProvider provider = new ShibAuthUserProvider(fedoraClient);
 
+    TokenService tokenService = new TokenService();
+
     static {
         LogUtil.adjustLogLevels();
     }
@@ -67,6 +71,7 @@ public class UserServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
 
+        LOG.info("Publishing authUserProvider to servlet context");
         getServletContext().setAttribute("authUserProvider", provider);
     }
 
@@ -86,24 +91,42 @@ public class UserServlet extends HttpServlet {
 
         LOG.debug("Servicing new request");
 
-        final AuthUser shibUser = provider.getUser(request, authUser -> {
+        final Token usertoken = tokenService.fromQueryString(request.getQueryString());
 
-            LOG.debug("Entering critical section");
+        final AuthUser shibUser;
+        try {
+            shibUser = provider.getUser(request, authUser -> {
 
-            // This is the critical section of the user service.
-            // If we need to create a user, do it. Otherwise update.
-            if (authUser.getId() == null && authUser.isFaculty()) {
-                LOG.debug("Creating new user");
-                return createUser(authUser);
-            } else if (authUser.getId() != null) {
-                LOG.debug("Updating user");
-                return updateUser(authUser);
+                LOG.debug("Entering critical section");
+
+                // This is the critical section of the user service.
+                // If we need to create a user, do it. Otherwise update.
+                final AuthUser u;
+                if (authUser.getId() == null) {
+                    LOG.debug("Creating new user");
+                    u = createUser(authUser);
+                } else {
+                    LOG.debug("Updating user");
+                    u = updateUser(authUser);
+                }
+
+                // If there is a user token, apply it to the submission.
+                if (usertoken != null) {
+                    applyUserToken(usertoken, u.getUser());
+                }
+
+                LOG.debug("Exiting critical section");
+                return u;
+
+            }, usertoken == null);
+        } catch (final BadTokenException e) {
+            try (Writer out = response.getWriter()) {
+                LOG.warn("Sending 400 response due to token exception", e);
+                response.setStatus(400);
+                out.append(e.getMessage());
             }
-
-            LOG.debug("Exiting critical section");
-            return authUser;
-
-        });
+            return;
+        }
 
         // At this point, any eligible person will have an up to date User object in Fedora
         // if the person is not eligible, the shib user ID will be null
@@ -123,6 +146,12 @@ public class UserServlet extends HttpServlet {
                 out.write(json.toJson(user, true));
                 response.setStatus(200);
             }
+        }
+    }
+
+    private void applyUserToken(Token token, User user) {
+        if (tokenService.replacePlaceholder(user, token)) {
+            tokenService.addWritePermissions(user, token);
         }
     }
 

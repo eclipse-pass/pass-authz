@@ -24,6 +24,7 @@ import static org.dataconservancy.pass.authz.ConfigUtil.getValue;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Enumeration;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import javax.servlet.http.HttpServletRequest;
@@ -85,11 +86,6 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         userCache = cache;
     }
 
-    @Override
-    public AuthUser getUser(HttpServletRequest request) {
-        return getUser(request, (u) -> u);
-    }
-
     /**
      * This method reads the shib headers and uses the values to populate an {@link AuthUser} object, which is
      * consumed by the {@code UserServlet} to build a {@code User} object for the back-end storage system.
@@ -98,7 +94,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
      * @return the populated AuthUser
      */
     @Override
-    public AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> doAfter) {
+    public AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> doAfter, boolean allowCached) {
 
         boolean isFaculty = false;
 
@@ -155,32 +151,38 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         if (employeeId != null) {
             LOG.debug("Looking up User based in employeeId '{}'", employeeId);
             try {
-                authUser.setUser(userCache.getOrDo(employeeId,
-                        () -> {
 
-                            // Critical section, only executed for a cache miss.
-                            //
-                            // We look to see if the user exists, then execute any
-                            // doAfter filters in the critical section
-                            // (e.g. User service creating or updating users).
-                            // If the doAter filter has populated the User field, then
-                            // cache it. Otherwise, don't cache anything.
+                final Callable<User> criticalSection = () -> {
 
-                            authUser.setId(findUserId(employeeId));
-                            final AuthUser filtered = doAfter.apply(authUser);
+                    // Critical section, only executed for a cache miss.
+                    //
+                    // We look to see if the user exists, then execute any
+                    // doAfter filters in the critical section
+                    // (e.g. User service creating or updating users).
+                    // If the doAter filter has populated the User field, then
+                    // cache it. Otherwise, don't cache anything.
 
-                            if (filtered.getUser() != null) {
+                    authUser.setId(findUserId(employeeId));
+                    final AuthUser filtered = doAfter.apply(authUser);
 
-                                // Return the User, it'll be cached.
-                                LOG.debug("doAfter filter supplied a User resource");
-                                return filtered.getUser();
-                            } else {
+                    if (filtered.getUser() != null) {
 
-                                // Return null so that this entry is not cached.
-                                LOG.debug("doAfter filter did NOT supply a User resource");
-                                return null;
-                            }
-                        }));
+                        // Return the User, it'll be cached.
+                        LOG.debug("doAfter filter supplied a User resource");
+                        return filtered.getUser();
+                    } else {
+
+                        // Return null so that this entry is not cached.
+                        LOG.debug("doAfter filter did NOT supply a User resource");
+                        return null;
+                    }
+                };
+
+                if (allowCached) {
+                    authUser.setUser(userCache.getOrDo(employeeId, criticalSection));
+                } else {
+                    authUser.setUser(userCache.doAndCache(employeeId, criticalSection));
+                }
 
                 // Populate the authUser ID for Users resulting from cache hits.
                 if (authUser.getUser() != null) {

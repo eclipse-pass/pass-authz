@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Johns Hopkins University
+ * Copyright 2018 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.UUID;
+import java.util.function.Function;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
@@ -37,7 +42,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
+import org.dataconservancy.pass.authz.usertoken.BadTokenException;
+import org.dataconservancy.pass.authz.usertoken.Token;
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.PassJsonAdapter;
+import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
 
@@ -69,7 +78,16 @@ public class UserServletTest {
     private HttpServletResponse response;
 
     @Mock
+    private AuthUserProvider userProvider;
+
+    @Mock
     PassClient client;
+
+    @Mock
+    TokenService tokenService;
+
+    @Mock
+    Token token;
 
     @Captor
     ArgumentCaptor<User> userCaptor;
@@ -79,6 +97,8 @@ public class UserServletTest {
     ByteArrayOutputStream output;
 
     UserServlet servlet;
+
+    PassJsonAdapter json = new PassJsonAdapterBasic();
 
     @Before
     public void setUp() throws Exception {
@@ -91,7 +111,21 @@ public class UserServletTest {
         USER.setEmail("bessie@farm.com");
         USER.setEmployeeId("08675309");
 
+        final User user = new User();
+        user.setId(URI.create("http://example.org:2020/" + UUID.randomUUID().toString()));
+        user.setUsername(USER.getPrincipal());
+        user.setDisplayName(USER.getName());
+        user.setEmail(USER.getEmail());
+        user.setInstitutionalId(USER.getInstitutionalId());
+        user.setLocalKey(USER.getEmployeeId());
+        user.setRoles(Arrays.asList(Role.ADMIN));
+        USER.setUser(user);
+        USER.setId(user.getId());
+        when(client.readResource(eq(user.getId()), eq(User.class))).thenReturn(user);
+
         output = new ByteArrayOutputStream();
+
+        when(response.getWriter()).thenReturn(new PrintWriter(output));
 
         when(response.getOutputStream()).thenReturn(new ServletOutputStream() {
 
@@ -112,14 +146,14 @@ public class UserServletTest {
             }
         });
 
-        servlet = new UserServlet();
-        servlet.provider = new AuthUserProvider() {
+        when(userProvider.getUser(any(), any(), anyBoolean())).thenAnswer(i -> {
+            final Function<AuthUser, AuthUser> criticalSection = i.getArgument(1);
+            return criticalSection.apply(USER);
+        });
 
-            @Override
-            public AuthUser getUser(HttpServletRequest request) {
-                return USER;
-            }
-        };
+        servlet = new UserServlet();
+        servlet.tokenService = tokenService;
+        servlet.provider = userProvider;
         servlet.fedoraClient = client;
     }
 
@@ -155,6 +189,9 @@ public class UserServletTest {
         assertEquals(USER.getEmail(), created.getEmail());
         assertEquals(USER.getEmployeeId(), created.getLocalKey());
         assertEquals(Arrays.asList(Role.SUBMITTER), created.getRoles());
+
+        verify(response, times(1)).setStatus(eq(200));
+        assertOutputEquals(created);
     }
 
     @Test
@@ -188,36 +225,29 @@ public class UserServletTest {
         assertEquals(USER.getEmail(), updated.getEmail());
         assertEquals(USER.getEmployeeId(), updated.getLocalKey());
         assertEquals(Arrays.asList(Role.ADMIN), updated.getRoles());
+
+        verify(response, times(1)).setStatus(eq(200));
+        assertOutputEquals(updated);
     }
 
     @Test
     public void noUpdatesNeededTest() throws Exception {
-        final URI foundId = URI.create("http://example.org/moo!");
-
-        USER.setId(foundId);
-
-        final User found = new User();
-        found.setId(foundId);
-        found.setUsername(USER.getPrincipal());
-        found.setDisplayName(USER.getName());
-        found.setEmail(USER.getEmail());
-        found.setInstitutionalId(USER.getInstitutionalId());
-        found.setLocalKey(USER.getEmployeeId());
-        found.setRoles(Arrays.asList(Role.ADMIN));
-        when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
 
         servlet.doGet(request, response);
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
                 User.class);
 
-        assertEquals(foundId, fromServlet.getId());
+        assertEquals(USER.getUser().getId(), fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
         assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
 
         verify(client, times(0)).updateResource(any());
+
+        verify(response, times(1)).setStatus(eq(200));
+        assertOutputEquals(USER.getUser());
     }
 
     @Test
@@ -255,29 +285,16 @@ public class UserServletTest {
 
     @Test
     public void hostSubstitutionTest() throws Exception {
-        final URI foundId = URI.create("http://example.org:2020/moo!");
-
-        USER.setId(foundId);
 
         when(request.getHeader("host")).thenReturn("foo.org");
-
-        final User found = new User();
-        found.setUsername(USER.getPrincipal());
-        found.setId(foundId);
-        found.setDisplayName(USER.getName());
-        found.setEmail(USER.getEmail());
-        found.setInstitutionalId(USER.getInstitutionalId());
-        found.setLocalKey(USER.getEmployeeId());
-        found.setRoles(Arrays.asList(Role.ADMIN));
-        when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
 
         servlet.doGet(request, response);
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
                 User.class);
 
-        assertNotEquals(foundId, fromServlet.getId());
-        assertTrue(fromServlet.getId().toString().startsWith("http://foo.org/moo"));
+        assertNotEquals(USER.getId(), fromServlet.getId());
+        assertTrue(fromServlet.getId().toString().startsWith("http://foo.org/"));
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
@@ -288,34 +305,113 @@ public class UserServletTest {
 
     @Test
     public void sameHostSubstitutionTest() throws Exception {
-        final URI foundId = URI.create("http://example.org:2020/moo!");
 
-        USER.setId(foundId);
-
-        when(request.getHeader("host")).thenReturn("example.org:2020");
-
-        final User found = new User();
-        found.setId(foundId);
-        found.setUsername(USER.getPrincipal());
-        found.setDisplayName(USER.getName());
-        found.setEmail(USER.getEmail());
-        found.setInstitutionalId(USER.getInstitutionalId());
-        found.setLocalKey(USER.getEmployeeId());
-        found.setRoles(Arrays.asList(Role.ADMIN));
-        when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
+        when(request.getHeader("host")).thenReturn(USER.getId().getAuthority());
 
         servlet.doGet(request, response);
 
         final User fromServlet = mapper.reader().treeToValue(mapper.readTree(new String(output.toByteArray())),
                 User.class);
 
-        assertEquals(foundId, fromServlet.getId());
+        assertEquals(USER.getId(), fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
         assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
 
         verify(client, times(0)).updateResource(any());
+    }
+
+    @Test
+    public void invalidUserTest() throws Exception {
+
+        final AuthUser unauthorizedUser = new AuthUser();
+        unauthorizedUser.setId(null);
+        final AuthUserProvider noUserProvider = mock(AuthUserProvider.class);
+        when(noUserProvider.getUser(any(), any(), anyBoolean())).thenReturn(unauthorizedUser);
+        servlet.provider = noUserProvider;
+        servlet.doGet(request, response);
+
+        verify(response, times(1)).setStatus(eq(401));
+    }
+
+    @Test
+    public void noTokenTest() throws Exception {
+        servlet.doGet(request, response);
+        verify(tokenService, times(0)).replacePlaceholder(any(User.class), any(Token.class));
+        verify(response, times(1)).setStatus(eq(200));
+        assertOutputEquals(USER.getUser());
+    }
+
+    @Test
+    public void badTokenTest() throws Exception {
+        final String queryString = "userToken=BLAH";
+        when(request.getQueryString()).thenReturn(queryString);
+        when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
+        when(tokenService.replacePlaceholder(any(), any())).thenThrow(BadTokenException.class);
+
+        servlet.doGet(request, response);
+        verify(response, times(1)).setStatus(eq(400));
+    }
+
+    @Test
+    public void tokenApplicationTest() throws Exception {
+        final String queryString = "userToken=BLAH";
+        when(request.getQueryString()).thenReturn(queryString);
+        when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
+        when(tokenService.replacePlaceholder(eq(USER.getUser()), eq(token))).thenReturn(true);
+
+        servlet.doGet(request, response);
+        verify(tokenService, times(1)).replacePlaceholder(eq(USER.getUser()), eq(token));
+        verify(tokenService, times(1)).addWritePermissions(eq(USER.getUser()), eq(token));
+        verify(response, times(1)).setStatus(eq(200));
+        assertOutputEquals(USER.getUser());
+    }
+
+    @Test
+    public void tokenApplicationNewUserTest() throws Exception {
+        final String queryString = "userToken=BLAH";
+        USER.setId(null);
+        final URI newUserId = URI.create("MOO");
+
+        // Return the User created by the user service.
+        when(client.createAndReadResource(any(), eq(User.class))).thenAnswer(i -> {
+            final User givenUserToCreate = i.getArgument(0);
+            givenUserToCreate.setId(newUserId);
+            return givenUserToCreate;
+        });
+
+        when(request.getQueryString()).thenReturn(queryString);
+        when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
+        when(tokenService.replacePlaceholder(any(User.class), eq(token))).thenReturn(true);
+
+        servlet.doGet(request, response);
+        verify(tokenService, times(1)).replacePlaceholder(any(User.class), eq(token));
+        verify(tokenService, times(1)).addWritePermissions(any(User.class), eq(token));
+        verify(response, times(1)).setStatus(eq(200));
+
+        USER.getUser().setId(newUserId);
+        assertOutputEquals(USER.getUser());
+    }
+
+    @Test
+    public void tokenAllreadyAppliedTest() throws Exception {
+        final String queryString = "userToken=BLAH";
+        when(request.getQueryString()).thenReturn(queryString);
+        when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
+        when(tokenService.replacePlaceholder(eq(USER.getUser()), eq(token))).thenReturn(false);
+
+        servlet.doGet(request, response);
+        verify(tokenService, times(1)).replacePlaceholder(eq(USER.getUser()), eq(token));
+        verify(tokenService, times(0)).addWritePermissions(any(), any());
+        verify(response, times(1)).setStatus(eq(200));
+        assertOutputEquals(USER.getUser());
+    }
+
+    private void assertOutputEquals(User user) {
+        final User fromOut = json.toModel(output.toByteArray(), User.class);
+        fromOut.setContext(user.getContext());
+        assertEquals(user, fromOut);
     }
 
 }

@@ -16,17 +16,14 @@
 
 package org.dataconservancy.pass.authz;
 
-import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Ignore.IGNORE_CONTAINERS;
-import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.SKIP_ACLS;
-import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.depth;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Callable;
 
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
-import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -34,11 +31,14 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 /**
  * @author apb@jhu.edu
@@ -69,10 +69,26 @@ public abstract class FcrepoIT {
         }
     }
 
+    @BeforeClass
+    public static void addAclContainer() throws Exception {
+        final HttpPut put = new HttpPut(FCREPO_BASE_URI + System.getProperty("acl.base", "acls"));
+        final HttpHead head = new HttpHead(put.getURI());
+
+        final int code = client.execute(head, r -> {
+            return r.getStatusLine().getStatusCode();
+        });
+
+        if (code == 404) {
+            client.execute(put, r -> {
+                assertSuccess(r);
+                return URI.create(r.getFirstHeader("Location").getValue());
+            });
+        }
+    }
+
     @AfterClass
     public static void cleanUp() {
-        new RepositoryCrawler().visit(URI.create(FedoraConfig.getBaseUrl()), FcrepoIT::deleteCompletely,
-                IGNORE_CONTAINERS.or(s -> s.id.toString().contains("acl")), SKIP_ACLS.or(depth(2)));
+        PassClientFactory.getPassClient().processAllEntities(FcrepoIT::deleteCompletely);
     }
 
     static void deleteCompletely(URI resource) {
