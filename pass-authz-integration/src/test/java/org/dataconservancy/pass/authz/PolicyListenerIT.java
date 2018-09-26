@@ -38,6 +38,7 @@ import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.PassEntity;
 import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.SubmissionEvent;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
 
@@ -263,6 +264,29 @@ public class PolicyListenerIT extends FcrepoIT {
         tryRead(BACKEND, submission, SC_OK);
     }
 
+    // Verify that submissionEvents are immutable
+    @Test
+    public void readOnlySubmissionEventTest() {
+        final SubmissionEvent event = client.createAndReadResource(new SubmissionEvent(), SubmissionEvent.class);
+
+        // Wait until it has an ACL
+        attempt(10, () -> {
+            assertHasACL(event.getId());
+        });
+
+        // Verify that the user, other submitters, grant admins, and backend can read
+        tryRead(user1, event, SC_OK);
+        tryRead(user2, event, SC_OK);
+        tryRead(userAdmin, event, SC_OK);
+        tryRead(BACKEND, event, SC_OK);
+
+        tryModifySubmissionEvent(user1, event, SC_FORBIDDEN);
+        tryModifySubmissionEvent(user2, event, SC_FORBIDDEN);
+        tryModifySubmissionEvent(userAdmin, event, SC_FORBIDDEN);
+        tryModifySubmissionEvent(BACKEND, event, SC_FORBIDDEN);
+
+    }
+
     static Submission tryCeateSubmission(User authUser, Grant grant, int expectedResponseCode,
             boolean... isSubmitted) {
         final HttpPost post = new HttpPost(URI.create(FCREPO_BASE_URI) + "submissions");
@@ -301,7 +325,17 @@ public class PolicyListenerIT extends FcrepoIT {
     }
 
     static void tryModifySubmission(User authUser, Submission submission, int expectedResponseCode) {
-        final HttpPatch patch = new HttpPatch(submission.getId());
+        submission.setMetadata(UUID.randomUUID().toString());
+        doPatch(authUser, submission, expectedResponseCode);
+    }
+
+    static void tryModifySubmissionEvent(User authUser, SubmissionEvent event, int expectedResponseCode) {
+        event.setComment(UUID.randomUUID().toString());
+        doPatch(authUser, event, expectedResponseCode);
+    }
+
+    private static void doPatch(User authUser, PassEntity passObject, int expectedResponseCode) {
+        final HttpPatch patch = new HttpPatch(passObject.getId());
         patch.setHeader("Content-Type", "application/merge-patch+json");
         if (authUser != BACKEND) {
             patch.setHeader(EMPLOYEE_ID, authUser.getLocalKey());
@@ -310,9 +344,7 @@ public class PolicyListenerIT extends FcrepoIT {
             patch.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
 
-        submission.setMetadata(UUID.randomUUID().toString());
-
-        patch.setEntity(new ByteArrayEntity(adapterBasic.toJson(submission, true), ContentType.create(
+        patch.setEntity(new ByteArrayEntity(adapterBasic.toJson(passObject, true), ContentType.create(
                 "application/ld+json")));
 
         try (final CloseableHttpResponse response = userHttp.execute(patch)) {
