@@ -32,6 +32,8 @@ public class AuthzListener {
 
     String SUBMISSION_TYPE = "http://oapass.org/ns/pass#Submission";
 
+    String SUBMISSION_EVENT_TYPE = "http://oapass.org/ns/pass#SubmissionEvent";
+
     private final ConnectionFactory factory;
 
     private final PolicyEngine aclPolicies;
@@ -57,8 +59,11 @@ public class AuthzListener {
                         final List<String> types = fm.getResourceTypes();
 
                         if (types.contains(SUBMISSION_TYPE)) {
-                            aclPolicies.updateSubmission(fm.getResourceURI());
                             LOG.debug("Handling Submission message for {} ", fm.getAction());
+                            aclPolicies.updateSubmission(fm.getResourceURI());
+                        } else if (types.contains(SUBMISSION_EVENT_TYPE)) {
+                            LOG.debug("Handling SubmissionEvent message for {} ", fm.getAction());
+                            aclPolicies.updateSubmissionEvent(fm.getResourceURI());
                         } else {
                             LOG.debug("Ignoring message with irrelevant types ", types);
                         }

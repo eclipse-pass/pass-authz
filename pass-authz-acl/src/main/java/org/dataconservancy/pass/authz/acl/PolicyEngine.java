@@ -93,11 +93,34 @@ public class PolicyEngine {
             authReaders.add(submitterRole);
         }
 
-        LOG.debug("Granding read of submission {} to {}", authReaders);
+        LOG.debug("Granting read of submission {} to {}", authReaders);
         LOG.debug("Granting write on submission {} to {}", uri, authWriters);
         acls.setPermissions(uri)
                 .grantRead(authReaders)
                 .grantWrite(authWriters)
                 .perform();
     }
+
+    public void updateSubmissionEvent(URI eventUri) {
+
+        final Set<URI> authReaders = new HashSet<>();
+
+        if (backendRole != null) {
+            authReaders.add(backendRole);
+        }
+
+        if (grantAdminRole != null) {
+            authReaders.add(grantAdminRole);
+        }
+
+        if (submitterRole != null) {
+            authReaders.add(submitterRole);
+        }
+
+        LOG.debug("Making submissionEvent {} immutable, but granting read to {}", eventUri, authReaders);
+        acls.setPermissions(eventUri)
+                .grantRead(authReaders)
+                .perform();
+    }
+
 }
