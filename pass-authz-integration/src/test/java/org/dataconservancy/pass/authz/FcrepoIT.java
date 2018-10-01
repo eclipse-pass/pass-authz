@@ -16,6 +16,8 @@
 
 package org.dataconservancy.pass.authz;
 
+import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Ignore.IGNORE_NONE;
+import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.SKIP_NONE;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
@@ -26,6 +28,7 @@ import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.authz.acl.Permission;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
+import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -96,7 +99,6 @@ public abstract class FcrepoIT {
 
     static void deleteCompletely(URI resource) {
         System.out.println("Deleting completely " + resource);
-        System.out.println("Should it be skipped? " + resource.toString().matches(".+/acls[/.+*|$]"));
         try (CloseableHttpResponse resp = client.execute(new HttpDelete(resource))) {
             if (resp.getStatusLine().getStatusCode() == 404) {
                 System.out.println("Resource already deleted:" + resource);
@@ -144,25 +146,29 @@ public abstract class FcrepoIT {
     static void assertSuccess(URI resource, HttpResponse response, String... messages) {
         if (response.getStatusLine().getStatusCode() > 299) {
             try {
-                String message = String.join("\n", messages);
+                final StringBuilder message = new StringBuilder(String.join("\n", messages));
                 if (response.getStatusLine().getStatusCode() == 403) {
                     final ACLManager mgr = new ACLManager();
 
-                    message += "\nRead authz: " + responseBody(mgr.getAuthorizationResource(resource,
-                            Permission.Read));
-                    message += "\nWrite authz: " + responseBody(mgr.getAuthorizationResource(resource,
-                            Permission.Write));
+                    message.append("\nRead authz: " + responseBody(mgr.getAuthorizationResource(resource,
+                            Permission.Read)));
+                    message.append("\nWrite authz: " + responseBody(mgr.getAuthorizationResource(resource,
+                            Permission.Write)));
 
-                    message += "\n\n " + EntityUtils.toString(response.getEntity());
+                    new RepositoryCrawler().visit(mgr.getAclResource(URI.create(FCREPO_BASE_URI)), uri -> {
+                        message.append("\nRoot acl resource" + uri + ":\n" + responseBody(uri));
+                    }, IGNORE_NONE, SKIP_NONE);
+
+                    message.append("\n\n " + EntityUtils.toString(response.getEntity()));
                 }
-                fail("Http request failed: " + response.getStatusLine() + "; " + message);
+                fail("Http request failed: " + response.getStatusLine() + "; " + message.toString());
             } catch (final Exception e) {
                 fail("Http request failed: " + response.getStatusLine());
             }
         }
     }
 
-    private static String responseBody(URI uri) {
+    static String responseBody(URI uri) {
         try (CloseableHttpResponse response = client.execute(new HttpGet(uri))) {
             if (response.getStatusLine().getStatusCode() == 200) {
                 return EntityUtils.toString(response.getEntity());

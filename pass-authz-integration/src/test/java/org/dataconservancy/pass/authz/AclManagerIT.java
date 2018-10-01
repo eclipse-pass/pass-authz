@@ -42,17 +42,19 @@ public class AclManagerIT extends FcrepoIT {
 
     static final URI AUTH_ROLE = URI.create("http://example.org/auth/myRole");
 
+    static final URI DEFAULT_CAN_READ_ROLE = URI.create("http://example.org/auth/" + AclManagerIT.class.getName());
+
     // fedoraAdmin
     static CloseableHttpClient http = getHttpClient();
 
     // An unprivileged user
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
 
-    ACLManager toTest = new ACLManager();
+    static ACLManager toTest = new ACLManager();
 
     @BeforeClass
     public static void setDefaultRead() {
-
+        toTest.addPermissions(URI.create(FCREPO_BASE_URI)).grantRead(asList(DEFAULT_CAN_READ_ROLE)).perform();
     }
 
     @Test
@@ -65,14 +67,14 @@ public class AclManagerIT extends FcrepoIT {
         });
 
         final HttpGet getTestObjectNoRole = new HttpGet(testObject);
-        getTestObjectNoRole.addHeader(AUTH_ROLE_HEADER, "fedoraUser");
+        getTestObjectNoRole.addHeader(AUTH_ROLE_HEADER, DEFAULT_CAN_READ_ROLE.toString());
 
         final HttpGet getTestObjectWithRole = new HttpGet(testObject);
         getTestObjectWithRole.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE.toString());
 
         // Make sure the user can read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertSuccess(testObject, r, "Failed read with no role");
+            assertSuccess(testObject, r, "Failed read with default role " + DEFAULT_CAN_READ_ROLE);
             return null;
         });
 
@@ -124,13 +126,14 @@ public class AclManagerIT extends FcrepoIT {
         });
 
         final HttpGet getTestObjectNoRole = new HttpGet(testObject);
+        getTestObjectNoRole.addHeader(AUTH_ROLE_HEADER, DEFAULT_CAN_READ_ROLE.toString());
 
         final HttpGet getTestObjectWithRole = new HttpGet(testObject);
         getTestObjectWithRole.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE.toString());
 
         // Make sure the user can read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertSuccess(testObject, r, "Failed read with no role");
+            assertSuccess(testObject, r, "Failed read with default role " + DEFAULT_CAN_READ_ROLE);
             return null;
         });
 

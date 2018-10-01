@@ -81,6 +81,7 @@ public class ACLManager {
     }
 
     public Builder addPermissions(URI resource) {
+        LOG.debug("Adding permissions to " + resource);
         return new Builder(resource, (builder, acl) -> {
 
             for (final Permission permission : builder.allPermissions()) {
@@ -98,6 +99,7 @@ public class ACLManager {
     }
 
     public Builder setPermissions(URI resource) {
+        LOG.debug("Setting permissions of " + resource);
         return new Builder(resource, (builder, acl) -> {
 
             for (final Permission permission : Permission.values()) {
@@ -124,6 +126,14 @@ public class ACLManager {
     public URI getAuthorizationResource(URI resource, Permission permission) {
         try {
             return getAuthorizationResourceForPermission(driver.findOrCreateACL(resource).uri, permission);
+        } catch (final Exception e) {
+            throw new RuntimeException("Could not find ACL", e);
+        }
+    }
+
+    public URI getAclResource(URI target) {
+        try {
+            return driver.findOrCreateACL(target).uri;
         } catch (final Exception e) {
             throw new RuntimeException("Could not find ACL", e);
         }
