@@ -17,8 +17,7 @@
 package org.dataconservancy.pass.authz;
 
 import static org.dataconservancy.pass.authz.AuthRolesProvider.getAuthRoleURI;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -81,7 +80,7 @@ public class PassAuthzIT extends FcrepoIT {
     public void userBasedPermissionIT() throws Exception {
 
         final User user = new User();
-        user.setLocalKey(UUID.randomUUID().toString());
+        user.getLocatorIds().add(ShibAuthUserProvider.localize(UUID.randomUUID().toString(), HOPKINS_ID_TYPE));
 
         final URI userUri = client.createResource(user);
 
@@ -97,13 +96,13 @@ public class PassAuthzIT extends FcrepoIT {
 
         // This will wait until we have a lookup in the index
         assertEquals(userUri, attempt(60, () -> {
-            final URI found = client.findByAttribute(User.class, "localKey", user.getLocalKey());
+            final URI found = client.findByAttribute(User.class, "locatorIds", user.getLocatorIds().get(0));
             assertNotNull(found);
             return found;
         }));
 
         final HttpGet fakeShibGet = new HttpGet(resourceToProtect);
-        fakeShibGet.setHeader(EMPLOYEE_ID, user.getLocalKey());
+        fakeShibGet.setHeader(EMPLOYEE_ID, String.valueOf(user.getLocatorIds().get(0).split(";", 0)));
 
         userHttp.execute(fakeShibGet, r -> {
             assertEquals(403, r.getStatusLine().getStatusCode());
@@ -130,12 +129,15 @@ public class PassAuthzIT extends FcrepoIT {
 
         final String DOMAIN = "bovidae.edu";
         final String USER_NAME = "4stomachs@" + DOMAIN;
-        final String LOCAL_KEY = UUID.randomUUID().toString();
+        final String EMPLOYEEID = UUID.randomUUID().toString();
+        final String HOPKINSID = UUID.randomUUID().toString();
 
         final URI authzRole = getAuthRoleURI(DOMAIN, Role.SUBMITTER);
 
         final User user = new User();
-        user.setLocalKey(LOCAL_KEY);
+        user.getLocatorIds().add(ShibAuthUserProvider.localize(HOPKINSID, HOPKINS_ID_TYPE));
+        user.getLocatorIds().add(ShibAuthUserProvider.localize(EMPLOYEEID, EMPLOYEE_ID_TYPE));
+        user.getLocatorIds().add(ShibAuthUserProvider.localize("4stomachs", JHED_ID_TYPE));
         user.setRoles(Arrays.asList(Role.SUBMITTER));
 
         final URI userUri = client.createResource(user);
@@ -152,13 +154,14 @@ public class PassAuthzIT extends FcrepoIT {
 
         // This will wait until we have a lookup in the index
         assertEquals(userUri, attempt(30, () -> {
-            final URI found = client.findByAttribute(User.class, "localKey", user.getLocalKey());
+            final URI found = client.findByAttribute(User.class, "locatorIds", user.getLocatorIds().get(0));
             assertNotNull(found);
             return found;
         }));
 
         final HttpGet fakeShibGet = new HttpGet(resourceToProtect);
-        fakeShibGet.setHeader(EMPLOYEE_ID, user.getLocalKey());
+        fakeShibGet.setHeader(EMPLOYEE_ID, EMPLOYEEID);
+        fakeShibGet.setHeader(HOPKINS_ID, HOPKINSID);
         fakeShibGet.setHeader(EPPN_HEADER, USER_NAME);
 
         // Should fail, as the user has no permissions at all

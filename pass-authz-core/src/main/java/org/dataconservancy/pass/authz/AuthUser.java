@@ -17,7 +17,9 @@
 package org.dataconservancy.pass.authz;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.dataconservancy.pass.model.User;
@@ -32,13 +34,9 @@ public class AuthUser {
 
     private String email;
 
-    private String institutionalId;
-
-    private String employeeId;
+    private List<String> locatorIds = new ArrayList<>();
 
     private URI id;
-
-    private boolean isFaculty;
 
     private String principal;
 
@@ -46,22 +44,13 @@ public class AuthUser {
 
     private User user;
 
-    /**
-     * the durable local key for the user
-     *
-     * @return the employee's id
-     */
-    public String getEmployeeId() {
-        return employeeId;
+
+    public List<String> getLocatorIds() {
+        return locatorIds;
     }
 
-    /**
-     * st the user's employee id, the durable local key
-     *
-     * @param employeeId the durable local key
-     */
-    public void setEmployeeId(String employeeId) {
-        this.employeeId = employeeId;
+    public void setLocatorIds(List<String> locatorIds) {
+        this.locatorIds = locatorIds;
     }
 
     /**
@@ -69,19 +58,19 @@ public class AuthUser {
      *
      * @return the boolean
      */
-    public boolean isFaculty() {
+ /*   public boolean isFaculty() {
         return isFaculty;
     }
-
+*/
     /**
      * set a boolean indicating whether the person has facuty status
      *
      * @param faculty boolean indicating whether the user has a faculty affiliation
      */
-    public void setFaculty(boolean faculty) {
+/*    public void setFaculty(boolean faculty) {
         isFaculty = faculty;
     }
-
+*/
     /**
      * Get the user's email address
      *
@@ -105,19 +94,10 @@ public class AuthUser {
      *
      * @return the institutional id
      */
-    public String getInstitutionalId() {
+ /*   public String getInstitutionalId() {
         return institutionalId;
     }
-
-    /**
-     * Set the institutional id for this user
-     *
-     * @param institutionalId (for JHU it's the Jhed Id)
-     */
-    public void setInstitutionalId(String institutionalId) {
-        this.institutionalId = institutionalId;
-    }
-
+*/
     /**
      * Get the repository id for the user which was assigned to this person's User object by the repository
      *
