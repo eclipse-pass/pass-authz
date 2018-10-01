@@ -214,9 +214,9 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         ListIterator idIterator = locatorIdList.listIterator();
 
         while (userURI == null && idIterator.hasNext()) {
-            String id = String.valueOf(idIterator.next());
-            if (id != null) {
-                userURI = passClient.findByAttribute(User.class, "locatorIds", id);
+            String locatorId = String.valueOf(idIterator.next());
+            if (locatorId != null) {
+                userURI = passClient.findByAttribute(User.class, "locatorIds", locatorId);
             }
         }
 

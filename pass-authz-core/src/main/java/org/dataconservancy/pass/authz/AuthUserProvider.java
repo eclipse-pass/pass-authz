@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 public interface AuthUserProvider {
 
     /**
-     * Get theauthenticated user from the current http request.
+     * Get the authenticated user from the current http request.
      * <p>
      * Inspects the http request for the current user/principal, and provides information about that user
      * <p>

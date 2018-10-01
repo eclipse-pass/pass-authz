@@ -185,8 +185,7 @@ public class UserServlet extends HttpServlet {
         LOG.debug("Found existing user {}", shibUser.getId());
 
         boolean update = false;
-
-        // employeeId should never change
+        
         // each user provider will only adjust fields for which it is authoritative
         // shib is authoritative for these
         if (user.getUsername() == null || !user.getUsername().equals(shibUser.getPrincipal())) {
