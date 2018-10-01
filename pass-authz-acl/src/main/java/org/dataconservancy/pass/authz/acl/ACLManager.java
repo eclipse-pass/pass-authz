@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Johns Hopkins University
+ * Copyright 2018 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,26 @@
 package org.dataconservancy.pass.authz.acl;
 
 import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static org.apache.commons.io.IOUtils.toInputStream;
+import static java.util.Collections.emptySet;
+import static java.util.stream.Collectors.toSet;
+import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Ignore.IGNORE_ROOT;
+import static org.dataconservancy.pass.client.fedora.RepositoryCrawler.Skip.depth;
 import static org.dataconservancy.pass.client.util.ConfigUtil.getSystemProperty;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 import org.fcrepo.client.FcrepoClient;
 import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
-import org.fcrepo.client.FcrepoOperationFailedException;
-import org.fcrepo.client.FcrepoResponse;
 
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
+import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.RDFNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,59 +49,49 @@ public class ACLManager {
 
     static final Logger LOG = LoggerFactory.getLogger(ACLManager.class);
 
-    URI PREFER_EMBED = URI.create("http://fedora.info/definitions/v4/repository#EmbedResources");
+    public static final String PROPERTY_ACL_BASE = "acl.base";
 
-    URI PREFER_SERVER_MANAGED = URI.create("http://fedora.info/definitions/v4/repository#ServerManaged");
+    public static final String URI_ACL_AGENT = "http://www.w3.org/ns/auth/acl#agent";
 
-    URI PREFER_CONTAINMENT = URI.create("http://www.w3.org/ns/ldp#PreferContainment");
+    public static final String URI_ACL_ACCESS_TO = "http://www.w3.org/ns/auth/acl#accessTo";
 
-    URI PREDICATE_ACCESS_CONTROL = URI.create("http://www.w3.org/ns/auth/acl#accessControl");
+    public static final String URI_ACL_MODE = "http://www.w3.org/ns/auth/acl#mode";
 
-    public final FcrepoClient repo;
-
-    private final URI acls;
-
-    static final String TEMPLATE_ADD_ACL_TRIPLE =
-            "INSERT {<> <http://www.w3.org/ns/auth/acl#accessControl> <%s>} WHERE {}";
-
-    static final String TEMPLATE_AUTHORIZATION =
+    private static final String TEMPLATE_AUTHORIZATION =
             "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n\n" +
-                    "<> a acl:Authorization;\n" +
-                    "acl:accessTo <%s>;\n" +
-                    "acl:agent <%s> .\n";
+                    "<> a acl:Authorization .\n" +
+                    "<> acl:accessTo <%s> .\n";
 
-    static final String READ_AUTH = "<> acl:mode acl:Read .\n";
+    AclDriver driver;
 
-    static final String WRITE_AUTH = "<> acl:mode acl:Write .\n";
+    RepositoryCrawler crawler;
 
     public ACLManager() {
-        repo = getFcrepoClient();
-        acls = getAclBase();
+        driver = new AclDriver(getAclBase(), getFcrepoClient());
+        this.crawler = new RepositoryCrawler();
     }
 
-    public ACLManager(FcrepoClient client) {
-        repo = client;
-        acls = getAclBase();
+    public ACLManager(FcrepoClient client, RepositoryCrawler crawler) {
+        driver = new AclDriver(getAclBase(), client);
+        this.crawler = crawler;
     }
 
     public static URI getAclBase() {
-        return URI.create(FedoraConfig.getBaseUrl() + getSystemProperty("acl.base", "acls"));
+        return URI.create(FedoraConfig.getBaseUrl() + getSystemProperty(PROPERTY_ACL_BASE, "acls"));
     }
 
     public Builder addPermissions(URI resource) {
         return new Builder(resource, (builder, acl) -> {
 
-            final AclAnalyzer analyzer = new AclAnalyzer(getFcrepoClient(), acl);
+            for (final Permission permission : builder.allPermissions()) {
+                final URI authzResource = getAuthorizationResourceForPermission(acl, permission);
 
-            for (final URI role : builder.allRoles()) {
-                final URI authzResource = analyzer.getAuthorizationResourceForRole(role);
+                final Set<URI> roles = builder.getRolesForPermission(permission);
 
-                if (authzResource == null) {
-                    postAuthzBody(acl, builder.getAclBody(role));
-                } else if (permissionsAreDifferent(role, builder, analyzer)) {
-                    patchAuthzBody(authzResource, builder.patchInsert(role));
+                if (driver.exists(authzResource)) {
+                    driver.patchAuthzBody(authzResource, patchInsert(resource, permission, roles));
                 } else {
-                    LOG.debug("No ACL update necessary");
+                    driver.putAuthzBody(authzResource, getAclBody(resource, permission, roles));
                 }
             }
         });
@@ -117,115 +100,25 @@ public class ACLManager {
     public Builder setPermissions(URI resource) {
         return new Builder(resource, (builder, acl) -> {
 
-            final AclAnalyzer analyzer = new AclAnalyzer(getFcrepoClient(), acl);
+            for (final Permission permission : Permission.values()) {
+                final URI authzResource = getAuthorizationResourceForPermission(acl, permission);
 
-            final Set<URI> roles = new HashSet<>();
+                final Set<URI> roles = builder.getRolesForPermission(permission);
 
-            roles.addAll(builder.allRoles());
-            roles.addAll(analyzer.getAuthRoles());
-
-            for (final URI role : roles) {
-
-                final URI authzResource = analyzer.getAuthorizationResourceForRole(role);
-
-                if (authzResource == null) {
-                    postAuthzBody(acl, builder.getAclBody(role));
-                } else if (permissionsAreDifferent(role, builder, analyzer)) {
-                    putAuthzBody(authzResource, builder.getAclBody(role));
-                } else {
-                    LOG.debug("No ACL update necessary");
-                }
+                driver.putAuthzBody(authzResource, getAclBody(resource, permission, roles));
             }
-        });
-    }
 
-    public Builder setPermissionsForRoles(URI resource, Collection<URI> roles) {
-        return new Builder(resource, (builder, acl) -> {
-            final AclAnalyzer analyzer = new AclAnalyzer(getFcrepoClient(), acl);
-
-            for (final URI role : roles) {
-
-                final URI authzResource = analyzer.getAuthorizationResourceForRole(role);
-
-                if (authzResource == null) {
-                    postAuthzBody(acl, builder.getAclBody(role));
-                } else if (permissionsAreDifferent(role, builder, analyzer)) {
-                    putAuthzBody(authzResource, builder.getAclBody(role));
-                } else {
-                    LOG.debug("No ACL update necessary");
+            final Collection<URI> desiredAuthorizationResources = authzResourcesForAcl(acl);
+            crawler.visit(acl, authz -> {
+                if (!desiredAuthorizationResources.contains(authz)) {
+                    driver.deleteCompletely(authz);
                 }
-            }
+            }, IGNORE_ROOT, depth(1));
         });
     }
 
     FcrepoClient getFcrepoClient() {
         return new FcrepoClientBuilder().credentials(FedoraConfig.getUserName(), FedoraConfig.getPassword()).build();
-    }
-
-    private FcrepoClient repo() {
-        return repo;
-    }
-
-    static boolean permissionsAreDifferent(URI role, Builder builder, AclAnalyzer acl) {
-        final Set<Permission> permissions = acl.getPermissionsforRole(role);
-        LOG.debug("read? (builder: {}, acl: {})", builder.read.contains(role), permissions.contains(Permission.Read));
-        LOG.debug("write? (builder: {}, acl: {})", builder.write.contains(role), permissions.contains(
-                Permission.Write));
-        return builder.read.contains(role) != permissions.contains(Permission.Read) ||
-                builder.write.contains(role) != permissions.contains(Permission.Write);
-
-    }
-
-    static void onErrorThrow(FcrepoResponse response, String message, Object... params) throws IOException {
-        if (response.getStatusCode() > 299) {
-            try (InputStream in = response.getBody()) {
-                throw new RuntimeException(
-                        format(message, params) + "; " +
-                                response.getStatusCode() + ": " +
-                                IOUtils.toString(in, UTF_8));
-            }
-        }
-
-    }
-
-    private void patchAuthzBody(URI authz, String body) {
-
-        LOG.debug("PATCHing authz to <{}> with body\n{}", authz, body);
-        try (FcrepoResponse response = repo().patch(authz)
-                .body(IOUtils.toInputStream(body, UTF_8))
-                .perform()) {
-            onErrorThrow(response, "Error updating authorization at <%s>", authz);
-
-        } catch (FcrepoOperationFailedException | IOException e) {
-            throw new RuntimeException("Error conecting to the repository", e);
-        }
-    }
-
-    private void putAuthzBody(URI authz, String body) {
-
-        LOG.debug("PUTting authz to <{}> with body\n{}", authz, body);
-        try (FcrepoResponse response = repo().put(authz)
-                .body(IOUtils.toInputStream(body, UTF_8), "text/turtle")
-                .preferLenient()
-                .perform()) {
-            onErrorThrow(response, "Error updating authorization at <%s>", authz);
-
-        } catch (FcrepoOperationFailedException | IOException e) {
-            throw new RuntimeException("Error conecting to the repository", e);
-        }
-    }
-
-    private void postAuthzBody(URI acl, String body) {
-
-        LOG.debug("POSTing authz to <{}> with body\n{}", acl, body);
-        try (FcrepoResponse response = repo().post(acl)
-                .body(IOUtils.toInputStream(body, UTF_8), "text/turtle")
-                .perform()) {
-            onErrorThrow(response, "Error adding authorization to acl <%s>", acl);
-
-        } catch (FcrepoOperationFailedException | IOException e) {
-            throw new RuntimeException("Error conecting to the repository", e);
-        }
     }
 
     public class Builder {
@@ -262,10 +155,10 @@ public class ACLManager {
 
         public URI perform() {
             try {
-                final Acl acl = findOrCreateACL();
+                final Acl acl = driver.findOrCreateACL(resource);
                 action.accept(this, acl.uri);
                 if (acl.isNew) {
-                    linkAcl(acl.uri, resource);
+                    driver.linkAcl(acl.uri, resource);
                 }
                 return acl.uri;
 
@@ -274,124 +167,71 @@ public class ACLManager {
             }
         }
 
-        Set<URI> allRoles() {
-            final HashSet<URI> all = new HashSet<>();
-            all.addAll(read);
-            all.addAll(write);
-            return all;
-        }
-
-        Acl findOrCreateACL() throws FcrepoOperationFailedException, IOException {
-
-            LOG.debug("Finding ACL for <{}>", resource);
-            try (FcrepoResponse response = repo.get(resource)
-                    .accept("application/n-triples")
-                    .preferRepresentation(emptyList(), asList(PREFER_CONTAINMENT, PREFER_SERVER_MANAGED)).perform()) {
-
-                onErrorThrow(response, "Error looking for ACL");
-
-                final List<URI> acls;
-                final Model model = ModelFactory.createDefaultModel();
-                try (InputStream body = response.getBody()) {
-                    model.read(body, "", "NTriples");
-                    acls = model.listStatements(null,
-                            model.createProperty(PREDICATE_ACCESS_CONTROL.toString()),
-                            (RDFNode) null)
-                            .mapWith(s -> URI.create(s.getObject().asResource().toString()))
-                            .toList();
-                }
-
-                if (acls.size() == 1) {
-                    LOG.debug("Found existing ACL <{}>", acls.get(0));
-                    return new Acl(acls.get(0), false);
-                } else if (acls.isEmpty()) {
-                    LOG.debug("No ACL, on <{}> creating one", resource);
-
-                    return createAcl(resource);
-                } else {
-                    throw new RuntimeException(format("More than one acl for resource <%s>: {%s}", resource,
-                            String.join(",", acls.stream().map(URI::toString).collect(Collectors.toList()))));
-                }
+        Set<URI> getRolesForPermission(Permission p) {
+            switch (p) {
+            case Read:
+                return read.stream().filter(not(write::contains)).collect(toSet());
+            case Write:
+                return write;
+            default:
+                return emptySet();
             }
         }
 
-        String getAclBody(URI role) {
-            final StringBuilder auth = new StringBuilder(format(TEMPLATE_AUTHORIZATION, resource, role));
-
-            if (read.contains(role)) {
-                LOG.info("Granting read on <{}> to <{}>", resource, role);
-                auth.append(READ_AUTH);
-            } else {
-                LOG.info("Denying read on <{}> to <{}>", resource, role);
+        Set<Permission> allPermissions() {
+            final HashSet<Permission> permissions = new HashSet<>();
+            if (!read.isEmpty()) {
+                permissions.add(Permission.Read);
             }
 
-            if (write.contains(role)) {
-                LOG.info("Granting write on <{}> to <{}>", resource, role);
-                auth.append(WRITE_AUTH);
-            } else {
-                LOG.info("Denying write on <{}> to <{}>", resource, role);
+            if (!write.isEmpty()) {
+                permissions.add(Permission.Write);
             }
 
-            return auth.toString();
+            return permissions;
+        }
+    }
+
+    private static String getAclBody(URI resource, Permission permission, Collection<URI> roles) {
+        final StringBuilder auth = new StringBuilder(format(TEMPLATE_AUTHORIZATION, resource));
+
+        for (final URI role : roles) {
+            auth.append(format("<> acl:agent <%s> .\n", role));
         }
 
-        String patchInsert(URI role) {
-            final StringBuilder patch = new StringBuilder(
-                    "PREFIX acl: <http://www.w3.org/ns/auth/acl#>\n\nINSERT {\n");
+        auth.append(permission.rdf);
 
-            if (read.contains(role)) {
-                LOG.info("Granting read on <{}> to <{}>", resource, role);
-                patch.append(READ_AUTH);
-            } else {
-                LOG.info("Denying read on <{}> to <{}>", resource, role);
-            }
+        return auth.toString();
+    }
 
-            if (write.contains(role)) {
-                LOG.info("Granting write on <{}> to <{}>", resource, role);
-                patch.append(WRITE_AUTH);
-            } else {
-                LOG.info("Denying write on <{}> to <{}>", resource, role);
-            }
+    private static String patchInsert(URI protectedResource, Permission permission, Collection<URI> roles) {
+        final StringBuilder patch = new StringBuilder(
+                "PREFIX acl: <http://www.w3.org/ns/auth/acl#>\n\nINSERT {\n");
 
-            patch.append("} WHERE {}");
+        patch.append(format("<> <%s> <%s> .\n", URI_ACL_ACCESS_TO, protectedResource));
+        patch.append(permission.rdf);
 
-            return patch.toString();
+        roles.forEach(role -> patch.append(format("<> <%s> <%s> .\n", URI_ACL_AGENT, role)));
+
+        patch.append("} WHERE {}");
+
+        return patch.toString();
+    }
+
+    private static URI getAuthorizationResourceForPermission(URI acl, Permission permission) {
+        if (acl.toString().endsWith("/")) {
+            return URI.create(acl.toString() + permission.toString());
+        } else {
+            return URI.create(acl.toString() + "/" + permission.toString());
         }
+    }
 
-        private Acl createAcl(URI resource) throws IOException, FcrepoOperationFailedException {
-            final URI acl;
-            try (FcrepoResponse response = repo.post(acls)
-                    .body(this.getClass().getResourceAsStream("/acl.ttl"), "text/turtle")
-                    .perform()) {
-                onErrorThrow(response, "Error creating acl by POSTing to " + acls);
-                acl = response.getLocation();
-            }
+    private static <T> Predicate<T> not(Predicate<T> predicate) {
+        return t -> !predicate.test(t);
+    }
 
-            LOG.debug("Created ACL at <{}>", acl);
-
-            return new Acl(acl, true);
-        }
-
-        private void linkAcl(URI acl, URI resource) throws IOException, FcrepoOperationFailedException {
-            LOG.debug("Linking ACL <{}> to <{}> via PATCH:\n{}", acl, resource, format(
-                    TEMPLATE_ADD_ACL_TRIPLE, acl));
-
-            try (FcrepoResponse response = repo.patch(resource)
-                    .body(toInputStream(format(TEMPLATE_ADD_ACL_TRIPLE, acl), UTF_8)).perform()) {
-                onErrorThrow(response, "Error linking to acl <%s> from <%s>", acl, resource);
-            }
-        }
-
-        private class Acl {
-
-            public final URI uri;
-
-            public final boolean isNew;
-
-            public Acl(URI uri, boolean isNew) {
-                this.uri = uri;
-                this.isNew = isNew;
-            }
-        }
+    private static Collection<URI> authzResourcesForAcl(URI acl) {
+        return asList(getAuthorizationResourceForPermission(acl, Permission.Read),
+                getAuthorizationResourceForPermission(acl, Permission.Write));
     }
 }
