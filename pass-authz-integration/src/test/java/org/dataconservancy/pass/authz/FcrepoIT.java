@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Callable;
 
+import org.dataconservancy.pass.authz.acl.ACLManager;
+import org.dataconservancy.pass.authz.acl.Permission;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 
@@ -31,6 +33,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -80,7 +83,7 @@ public abstract class FcrepoIT {
 
         if (code == 404) {
             client.execute(put, r -> {
-                assertSuccess(r);
+                assertSuccess(put.getURI(), r);
                 return URI.create(r.getFirstHeader("Location").getValue());
             });
         }
@@ -138,14 +141,36 @@ public abstract class FcrepoIT {
                 .build();
     }
 
-    static void assertSuccess(HttpResponse response) {
+    static void assertSuccess(URI resource, HttpResponse response, String... messages) {
         if (response.getStatusLine().getStatusCode() > 299) {
             try {
-                final String message = EntityUtils.toString(response.getEntity());
+                String message = String.join("\n", messages);
+                if (response.getStatusLine().getStatusCode() == 403) {
+                    final ACLManager mgr = new ACLManager();
+
+                    message += "\nRead authz: " + responseBody(mgr.getAuthorizationResource(resource,
+                            Permission.Read));
+                    message += "\nWrite authz: " + responseBody(mgr.getAuthorizationResource(resource,
+                            Permission.Write));
+
+                    message += "\n\n " + EntityUtils.toString(response.getEntity());
+                }
                 fail("Http request failed: " + response.getStatusLine() + "; " + message);
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 fail("Http request failed: " + response.getStatusLine());
             }
+        }
+    }
+
+    private static String responseBody(URI uri) {
+        try (CloseableHttpResponse response = client.execute(new HttpGet(uri))) {
+            if (response.getStatusLine().getStatusCode() == 200) {
+                return EntityUtils.toString(response.getEntity());
+            } else {
+                return Integer.toString(response.getStatusLine().getStatusCode());
+            }
+        } catch (final Exception e) {
+            return "XXX";
         }
     }
 

@@ -16,6 +16,7 @@
 
 package org.dataconservancy.pass.authz;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
@@ -53,7 +54,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -64,7 +65,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user can read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r, "Failed read with no role");
             return null;
         });
 
@@ -81,7 +82,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user WITH the proper role CAN read the object
         userHttp.execute(getTestObjectWithRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r, format("Failed read by auth role <%s>", AUTH_ROLE));
             return null;
         });
 
@@ -101,7 +102,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Now make sure they can write
         userHttp.execute(write, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r, format("Failed write by auth role <%s>", AUTH_ROLE));
             return null;
         });
     }
@@ -111,7 +112,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -122,7 +123,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user can read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -139,7 +140,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user WITH the proper role CAN read the object
         userHttp.execute(getTestObjectWithRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -161,7 +162,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Now make sure they can write
         userHttp.execute(write, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
     }
@@ -172,7 +173,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -212,22 +213,22 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read and write
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
     }
@@ -238,7 +239,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -278,22 +279,22 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read and write
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
     }
@@ -304,7 +305,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -344,12 +345,12 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -360,7 +361,7 @@ public class AclManagerIT extends FcrepoIT {
         });
 
         userHttp.execute(writeRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -372,18 +373,18 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         // .. but only role 1 can write
         userHttp.execute(writeRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 

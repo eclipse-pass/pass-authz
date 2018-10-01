@@ -68,7 +68,7 @@ public class PassAuthzIT extends FcrepoIT {
 
         if (code == 404) {
             http.execute(put, r -> {
-                assertSuccess(r);
+                assertSuccess(put.getURI(), r);
                 return URI.create(r.getFirstHeader("Location").getValue());
             });
         }
@@ -117,7 +117,7 @@ public class PassAuthzIT extends FcrepoIT {
                 .perform();
 
         userHttp.execute(fakeShibGet, r -> {
-            assertSuccess(r);
+            assertSuccess(fakeShibGet.getURI(), r);
             return null;
         });
     }
@@ -175,7 +175,7 @@ public class PassAuthzIT extends FcrepoIT {
 
         // Now it should work
         userHttp.execute(fakeShibGet, r -> {
-            assertSuccess(r);
+            assertSuccess(fakeShibGet.getURI(), r);
             return null;
         });
     }

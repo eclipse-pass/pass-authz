@@ -121,6 +121,14 @@ public class ACLManager {
         return new FcrepoClientBuilder().credentials(FedoraConfig.getUserName(), FedoraConfig.getPassword()).build();
     }
 
+    public URI getAuthorizationResource(URI resource, Permission permission) {
+        try {
+            return getAuthorizationResourceForPermission(driver.findOrCreateACL(resource).uri, permission);
+        } catch (final Exception e) {
+            throw new RuntimeException("Could not find ACL", e);
+        }
+    }
+
     public class Builder {
 
         final URI resource;
