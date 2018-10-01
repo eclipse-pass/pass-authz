@@ -30,6 +30,7 @@ import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -49,6 +50,11 @@ public class AclManagerIT extends FcrepoIT {
 
     ACLManager toTest = new ACLManager();
 
+    @BeforeClass
+    public static void setDefaultRead() {
+
+    }
+
     @Test
     public void addAndUpdateAclTest() throws Exception {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
@@ -59,6 +65,7 @@ public class AclManagerIT extends FcrepoIT {
         });
 
         final HttpGet getTestObjectNoRole = new HttpGet(testObject);
+        getTestObjectNoRole.addHeader(AUTH_ROLE_HEADER, "fedoraUser");
 
         final HttpGet getTestObjectWithRole = new HttpGet(testObject);
         getTestObjectWithRole.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE.toString());
@@ -123,7 +130,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user can read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertSuccess(testObject, r);
+            assertSuccess(testObject, r, "Failed read with no role");
             return null;
         });
 
