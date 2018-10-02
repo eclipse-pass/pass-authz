@@ -292,6 +292,7 @@ public class PolicyListenerIT extends FcrepoIT {
 
         if (authUser != BACKEND) {
             post.setHeader(HOPKINS_ID, delocalize(authUser.getLocatorIds().get(0)));
+            post.setHeader(EPPN_HEADER, "someone@johnshopkins.edu");
         } else {
             post.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -336,6 +337,7 @@ public class PolicyListenerIT extends FcrepoIT {
         patch.setHeader("Content-Type", "application/merge-patch+json");
         if (authUser != BACKEND) {
             patch.setHeader(HOPKINS_ID, delocalize(authUser.getLocatorIds().get(0)));
+            patch.setHeader(EPPN_HEADER, "someone@johnshopkins.edu");
         } else {
             patch.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -370,7 +372,6 @@ public class PolicyListenerIT extends FcrepoIT {
         if (authUser != BACKEND) {
             get.setHeader(HOPKINS_ID, delocalize(authUser.getLocatorIds().get(0)));
             get.setHeader(EPPN_HEADER, "someone@johnshopkins.edu");
-            get.setHeader("Mail", "XXXXXXXXXXXXXXXXXXXXXX");
         } else {
             get.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }

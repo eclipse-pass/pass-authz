@@ -99,7 +99,7 @@ public class PassAuthzIT extends FcrepoIT {
                 .perform();
 
         // This will wait until we have a lookup in the index
-        assertEquals(userUri, attempt(500, () -> {
+        assertEquals(userUri, attempt(60, () -> {
             final URI found = client.findByAttribute(User.class, "locatorIds", user.getLocatorIds().get(0));
 
             System.out.println(user.getLocatorIds().get(0));
@@ -160,7 +160,7 @@ public class PassAuthzIT extends FcrepoIT {
                 .perform();
 
         // This will wait until we have a lookup in the index
-        assertEquals(userUri, attempt(500, () -> {
+        assertEquals(userUri, attempt(60, () -> {
             final URI found = client.findByAttribute(User.class, "locatorIds", user.getLocatorIds().get(0));
             System.out.println(user.getLocatorIds().get(0));
             System.out.println(ConfigUtil.getSystemProperty("pass.elasticsearch.url", null));
