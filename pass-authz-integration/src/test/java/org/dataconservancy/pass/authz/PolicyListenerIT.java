@@ -167,7 +167,7 @@ public class PolicyListenerIT extends FcrepoIT {
 
         if (code == 404) {
             http.execute(put, r -> {
-                assertSuccess(r);
+                assertSuccess(put.getURI(), r);
                 return URI.create(r.getFirstHeader("Location").getValue());
             });
         }

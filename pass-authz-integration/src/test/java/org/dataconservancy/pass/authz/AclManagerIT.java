@@ -16,6 +16,7 @@
 
 package org.dataconservancy.pass.authz;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
@@ -24,13 +25,12 @@ import static org.junit.Assert.assertTrue;
 import java.net.URI;
 import java.util.Arrays;
 
-import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
-
 import org.dataconservancy.pass.authz.acl.ACLManager;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -42,31 +42,39 @@ public class AclManagerIT extends FcrepoIT {
 
     static final URI AUTH_ROLE = URI.create("http://example.org/auth/myRole");
 
+    static final URI DEFAULT_CAN_READ_ROLE = URI.create("http://example.org/auth/" + AclManagerIT.class.getName());
+
     // fedoraAdmin
     static CloseableHttpClient http = getHttpClient();
 
     // An unprivileged user
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
 
-    ACLManager toTest = new ACLManager(new FcrepoClientBuilder().credentials("fedoraAdmin", "moo").build());
+    static ACLManager toTest = new ACLManager();
+
+    @BeforeClass
+    public static void setDefaultRead() {
+        toTest.addPermissions(URI.create(FCREPO_BASE_URI)).grantRead(asList(DEFAULT_CAN_READ_ROLE)).perform();
+    }
 
     @Test
     public void addAndUpdateAclTest() throws Exception {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
         final HttpGet getTestObjectNoRole = new HttpGet(testObject);
+        getTestObjectNoRole.addHeader(AUTH_ROLE_HEADER, DEFAULT_CAN_READ_ROLE.toString());
 
         final HttpGet getTestObjectWithRole = new HttpGet(testObject);
         getTestObjectWithRole.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE.toString());
 
         // Make sure the user can read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r, "Failed read with default role " + DEFAULT_CAN_READ_ROLE);
             return null;
         });
 
@@ -83,7 +91,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user WITH the proper role CAN read the object
         userHttp.execute(getTestObjectWithRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r, format("Failed read by auth role <%s>", AUTH_ROLE));
             return null;
         });
 
@@ -103,7 +111,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Now make sure they can write
         userHttp.execute(write, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r, format("Failed write by auth role <%s>", AUTH_ROLE));
             return null;
         });
     }
@@ -113,18 +121,19 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
         final HttpGet getTestObjectNoRole = new HttpGet(testObject);
+        getTestObjectNoRole.addHeader(AUTH_ROLE_HEADER, DEFAULT_CAN_READ_ROLE.toString());
 
         final HttpGet getTestObjectWithRole = new HttpGet(testObject);
         getTestObjectWithRole.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE.toString());
 
         // Make sure the user can read the test object
         userHttp.execute(getTestObjectNoRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r, "Failed read with default role " + DEFAULT_CAN_READ_ROLE);
             return null;
         });
 
@@ -141,7 +150,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure the user WITH the proper role CAN read the object
         userHttp.execute(getTestObjectWithRole, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -163,7 +172,7 @@ public class AclManagerIT extends FcrepoIT {
 
         // Now make sure they can write
         userHttp.execute(write, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
     }
@@ -174,7 +183,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -214,22 +223,22 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read and write
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
     }
@@ -240,7 +249,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -280,22 +289,22 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read and write
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(writeRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
     }
@@ -306,7 +315,7 @@ public class AclManagerIT extends FcrepoIT {
         final HttpPost post = new HttpPost(FCREPO_BASE_URI);
 
         final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
+            assertSuccess(URI.create(FCREPO_BASE_URI), r);
             return URI.create(r.getFirstHeader("Location").getValue());
         });
 
@@ -346,12 +355,12 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -362,7 +371,7 @@ public class AclManagerIT extends FcrepoIT {
         });
 
         userHttp.execute(writeRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -374,18 +383,18 @@ public class AclManagerIT extends FcrepoIT {
 
         // Make sure both can read
         userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
         // .. but only role 1 can write
         userHttp.execute(writeRole1, r -> {
-            assertSuccess(r);
+            assertSuccess(testObject, r);
             return null;
         });
 
@@ -410,130 +419,5 @@ public class AclManagerIT extends FcrepoIT {
             assertEquals(403, r.getStatusLine().getStatusCode());
             return null;
         });
-
-    }
-
-    @Test
-    public void setSpecificRolesAndRevokeTest() throws Exception {
-        final URI AUTH_ROLE_2 = URI.create("http://example.org/auth/myRole2");
-        final HttpPost post = new HttpPost(FCREPO_BASE_URI);
-
-        final URI testObject = http.execute(post, r -> {
-            assertSuccess(r);
-            return URI.create(r.getFirstHeader("Location").getValue());
-        });
-
-        final HttpGet getTestObjectWithRole1 = new HttpGet(testObject);
-        getTestObjectWithRole1.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE.toString());
-
-        final HttpGet getTestObjectWithRole2 = new HttpGet(testObject);
-        getTestObjectWithRole2.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE_2.toString());
-
-        final HttpPost writeRole1 = new HttpPost(testObject);
-        writeRole1.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE.toString());
-
-        final HttpPost writeRole2 = new HttpPost(testObject);
-        writeRole2.addHeader(AUTH_ROLE_HEADER, AUTH_ROLE_2.toString());
-
-        toTest.setPermissions(testObject).grantWrite(asList(URI.create("test:nobody"))).perform();
-
-        // Make sure neither can read
-        userHttp.execute(getTestObjectWithRole1, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
-            return null;
-        });
-
-        userHttp.execute(getTestObjectWithRole2, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
-            return null;
-        });
-
-        // Now grant read to 1, and write to 2
-        toTest.setPermissionsForRoles(testObject, asList(AUTH_ROLE))
-                .grantRead(asList(AUTH_ROLE))
-                .perform();
-
-        toTest.setPermissionsForRoles(testObject, asList(AUTH_ROLE_2))
-                .grantRead(asList(AUTH_ROLE_2))
-                .grantWrite(asList(AUTH_ROLE_2))
-                .perform();
-
-        // Make sure both can read
-        userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
-            return null;
-        });
-
-        userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
-            return null;
-        });
-
-        // .. but only role 2 can write
-        userHttp.execute(writeRole1, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
-            return null;
-        });
-
-        userHttp.execute(writeRole2, r -> {
-            assertSuccess(r);
-            return null;
-        });
-
-        // Now reverse the permissions
-        toTest.setPermissionsForRoles(testObject, asList(AUTH_ROLE_2))
-                .grantRead(asList(AUTH_ROLE_2))
-                .perform();
-
-        toTest.setPermissionsForRoles(testObject, asList(AUTH_ROLE))
-                .grantRead(asList(AUTH_ROLE))
-                .grantWrite(asList(AUTH_ROLE))
-                .perform();
-
-        // Make sure both can read
-        userHttp.execute(getTestObjectWithRole1, r -> {
-            assertSuccess(r);
-            return null;
-        });
-
-        userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
-            return null;
-        });
-
-        // .. but only role 1 can write
-        userHttp.execute(writeRole1, r -> {
-            assertSuccess(r);
-            return null;
-        });
-
-        userHttp.execute(writeRole2, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
-            return null;
-        });
-
-        // Now revoke 1
-        toTest.setPermissionsForRoles(testObject, asList(AUTH_ROLE))
-                .perform();
-
-        // Make 1 cannot read, but 2 still can
-        userHttp.execute(getTestObjectWithRole1, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
-            return null;
-        });
-
-        userHttp.execute(getTestObjectWithRole2, r -> {
-            assertSuccess(r);
-            return null;
-        });
-
-        // Now revoke 2
-        toTest.setPermissionsForRoles(testObject, asList(AUTH_ROLE_2))
-                .perform();
-        userHttp.execute(getTestObjectWithRole2, r -> {
-            assertEquals(403, r.getStatusLine().getStatusCode());
-            return null;
-        });
-
     }
 }

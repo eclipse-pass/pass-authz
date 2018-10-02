@@ -25,8 +25,6 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.UUID;
 
-import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
-
 import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
@@ -52,7 +50,7 @@ public class PassAuthzIT extends FcrepoIT {
 
     PassClient client = PassClientFactory.getPassClient();
 
-    ACLManager acls = new ACLManager(new FcrepoClientBuilder().credentials("fedoraAdmin", "moo").build());
+    ACLManager acls = new ACLManager();
 
     static CloseableHttpClient http = getHttpClient();
 
@@ -69,7 +67,7 @@ public class PassAuthzIT extends FcrepoIT {
 
         if (code == 404) {
             http.execute(put, r -> {
-                assertSuccess(r);
+                assertSuccess(put.getURI(), r);
                 return URI.create(r.getFirstHeader("Location").getValue());
             });
         }
@@ -118,7 +116,7 @@ public class PassAuthzIT extends FcrepoIT {
                 .perform();
 
         userHttp.execute(fakeShibGet, r -> {
-            assertSuccess(r);
+            assertSuccess(fakeShibGet.getURI(), r);
             return null;
         });
     }
@@ -180,7 +178,7 @@ public class PassAuthzIT extends FcrepoIT {
 
         // Now it should work
         userHttp.execute(fakeShibGet, r -> {
-            assertSuccess(r);
+            assertSuccess(fakeShibGet.getURI(), r);
             return null;
         });
     }

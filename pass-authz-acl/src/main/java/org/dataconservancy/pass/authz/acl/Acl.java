@@ -16,16 +16,16 @@
 
 package org.dataconservancy.pass.authz.acl;
 
-/**
- * @author apb@jhu.edu
- */
-public enum Permission {
-    Read("<> acl:mode acl:Read .\n"),
-    Write("<> acl:mode acl:Read .\n <> acl:mode acl:Write . \n");
+import java.net.URI;
 
-    final String rdf;
+class Acl {
 
-    private Permission(final String rdf) {
-        this.rdf = rdf;
+    public final URI uri;
+
+    public final boolean isNew;
+
+    public Acl(URI uri, boolean isNew) {
+        this.uri = uri;
+        this.isNew = isNew;
     }
 }
