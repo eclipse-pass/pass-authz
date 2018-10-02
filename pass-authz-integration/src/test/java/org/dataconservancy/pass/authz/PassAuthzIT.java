@@ -109,7 +109,7 @@ public class PassAuthzIT extends FcrepoIT {
         }));
 
         final HttpGet fakeShibGet = new HttpGet(resourceToProtect);
-        fakeShibGet.setHeader(EMPLOYEE_ID, String.valueOf(user.getLocatorIds().get(0).split(";", 0)));
+        fakeShibGet.setHeader(HOPKINS_ID, delocalize(user.getLocatorIds().get(0)));
 
         userHttp.execute(fakeShibGet, r -> {
             assertEquals(403, r.getStatusLine().getStatusCode());
