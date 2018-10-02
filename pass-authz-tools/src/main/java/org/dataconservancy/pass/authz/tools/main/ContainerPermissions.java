@@ -65,9 +65,9 @@ public class ContainerPermissions {
         containerBase = URI.create(ofNullable(FedoraConfig.getBaseUrl()).orElse(root.get("container-base").asText()));
         roleBase = ofNullable(root.get("role-base").asText()).map(URI::create).orElse(null);
 
-        try (FcrepoResponse response = manager.repo.head(getAclBase()).perform()) {
+        try (FcrepoResponse response = client.head(getAclBase()).perform()) {
             if (response.getStatusCode() == 404) {
-                try (FcrepoResponse createResp = manager.repo.put(getAclBase()).perform()) {
+                try (FcrepoResponse createResp = client.put(getAclBase()).perform()) {
                     System.err.println(createResp.getStatusCode());
                 }
             }
