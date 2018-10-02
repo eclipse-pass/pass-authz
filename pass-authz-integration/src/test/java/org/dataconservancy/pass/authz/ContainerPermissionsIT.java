@@ -29,6 +29,7 @@ import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ public class ContainerPermissionsIT extends FcrepoIT {
     static CloseableHttpClient client = getHttpClient();
 
     @Test
+    @Ignore
     public void createResourcesIT() throws Exception {
         final RepositoryCrawler crawler = new RepositoryCrawler();
 
