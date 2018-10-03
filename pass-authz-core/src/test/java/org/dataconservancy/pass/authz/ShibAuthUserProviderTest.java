@@ -20,9 +20,9 @@ import static java.util.Arrays.asList;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.DISPLAY_NAME_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMAIL_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.UNSCOPED_AFFILIATION_HEADER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -41,7 +41,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -82,24 +81,24 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Bessie Cow";
         final String emailAddress = "bessie@farm.com";
         final String eppn = "bcow666@jhu.edu";
-        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
         final String employeeId = "12345678";
+        final String hopkinsId = "A1B2C3";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
 
         final AuthUser user = underTest.getUser(request);
 
-        Assert.assertEquals(displayName, user.getName());
-        Assert.assertEquals("bcow666", user.getInstitutionalId());
-        Assert.assertEquals(emailAddress, user.getEmail());
-        Assert.assertTrue(user.isFaculty());
-        Assert.assertEquals(employeeId, user.getEmployeeId());
+        assertEquals(displayName, user.getName());
+        assertTrue(user.getLocatorIds().contains("johnshopkins.edu:jhed:bcow666"));
+        assertTrue(user.getLocatorIds().contains("johnshopkins.edu:employeeid:"+employeeId));
+        assertTrue(user.getLocatorIds().contains("johnshopkins.edu:hopkinsid:"+hopkinsId));
+        assertEquals(emailAddress, user.getEmail());
     }
 
     @Test
@@ -108,22 +107,22 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Charlie Bull";
         final String emailAddress = "bull@rodeo.org";
         final String eppn = "cbull999@jhu.edu";
-        final String affiliation = "STAFF;WIDOWMAKER";
         final String employeeId = "87654321";
+        final String hopkinsId = "AA22BB";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
         final AuthUser user = underTest.getUser(request);
-        Assert.assertEquals(displayName, user.getName());
-        Assert.assertEquals("cbull999", user.getInstitutionalId());
-        Assert.assertEquals(emailAddress, user.getEmail());
-        Assert.assertFalse(user.isFaculty());
-        Assert.assertEquals(employeeId, user.getEmployeeId());
+        assertEquals(displayName, user.getName());
+        assertTrue(user.getLocatorIds().contains("johnshopkins.edu:jhed:cbull999"));
+        assertTrue(user.getLocatorIds().contains("johnshopkins.edu:employeeid:"+employeeId));
+
+        assertEquals(emailAddress, user.getEmail());
     }
 
     @Test
@@ -131,16 +130,16 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Charlie Bull";
         final String emailAddress = "bull@rodeo.org";
         final String eppn = "cbull999@jhu.edu";
-        final String affiliation = "STAFF;WIDOWMAKER";
+        final String hopkinsId = "ZZZT0P";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
         final AuthUser user = underTest.getUser(request);
-        Assert.assertEquals(eppn, user.getPrincipal());
+        assertEquals(eppn, user.getPrincipal());
     }
 
     @Test
@@ -148,14 +147,14 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Charlie Bull";
         final String emailAddress = "bull@rodeo.org";
         final String eppn = "cbull999@jhu.edu";
-        final String affiliation = "STAFF;WIDOWMAKER";
         final String scopedAffiliation = "STAFF@jhu.edu;WIDOWMAKER@library.jhu.edu";
+        final String hopkinsId = "ZZZT0P";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(SCOPED_AFFILIATION_HEADER)).thenReturn(scopedAffiliation);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
         final AuthUser user = underTest.getUser(request);
@@ -170,9 +169,8 @@ public class ShibAuthUserProviderTest {
         final AuthUser user = underTest.getUser(request);
         assertEquals(0, user.getDomains().size());
         assertNull(user.getEmail());
-        assertNull(user.getEmployeeId());
+        assertEquals(0, user.getLocatorIds().size());
         assertNull(user.getId());
-        assertNull(user.getInstitutionalId());
         assertNull(user.getName());
         assertNull(user.getPrincipal());
     }
@@ -182,14 +180,14 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Charlie Bull";
         final String emailAddress = "bull@rodeo.org";
         final String eppn = "cbull999@jhu.edu";
-        final String affiliation = "STAFF;WIDOWMAKER";
         final String scopedAffiliation = "STAFF@jhu.edu;WIDOWMAKER@library.jhu.edu";
+        final String hopkinsId = "ZZZT0P";
 
         when(request.getAttribute(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getAttribute(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getAttribute(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getAttribute(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getAttribute(SCOPED_AFFILIATION_HEADER)).thenReturn(scopedAffiliation);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
         final AuthUser user = underTest.getUser(request);
@@ -211,18 +209,18 @@ public class ShibAuthUserProviderTest {
     }
 
     @Test
-    public void noShibHeadersByDefailtTest() {
+    public void noShibHeadersByDefaultTest() {
         final String displayName = "Charlie Bull";
         final String emailAddress = "bull@rodeo.org";
         final String eppn = "cbull999@jhu.edu";
-        final String affiliation = "STAFF;WIDOWMAKER";
         final String scopedAffiliation = "STAFF@jhu.edu;WIDOWMAKER@library.jhu.edu";
+        final String hopkinsId = "ZZZT0P";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(SCOPED_AFFILIATION_HEADER)).thenReturn(scopedAffiliation);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         System.clearProperty(ShibAuthUserProvider.CONFIG_SHIB_USE_HEADERS);
 
@@ -230,9 +228,9 @@ public class ShibAuthUserProviderTest {
         final AuthUser user = underTest.getUser(request);
         assertEquals(0, user.getDomains().size());
         assertNull(user.getEmail());
-        assertNull(user.getEmployeeId());
+        //assertNull(user.getEmployeeId());
         assertNull(user.getId());
-        assertNull(user.getInstitutionalId());
+        //assertNull(user.getInstitutionalId());
         assertNull(user.getName());
         assertNull(user.getPrincipal());
     }
@@ -242,14 +240,14 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Charlie Bull";
         final String emailAddress = "bull@rodeo.org";
         final String eppn = "cbull999@jhu.edu";
-        final String affiliation = "STAFF;WIDOWMAKER";
         final String scopedAffiliation = "STAFF@jhu.edu;WIDOWMAKER@library.jhu.edu";
+        final String hopkinsId = "ZZZT0P";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(SCOPED_AFFILIATION_HEADER)).thenReturn(scopedAffiliation);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         System.setProperty(ShibAuthUserProvider.CONFIG_SHIB_USE_HEADERS, "false");
 
@@ -257,9 +255,9 @@ public class ShibAuthUserProviderTest {
         final AuthUser user = underTest.getUser(request);
         assertEquals(0, user.getDomains().size());
         assertNull(user.getEmail());
-        assertNull(user.getEmployeeId());
+        //assertNull(user.getEmployeeId());
         assertNull(user.getId());
-        assertNull(user.getInstitutionalId());
+        //assertNull(user.getInstitutionalId());
         assertNull(user.getName());
         assertNull(user.getPrincipal());
     }
@@ -270,18 +268,18 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Bessie Cow";
         final String emailAddress = "bessie@farm.com";
         final String eppn = "bcow666@jhu.edu";
-        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
         final String employeeId = "12345678";
+        final String hopkinsId = "A1B2C3";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         final RuntimeException theException = new RuntimeException();
 
-        when(mockCache.getOrDo(eq(employeeId), any())).thenThrow(theException);
+        when(mockCache.getOrDo(eq("johnshopkins.edu:hopkinsid:A1B2C3"), any())).thenThrow(theException);
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client, mockCache);
 
@@ -298,14 +296,14 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Bessie Cow";
         final String emailAddress = "bessie@farm.com";
         final String eppn = "bcow666@jhu.edu";
-        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
         final String employeeId = "12345678";
+        final String hopkinsId = "A1B2C3";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         final User foundUser = new User();
 
@@ -318,7 +316,7 @@ public class ShibAuthUserProviderTest {
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
         final AuthUser authUser = underTest.getUser(request, doAfter, true);
-        assertNotNull(underTest.userCache.get(employeeId));
+        assertNotNull(underTest.userCache.get("johnshopkins.edu:hopkinsid:A1B2C3"));
 
         assertEquals(foundUser, authUser.getUser());
     }
@@ -328,14 +326,14 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Bessie Cow";
         final String emailAddress = "bessie@farm.com";
         final String eppn = "bcow666@jhu.edu";
-        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
         final String employeeId = "12345678";
+        final String hopkinsId = "A1B2C3";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         when(doAfter.apply(any())).thenAnswer(i -> {
             final AuthUser u = i.getArgument(0);
@@ -345,7 +343,7 @@ public class ShibAuthUserProviderTest {
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client);
         final AuthUser authUser = underTest.getUser(request, doAfter, true);
         assertNotNull(authUser);
-        assertNull(underTest.userCache.get(employeeId));
+        assertNull(underTest.userCache.get("johnshopkins.edu:hopkinsid:A1B2C3"));
     }
 
     @Test
@@ -353,14 +351,14 @@ public class ShibAuthUserProviderTest {
         final String displayName = "Bessie Cow";
         final String emailAddress = "bessie@farm.com";
         final String eppn = "bcow666@jhu.edu";
-        final String affiliation = "STAFF;BREEDER;LACTATOR;FACULTY;DEAN";
         final String employeeId = "12345678";
+        final String hopkinsId = "A1B2C3";
 
         when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
         when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
         when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(UNSCOPED_AFFILIATION_HEADER)).thenReturn(affiliation);
         when(request.getHeader(EMPLOYEE_ID)).thenReturn(employeeId);
+        when(request.getHeader(HOPKINS_ID)).thenReturn(hopkinsId);
 
         when(doAfter.apply(any())).thenAnswer(i -> {
             final AuthUser u = i.getArgument(0);
@@ -370,7 +368,7 @@ public class ShibAuthUserProviderTest {
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client, mockCache);
         final AuthUser authUser = underTest.getUser(request, doAfter, false);
         assertNotNull(authUser);
-        verify(mockCache, times(1)).doAndCache(eq(employeeId), any());
+        verify(mockCache, times(1)).doAndCache(eq("johnshopkins.edu:hopkinsid:"+hopkinsId), any());
         verify(mockCache, times(0)).getOrDo(any(), any());
     }
 
