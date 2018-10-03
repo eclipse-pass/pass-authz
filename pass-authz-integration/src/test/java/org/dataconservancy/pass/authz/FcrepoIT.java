@@ -207,4 +207,8 @@ public abstract class FcrepoIT {
         }
         throw new RuntimeException("Failed executing task", caught);
     }
+
+    static String delocalize(String identifier) {
+        return identifier.split(":")[2];
+    }
 }

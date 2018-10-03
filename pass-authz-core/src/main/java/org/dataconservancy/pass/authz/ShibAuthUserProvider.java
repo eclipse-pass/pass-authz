@@ -45,7 +45,8 @@ import org.slf4j.LoggerFactory;
  * <li>Eppn - the user's "official" JHU email address, which starts with the users institutional id</li>
  * <li>Affiliation - a semi-colon-separated list of roles or statuses indicating employment type and domain</li>
  * <li>Employeenumber - the user's employee id, durable across institutional id changes</li>
- * <li>unique-id - the user's hopkins id, durable across institutional id changes, for all active hopkins community members</li>
+ * <li>unique-id - the user's hopkins id, durable across institutional id changes, for all active hopkins community
+ * members</li>
  * </ul>
  *
  * @author apb@jhu.edu
@@ -103,7 +104,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     @Override
     public AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> doAfter, boolean allowCached) {
 
-        //boolean isFaculty = false;
+        // boolean isFaculty = false;
 
         if (LOG.isDebugEnabled() && request != null) {
 
@@ -119,7 +120,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         final String displayName = getShibAttr(request, DISPLAY_NAME_HEADER, String::trim);
         final String emailAddress = getShibAttr(request, EMAIL_HEADER, String::trim);
-        String institutionalId = getShibAttr(request, EPPN_HEADER, s ->s.split("@")[0]);
+        String institutionalId = getShibAttr(request, EPPN_HEADER, s -> s.split("@")[0]);
         if (institutionalId != null && !institutionalId.isEmpty()) {
             institutionalId = localize(institutionalId.toLowerCase(), JHED_ID_TYPE);
         }
@@ -131,7 +132,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         final AuthUser authUser = new AuthUser();
         authUser.setName(displayName);
         authUser.setEmail(emailAddress);
-        //populate the locatorId list with durable ids first
+        // populate the locatorId list with durable ids first
         if (hopkinsId != null) {
             authUser.getLocatorIds().add(hopkinsId);
             cacheLookupId = hopkinsId;
@@ -199,7 +200,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                 }
                 LOG.debug("User resource for {} is {}", hopkinsId, authUser.getId());
             } catch (final Exception e) {
-                throw new RuntimeException("Error while looking up user by locatorIds" + authUser.getLocatorIds().toString(), e);
+                throw new RuntimeException("Error while looking up user by locatorIds" + authUser.getLocatorIds()
+                        .toString(), e);
             }
         } else {
             LOG.debug("No shibboleth hopkins id; skipping user lookup ");
@@ -211,10 +213,10 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     private URI findUserId(List<String> locatorIdList) {
 
         URI userURI = null;
-        ListIterator idIterator = locatorIdList.listIterator();
+        final ListIterator<String> idIterator = locatorIdList.listIterator();
 
         while (userURI == null && idIterator.hasNext()) {
-            String locatorId = String.valueOf(idIterator.next());
+            final String locatorId = String.valueOf(idIterator.next());
             if (locatorId != null) {
                 userURI = passClient.findByAttribute(User.class, "locatorIds", locatorId);
             }
@@ -239,16 +241,16 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     }
 
     /**
-     * This method turns a shib provided identifier into a "localized" version of the form domain:type:value
-     * If the supplied value is null or empty, this method returns null
+     * This method turns a shib provided identifier into a "localized" version of the form domain:type:value If the
+     * supplied value is null or empty, this method returns null
      *
      * @param value the provided value for the identifier
      * @param type the type of identifier
      * @return the localized version of the identifier
      */
-    public static String localize (String value, String type) {
+    public static String localize(String value, String type) {
         if (type != null && value != null && !value.isEmpty()) {
-            return  String.join(":", DOMAIN, type, value);
+            return String.join(":", DOMAIN, type, value);
         } else {
             return null;
         }

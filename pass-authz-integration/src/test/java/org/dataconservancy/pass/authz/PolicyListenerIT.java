@@ -22,7 +22,6 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.dataconservancy.pass.authz.JarRunner.jar;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID;
 import static org.junit.Assert.assertEquals;
@@ -125,32 +124,20 @@ public class PolicyListenerIT extends FcrepoIT {
 
         user1 = new User();
         user1.setDisplayName("User One");
-        //user1.setLocalKey("x0001");
-        //user1.setInstitutionalId("user1@johnshopkins.edu");
 
         user1.getLocatorIds().add(ShibAuthUserProvider.localize("U1U1U1", ShibAuthUserProvider.HOPKINS_ID_TYPE));
-        user1.getLocatorIds().add(ShibAuthUserProvider.localize("x0001", ShibAuthUserProvider.EMPLOYEE_ID_TYPE));
-        user1.getLocatorIds().add(ShibAuthUserProvider.localize("user1", ShibAuthUserProvider.JHED_ID_TYPE));
         user1.getRoles().add(Role.SUBMITTER);
         user1 = client.createAndReadResource(user1, User.class);
 
         user2 = new User();
         user2.setDisplayName("User Two");
-        //user2.setLocalKey("x0002");
-        //user2.setInstitutionalId("user2@johnshopkins.edu");
         user2.getLocatorIds().add(ShibAuthUserProvider.localize("U2U2U2", ShibAuthUserProvider.HOPKINS_ID_TYPE));
-        user2.getLocatorIds().add(ShibAuthUserProvider.localize("x0002", ShibAuthUserProvider.EMPLOYEE_ID_TYPE));
-        user2.getLocatorIds().add(ShibAuthUserProvider.localize("user2", ShibAuthUserProvider.JHED_ID_TYPE));
         user2.getRoles().add(Role.SUBMITTER);
         user2 = client.createAndReadResource(user2, User.class);
 
         userAdmin = new User();
         userAdmin.setDisplayName("Admin user");
-        //userAdmin.setLocalKey("x0003");
-        //userAdmin.setInstitutionalId("admin@johnshopkins.edu");
         userAdmin.getLocatorIds().add(ShibAuthUserProvider.localize("U3U3U3", ShibAuthUserProvider.HOPKINS_ID_TYPE));
-        userAdmin.getLocatorIds().add(ShibAuthUserProvider.localize("x0003", ShibAuthUserProvider.EMPLOYEE_ID_TYPE));
-        userAdmin.getLocatorIds().add(ShibAuthUserProvider.localize("user3", ShibAuthUserProvider.JHED_ID_TYPE));
         userAdmin.getRoles().add(Role.ADMIN);
         userAdmin = client.createAndReadResource(userAdmin, User.class);
 
@@ -304,11 +291,8 @@ public class PolicyListenerIT extends FcrepoIT {
         post.setHeader("Content-Type", "application/ld+json");
 
         if (authUser != BACKEND) {
-            //post.setHeader(EMPLOYEE_ID, authUser.getLocalKey());
-            //post.setHeader(EPPN_HEADER, authUser.getInstitutionalId());
-            post.setHeader(EPPN_HEADER, authUser.getLocatorIds().get(2));
-            post.setHeader(EMPLOYEE_ID, authUser.getLocatorIds().get(1));
-            post.setHeader(HOPKINS_ID, authUser.getLocatorIds().get(0));
+            post.setHeader(HOPKINS_ID, delocalize(authUser.getLocatorIds().get(0)));
+            post.setHeader(EPPN_HEADER, "someone@johnshopkins.edu");
         } else {
             post.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -352,11 +336,8 @@ public class PolicyListenerIT extends FcrepoIT {
         final HttpPatch patch = new HttpPatch(passObject.getId());
         patch.setHeader("Content-Type", "application/merge-patch+json");
         if (authUser != BACKEND) {
-            //patch.setHeader(EMPLOYEE_ID, authUser.getLocalKey());
-            //patch.setHeader(EPPN_HEADER, authUser.getInstitutionalId());
-            patch.setHeader(EPPN_HEADER, authUser.getLocatorIds().get(2));
-            patch.setHeader(EMPLOYEE_ID, authUser.getLocatorIds().get(1));
-            patch.setHeader(HOPKINS_ID, authUser.getLocatorIds().get(0));
+            patch.setHeader(HOPKINS_ID, delocalize(authUser.getLocatorIds().get(0)));
+            patch.setHeader(EPPN_HEADER, "someone@johnshopkins.edu");
         } else {
             patch.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -389,9 +370,8 @@ public class PolicyListenerIT extends FcrepoIT {
         get.setHeader("Accept", "application/ld+json");
 
         if (authUser != BACKEND) {
-            get.setHeader(EPPN_HEADER, authUser.getLocatorIds().get(2));
-            get.setHeader(EMPLOYEE_ID, authUser.getLocatorIds().get(1));
-            get.setHeader(HOPKINS_ID, authUser.getLocatorIds().get(0));
+            get.setHeader(HOPKINS_ID, delocalize(authUser.getLocatorIds().get(0)));
+            get.setHeader(EPPN_HEADER, "someone@johnshopkins.edu");
         } else {
             get.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }

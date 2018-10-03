@@ -17,7 +17,12 @@
 package org.dataconservancy.pass.authz;
 
 import static org.dataconservancy.pass.authz.AuthRolesProvider.getAuthRoleURI;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -28,6 +33,7 @@ import java.util.UUID;
 import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
+import org.dataconservancy.pass.client.util.ConfigUtil;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
@@ -95,12 +101,15 @@ public class PassAuthzIT extends FcrepoIT {
         // This will wait until we have a lookup in the index
         assertEquals(userUri, attempt(60, () -> {
             final URI found = client.findByAttribute(User.class, "locatorIds", user.getLocatorIds().get(0));
+
+            System.out.println(user.getLocatorIds().get(0));
+            System.out.println(ConfigUtil.getSystemProperty("pass.elasticsearch.url", null));
             assertNotNull(found);
             return found;
         }));
 
         final HttpGet fakeShibGet = new HttpGet(resourceToProtect);
-        fakeShibGet.setHeader(EMPLOYEE_ID, String.valueOf(user.getLocatorIds().get(0).split(";", 0)));
+        fakeShibGet.setHeader(HOPKINS_ID, delocalize(user.getLocatorIds().get(0)));
 
         userHttp.execute(fakeShibGet, r -> {
             assertEquals(403, r.getStatusLine().getStatusCode());
@@ -151,8 +160,10 @@ public class PassAuthzIT extends FcrepoIT {
                 .perform();
 
         // This will wait until we have a lookup in the index
-        assertEquals(userUri, attempt(30, () -> {
+        assertEquals(userUri, attempt(60, () -> {
             final URI found = client.findByAttribute(User.class, "locatorIds", user.getLocatorIds().get(0));
+            System.out.println(user.getLocatorIds().get(0));
+            System.out.println(ConfigUtil.getSystemProperty("pass.elasticsearch.url", null));
             assertNotNull(found);
             return found;
         }));

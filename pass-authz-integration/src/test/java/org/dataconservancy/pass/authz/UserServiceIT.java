@@ -17,7 +17,10 @@
 package org.dataconservancy.pass.authz;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -26,7 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -75,6 +80,8 @@ public class UserServiceIT extends FcrepoIT {
 
     private static final String SHIB_HOPKINS_ID_HEADER = "unique-id";
 
+    private static final Random random = new Random();
+
     PassJsonAdapter json = new PassJsonAdapterBasic();
 
     final PassClient passClient = PassClientFactory.getPassClient();
@@ -98,7 +105,8 @@ public class UserServiceIT extends FcrepoIT {
         final PassClient passClient = PassClientFactory.getPassClient();
         final URI id = passClient.createResource(newUser);
 
-        attempt(60, () -> assertNotNull(passClient.findByAttribute(User.class, "locatorIds","johnshopkins.edu:hopkinsid:10933511")));
+        attempt(60, () -> assertNotNull(passClient.findByAttribute(User.class, "locatorIds",
+                "johnshopkins.edu:hopkinsid:KDD003")));
 
         final Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Bugs Bunny");
@@ -122,25 +130,27 @@ public class UserServiceIT extends FcrepoIT {
         // these fields should be updated on this user
         assertTrue(passUser.getLocatorIds().contains("johnshopkins.edu:jhed:bbunny1"));
         assertTrue(passUser.getLocatorIds().contains("johnshopkins.edu:employeeid:10933511"));
-        assertTrue(passUser.getLocatorIds().contains("johnshopkins.edu:jhed:KDD003"));
+        assertTrue(passUser.getLocatorIds().contains("johnshopkins.edu:hopkinsid:KDD003"));
         assertEquals("Bugs Bunny", passUser.getDisplayName());
         assertEquals("bugs@jhu.edu", passUser.getEmail());
-        assertEquals(passUser, fromResponse);
-
+        assertUsersEqual(passUser, fromResponse);
     }
 
     @Test
     public void testGivenUserDoesNotExist200() throws Exception {
 
         final Map<String, String> shibHeaders = new HashMap<>();
+
+        final String UNIQUE_ID = UUID.randomUUID().toString();
+
         shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Daffy Duck");
         shibHeaders.put(SHIB_MAIL_HEADER, "daffy@jhu.edu");
         shibHeaders.put(SHIB_EPPN_HEADER, "dduck1@jhu.edu");
         shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
-        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "10020030");
-        shibHeaders.put(SHIB_HOPKINS_ID_HEADER, "DDD000");
+        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, Integer.toString(random.nextInt(1000000)));
+        shibHeaders.put(SHIB_HOPKINS_ID_HEADER, UNIQUE_ID);
 
-        assertNull(passClient.findByAttribute(User.class, "locatorIds", "johnshopkins.edu:hopkinsid:DDD000"));
+        assertNull(passClient.findByAttribute(User.class, "locatorIds", "johnshopkins.edu:hopkinsid:" + UNIQUE_ID));
 
         final Request get = buildShibRequest(shibHeaders);
         final User fromResponse;
@@ -152,7 +162,7 @@ public class UserServiceIT extends FcrepoIT {
         }
 
         final URI id = attempt(60, () -> Optional.ofNullable(passClient.findByAttribute(User.class, "locatorIds",
-                "johnshopkins.edu:hopkinsid:DDD000"))
+                "johnshopkins.edu:hopkinsid:" + UNIQUE_ID))
                 .orElseThrow(() -> new NullPointerException("Did not find result from locator id search")));
 
         final User passUser = passClient.readResource(id, User.class);
@@ -161,7 +171,7 @@ public class UserServiceIT extends FcrepoIT {
         assertEquals(shibHeaders.get(SHIB_MAIL_HEADER), passUser.getEmail());
         assertTrue(passUser.getLocatorIds().contains(ShibAuthUserProvider.localize("dduck1",
                 ShibAuthUserProvider.JHED_ID_TYPE)));
-        assertEquals(passUser, fromResponse);
+        assertUsersEqual(passUser, fromResponse);
 
     }
 
@@ -181,6 +191,8 @@ public class UserServiceIT extends FcrepoIT {
     }
 
     private void doTokenTest(boolean loginFirst) throws Exception {
+        final String uniqueId = UUID.randomUUID().toString();
+
         final Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Daffy Duck");
         shibHeaders.put(SHIB_MAIL_HEADER, "daffy@jhu.edu");
@@ -188,8 +200,8 @@ public class UserServiceIT extends FcrepoIT {
         shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;STAFF@jhmi.edu");
         shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, Integer.toString(ThreadLocalRandom.current().nextInt(1000,
                 99999)));
-        shibHeaders.put(SHIB_HOPKINS_ID_HEADER, "BBB345");
-        assertNull(passClient.findByAttribute(User.class, "locatorIds", "johnshopkins.edu:hopkinsid:BBB345"));
+        shibHeaders.put(SHIB_HOPKINS_ID_HEADER, uniqueId);
+        assertNull(passClient.findByAttribute(User.class, "locatorIds", "johnshopkins.edu:hopkinsid:" + uniqueId));
 
         final URI MAILTO_PLACEHOLDER = URI.create("mailto:Daffy%20Duck%20%3Cdduck%40gmail.com%3E");
 
@@ -328,5 +340,12 @@ public class UserServiceIT extends FcrepoIT {
         final Model model = ModelFactory.createDefaultModel();
         model.read(new ByteArrayInputStream(body), null, "JSON-LD");
         Assert.assertTrue(new String(body), model.listStatements().toList().size() > 3);
+    }
+
+    private static void assertUsersEqual(User user1, User user2) {
+        assertEquals(user1.getLocatorIds().size(), user2.getLocatorIds().size());
+        assertTrue(user1.getLocatorIds().containsAll(user2.getLocatorIds()));
+        user2.setLocatorIds(user1.getLocatorIds());
+        assertEquals(user1, user2);
     }
 }
