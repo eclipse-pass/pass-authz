@@ -21,6 +21,8 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -158,8 +160,7 @@ public class UserServlet extends HttpServlet {
     private AuthUser createUser(AuthUser authUser) {
         final User user = new User();
         user.setUsername(authUser.getPrincipal());
-        user.setLocalKey(authUser.getEmployeeId());
-        user.setInstitutionalId(authUser.getInstitutionalId());
+        user.setLocatorIds(authUser.getLocatorIds());
         user.setDisplayName(authUser.getName());
         user.setEmail(authUser.getEmail());
         user.getRoles().add(User.Role.SUBMITTER);
@@ -167,8 +168,7 @@ public class UserServlet extends HttpServlet {
         authUser.setUser(fedoraClient.createAndReadResource(user, User.class));
         authUser.setId(authUser.getUser().getId());
 
-        LOG.info("Created new User resource <{}> for {} ({})", authUser.getId(), user.getLocalKey(), user
-                .getInstitutionalId());
+        LOG.info("Created new User resource <{}> for {})", authUser.getId(), user.getLocatorIds().get(0));
         return authUser;
     }
 
@@ -184,7 +184,6 @@ public class UserServlet extends HttpServlet {
 
         boolean update = false;
 
-        // employeeId should never change
         // each user provider will only adjust fields for which it is authoritative
         // shib is authoritative for these
         if (user.getUsername() == null || !user.getUsername().equals(shibUser.getPrincipal())) {
@@ -199,9 +198,9 @@ public class UserServlet extends HttpServlet {
             user.setDisplayName(shibUser.getName());
             update = true;
         }
-        if (user.getInstitutionalId() == null || !user.getInstitutionalId().equals(shibUser
-                .getInstitutionalId())) {
-            user.setInstitutionalId(shibUser.getInstitutionalId());
+        if (user.getLocatorIds() == null || !user.getLocatorIds().containsAll(shibUser.getLocatorIds())) {
+            user.getLocatorIds().addAll(shibUser.getLocatorIds());
+            user.setLocatorIds(new ArrayList<>(new HashSet(user.getLocatorIds())));//remove duplicates
             update = true;
         }
 

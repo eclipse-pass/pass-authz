@@ -18,6 +18,9 @@ package org.dataconservancy.pass.authz;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -48,6 +51,7 @@ import org.dataconservancy.pass.model.User;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
+import org.dataconservancy.pass.model.support.Identifier;
 import org.fusesource.hawtbuf.ByteArrayInputStream;
 import org.junit.Assert;
 import org.junit.Test;
@@ -63,18 +67,6 @@ import okhttp3.Response;
  */
 public class UserServiceIT extends FcrepoIT {
 
-    private static final String SHIB_DISPLAYNAME_HEADER = "Displayname";
-
-    private static final String SHIB_MAIL_HEADER = "Mail";
-
-    private static final String SHIB_EPPN_HEADER = "Eppn";
-
-    private static final String SHIB_UNSCOPED_AFFILIATION_HEADER = "Unscoped-Affiliation";
-
-    private static final String SHIB_SCOPED_AFFILIATION_HEADER = "Affiliation";
-
-    private static final String SHIB_EMPLOYEE_NUMBER_HEADER = "Employeenumber";
-
     PassJsonAdapter json = new PassJsonAdapterBasic();
 
     final PassClient passClient = PassClientFactory.getPassClient();
@@ -85,26 +77,33 @@ public class UserServiceIT extends FcrepoIT {
             .build();
 
     @Test
+
     public void testGivenUserDoesExistReturns200() throws Exception {
 
         final User newUser = new User();
         newUser.setFirstName("Bugs");
         newUser.setLastName("Bunny");
-        newUser.setLocalKey("10933511");
+        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE,"10933511").serialize();
+        newUser.getLocatorIds().add(eeId);
+        String hkId = new Identifier(DOMAIN, HOPKINS_ID_TYPE, "LSDFER").serialize();
+        newUser.getLocatorIds().add(hkId);
+        newUser.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE,"bbunny1").serialize());
         newUser.getRoles().add(User.Role.SUBMITTER);
 
         final PassClient passClient = PassClientFactory.getPassClient();
         final URI id = passClient.createResource(newUser);
 
-        attempt(60, () -> Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", "10933511")));
+        attempt(60, () -> Assert.assertNotNull(passClient.findByAttribute(User.class, "locatorIds", hkId)));
 
         final Map<String, String> shibHeaders = new HashMap<>();
-        shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Bugs Bunny");
-        shibHeaders.put(SHIB_MAIL_HEADER, "bugs@jhu.edu");
-        shibHeaders.put(SHIB_EPPN_HEADER, "bbunny1@jhu.edu");
-        shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "SOCIOPATH;FACULTY");
-        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "SOCIOPATH@jhu.edu;FACULTY@jhu.edu");
-        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "10933511");
+        shibHeaders.put(DISPLAY_NAME_HEADER, "Bugs Bunny");
+        shibHeaders.put(EMAIL_HEADER, "bugs@jhu.edu");
+        shibHeaders.put(EPPN_HEADER, "bbunny1@jhu.edu");
+        shibHeaders.put(SCOPED_AFFILIATION_HEADER, "SOCIOPATH@jhu.edu;FACULTY@jhu.edu");
+        shibHeaders.put(EMPLOYEE_ID_HEADER, "10933511");
+        shibHeaders.put(HOPKINS_ID_HEADER, "LSDFER@johnshopkins.edu");
+
+        String jhedId = new Identifier(DOMAIN, JHED_ID_TYPE, "bbunny1").serialize();
 
         final Request get = buildShibRequest(shibHeaders);
         final User fromResponse;
@@ -118,47 +117,12 @@ public class UserServiceIT extends FcrepoIT {
         final User passUser = passClient.readResource(id, User.class);
 
         // these fields should be updated on this user
-        Assert.assertEquals("bbunny1", passUser.getInstitutionalId());
-        Assert.assertEquals("Bugs Bunny", passUser.getDisplayName());
-        Assert.assertEquals("bugs@jhu.edu", passUser.getEmail());
-        Assert.assertEquals(passUser, fromResponse);
-
-    }
-
-    @Test
-    public void testGivenUserDoesNotExistIsFacultyReturns200() throws Exception {
-
-        final Map<String, String> shibHeaders = new HashMap<>();
-        shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Daffy Duck");
-        shibHeaders.put(SHIB_MAIL_HEADER, "daffy@jhu.edu");
-        shibHeaders.put(SHIB_EPPN_HEADER, "dduck1@jhu.edu");
-        shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "TARGET;FACULTY");
-        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
-        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "10020030");
-
-        Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(
-                SHIB_EMPLOYEE_NUMBER_HEADER)));
-
-        final Request get = buildShibRequest(shibHeaders);
-        final User fromResponse;
-        try (Response response = httpClient.newCall(get).execute()) {
-            final byte[] body = response.body().bytes();
-            fromResponse = json.toModel(body, User.class);
-            Assert.assertEquals(200, response.code());
-            assertIsjsonld(body);
-        }
-
-        final URI id = attempt(60, () -> Optional.ofNullable(passClient.findByAttribute(User.class, "localKey",
-                shibHeaders
-                        .get(SHIB_EMPLOYEE_NUMBER_HEADER))).orElseThrow(() -> new NullPointerException(
-                                "Did not find result from localKey search")));
-
-        final User passUser = passClient.readResource(id, User.class);
-
-        Assert.assertEquals(shibHeaders.get(SHIB_DISPLAYNAME_HEADER), passUser.getDisplayName());
-        Assert.assertEquals(shibHeaders.get(SHIB_MAIL_HEADER), passUser.getEmail());
-        Assert.assertEquals("dduck1", passUser.getInstitutionalId());
-        Assert.assertEquals(passUser, fromResponse);
+        assertTrue(passUser.getLocatorIds().contains(eeId));
+        assertTrue(passUser.getLocatorIds().contains(jhedId));
+        assertEquals(passUser.getLocatorIds().size(), fromResponse.getLocatorIds().size());
+        assertEquals("Bugs Bunny", passUser.getDisplayName());
+        assertEquals("bugs@jhu.edu", passUser.getEmail());
+        assertEquals(passUser.getId(), fromResponse.getId());
 
     }
 
@@ -179,16 +143,18 @@ public class UserServiceIT extends FcrepoIT {
 
     private void doTokenTest(boolean loginFirst) throws Exception {
         final Map<String, String> shibHeaders = new HashMap<>();
-        shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Daffy Duck");
-        shibHeaders.put(SHIB_MAIL_HEADER, "daffy@jhu.edu");
-        shibHeaders.put(SHIB_EPPN_HEADER, "dduck1@jhu.edu");
-        shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "TARGET;STAFF");
-        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;STAFF@jhmi.edu");
-        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, Integer.toString(ThreadLocalRandom.current().nextInt(1000,
-                99999)));
+        shibHeaders.put(DISPLAY_NAME_HEADER, "Daffy Duck");
+        shibHeaders.put(EMAIL_HEADER, "daffy@jhu.edu");
+        shibHeaders.put(EPPN_HEADER, "dduck1@jhu.edu");
+        shibHeaders.put(HOPKINS_ID_HEADER, "DDDDDD@johnshopkins.edu");
+        shibHeaders.put(SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;STAFF@jhmi.edu");
+        String number = Integer.toString(ThreadLocalRandom.current().nextInt(1000,
+                99999));
+        shibHeaders.put(EMPLOYEE_ID_HEADER, number);
 
-        Assert.assertNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(
-                SHIB_EMPLOYEE_NUMBER_HEADER)));
+        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, number).serialize();
+
+        assertNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
 
         final URI MAILTO_PLACEHOLDER = URI.create("mailto:Daffy%20Duck%20%3Cdduck%40gmail.com%3E");
 
@@ -246,12 +212,12 @@ public class UserServiceIT extends FcrepoIT {
         final ExecutorService exe = Executors.newFixedThreadPool(8);
 
         final Map<String, String> shibHeaders = new HashMap<>();
-        shibHeaders.put(SHIB_DISPLAYNAME_HEADER, "Wot Gorilla");
-        shibHeaders.put(SHIB_MAIL_HEADER, "gorilla@jhu.edu");
-        shibHeaders.put(SHIB_EPPN_HEADER, "wotg1@jhu.edu");
-        shibHeaders.put(SHIB_UNSCOPED_AFFILIATION_HEADER, "TARGET;FACULTY");
-        shibHeaders.put(SHIB_SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
-        shibHeaders.put(SHIB_EMPLOYEE_NUMBER_HEADER, "89248104");
+        shibHeaders.put(DISPLAY_NAME_HEADER, "Wot Gorilla");
+        shibHeaders.put(EMAIL_HEADER, "gorilla@jhu.edu");
+        shibHeaders.put(EPPN_HEADER, "wotg1@jhu.edu");
+        shibHeaders.put(SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
+        shibHeaders.put(EMPLOYEE_ID_HEADER, "89248104");
+        shibHeaders.put(HOPKINS_ID_HEADER, "WGWGWG@" + DOMAIN);
 
         final List<Future<User>> results = new ArrayList<>();
 
@@ -280,9 +246,9 @@ public class UserServiceIT extends FcrepoIT {
                 .collect(Collectors.toSet());
 
         Assert.assertEquals(1, created.size());
+        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, "89248104").serialize();
         attempt(60, () -> {
-            Assert.assertNotNull(passClient.findByAttribute(User.class, "localKey", shibHeaders.get(
-                    SHIB_EMPLOYEE_NUMBER_HEADER)));
+            Assert.assertNotNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
         });
 
         exe.shutdown();
@@ -303,12 +269,12 @@ public class UserServiceIT extends FcrepoIT {
         // roles filter and fcrepo auth.
         return builder.url(requestUri.toURL())
                 .header("Authorization", Credentials.basic("user", "moo"))
-                .header(SHIB_DISPLAYNAME_HEADER, headers.get(SHIB_DISPLAYNAME_HEADER))
-                .header(SHIB_MAIL_HEADER, headers.get(SHIB_MAIL_HEADER))
-                .header(SHIB_EPPN_HEADER, headers.get(SHIB_EPPN_HEADER))
-                .header(SHIB_UNSCOPED_AFFILIATION_HEADER, headers.get(SHIB_UNSCOPED_AFFILIATION_HEADER))
-                .header(SHIB_SCOPED_AFFILIATION_HEADER, headers.get(SHIB_SCOPED_AFFILIATION_HEADER))
-                .header(SHIB_EMPLOYEE_NUMBER_HEADER, headers.get(SHIB_EMPLOYEE_NUMBER_HEADER))
+                .header(DISPLAY_NAME_HEADER, headers.get(DISPLAY_NAME_HEADER))
+                .header(EMAIL_HEADER, headers.get(EMAIL_HEADER))
+                .header(EPPN_HEADER, headers.get(EPPN_HEADER))
+                .header(SCOPED_AFFILIATION_HEADER, headers.get(SCOPED_AFFILIATION_HEADER))
+                .header(EMPLOYEE_ID_HEADER, headers.get(EMPLOYEE_ID_HEADER))
+                .header(HOPKINS_ID_HEADER, headers.get(HOPKINS_ID_HEADER))
                 .build();
     }
 
@@ -327,6 +293,6 @@ public class UserServiceIT extends FcrepoIT {
     private static void assertIsjsonld(byte[] body) {
         final Model model = ModelFactory.createDefaultModel();
         model.read(new ByteArrayInputStream(body), null, "JSON-LD");
-        Assert.assertTrue(new String(body), model.listStatements().toList().size() > 3);
+        assertTrue(new String(body), model.listStatements().toList().size() > 3);
     }
 }

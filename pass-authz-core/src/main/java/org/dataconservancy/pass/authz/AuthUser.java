@@ -17,7 +17,9 @@
 package org.dataconservancy.pass.authz;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.dataconservancy.pass.model.User;
@@ -32,13 +34,9 @@ public class AuthUser {
 
     private String email;
 
-    private String institutionalId;
-
-    private String employeeId;
+    private List<String> locatorIds =  new ArrayList<>();
 
     private URI id;
-
-    private boolean isFaculty;
 
     private String principal;
 
@@ -47,39 +45,21 @@ public class AuthUser {
     private User user;
 
     /**
-     * the durable local key for the user
+     * the list of locator idsfor the user
      *
-     * @return the employee's id
+     * @return the list of ids
      */
-    public String getEmployeeId() {
-        return employeeId;
+    public List<String> getLocatorIds() {
+        return locatorIds;
     }
 
     /**
-     * st the user's employee id, the durable local key
+     * set the user's locator ids
      *
-     * @param employeeId the durable local key
+     * @param locatorIds the durable list of ids
      */
-    public void setEmployeeId(String employeeId) {
-        this.employeeId = employeeId;
-    }
-
-    /**
-     * boolean indicating whether a person has faculty status
-     *
-     * @return the boolean
-     */
-    public boolean isFaculty() {
-        return isFaculty;
-    }
-
-    /**
-     * set a boolean indicating whether the person has facuty status
-     *
-     * @param faculty boolean indicating whether the user has a faculty affiliation
-     */
-    public void setFaculty(boolean faculty) {
-        isFaculty = faculty;
+    public void setLocatorIds(List<String> locatorIds) {
+        this.locatorIds = locatorIds;
     }
 
     /**
@@ -98,24 +78,6 @@ public class AuthUser {
      */
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    /**
-     * Get the institutional id for this user (for JHU it's the Jhed Id)
-     *
-     * @return the institutional id
-     */
-    public String getInstitutionalId() {
-        return institutionalId;
-    }
-
-    /**
-     * Set the institutional id for this user
-     *
-     * @param institutionalId (for JHU it's the Jhed Id)
-     */
-    public void setInstitutionalId(String institutionalId) {
-        this.institutionalId = institutionalId;
     }
 
     /**
@@ -173,7 +135,7 @@ public class AuthUser {
      * In shib terms, this is eppn;
      * </p>
      *
-     * @return
+     * @return principal
      */
     public String getPrincipal() {
         return principal;
@@ -182,7 +144,7 @@ public class AuthUser {
     /**
      * Set the user's principal.
      *
-     * @param principal
+     * @param principal the user's principal
      */
     public void setPrincipal(String principal) {
         this.principal = principal;

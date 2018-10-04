@@ -49,7 +49,9 @@ import org.dataconservancy.pass.client.PassJsonAdapter;
 import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
 
+import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -106,18 +108,17 @@ public class UserServletTest {
 
         USER.setPrincipal("bessie@farm.com");
         USER.setName("MOOO COW");
-        USER.setFaculty(true);
-        USER.setInstitutionalId("cowb1");
         USER.setEmail("bessie@farm.com");
-        USER.setEmployeeId("08675309");
+        USER.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE, "cowb1").serialize());
+        USER.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, "08675309").serialize());
+        USER.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, "P2P2P2").serialize());
 
         final User user = new User();
         user.setId(URI.create("http://example.org:2020/" + UUID.randomUUID().toString()));
         user.setUsername(USER.getPrincipal());
         user.setDisplayName(USER.getName());
         user.setEmail(USER.getEmail());
-        user.setInstitutionalId(USER.getInstitutionalId());
-        user.setLocalKey(USER.getEmployeeId());
+        user.setLocatorIds(USER.getLocatorIds());
         user.setRoles(Arrays.asList(Role.ADMIN));
         USER.setUser(user);
         USER.setId(user.getId());
@@ -178,17 +179,19 @@ public class UserServletTest {
         assertEquals(newUserId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
-        assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
+        assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
+        assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), fromServlet.getLocatorIds().size());
 
         verify(client).createAndReadResource(userCaptor.capture(), eq(User.class));
 
         final User created = userCaptor.getValue();
         assertEquals(USER.getName(), created.getDisplayName());
-        assertEquals(USER.getInstitutionalId(), created.getInstitutionalId());
         assertEquals(USER.getEmail(), created.getEmail());
-        assertEquals(USER.getEmployeeId(), created.getLocalKey());
         assertEquals(Arrays.asList(Role.SUBMITTER), created.getRoles());
+        assertTrue(USER.getLocatorIds().containsAll(created.getLocatorIds()));
+        assertTrue(created.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), created.getLocatorIds().size());
 
         verify(response, times(1)).setStatus(eq(200));
         assertOutputEquals(created);
@@ -202,7 +205,7 @@ public class UserServletTest {
 
         final User found = new User();
         found.setId(foundId);
-        found.setLocalKey(USER.getEmployeeId());
+        found.setLocatorIds(USER.getLocatorIds());
         found.setRoles(Arrays.asList(Role.ADMIN));
         when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
 
@@ -214,17 +217,19 @@ public class UserServletTest {
         assertEquals(foundId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
-        assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
+        assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
+        assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), fromServlet.getLocatorIds().size());
 
         verify(client).updateResource((userCaptor.capture()));
 
         final User updated = userCaptor.getValue();
         assertEquals(USER.getName(), updated.getDisplayName());
-        assertEquals(USER.getInstitutionalId(), updated.getInstitutionalId());
         assertEquals(USER.getEmail(), updated.getEmail());
-        assertEquals(USER.getEmployeeId(), updated.getLocalKey());
         assertEquals(Arrays.asList(Role.ADMIN), updated.getRoles());
+        assertTrue(USER.getLocatorIds().containsAll(updated.getLocatorIds()));
+        assertTrue(updated.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), updated.getLocatorIds().size());
 
         verify(response, times(1)).setStatus(eq(200));
         assertOutputEquals(updated);
@@ -241,8 +246,9 @@ public class UserServletTest {
         assertEquals(USER.getUser().getId(), fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
-        assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
+        assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
+        assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), fromServlet.getLocatorIds().size());
 
         verify(client, times(0)).updateResource(any());
 
@@ -263,8 +269,7 @@ public class UserServletTest {
         found.setUsername(USER.getPrincipal());
         found.setDisplayName(USER.getName());
         found.setEmail(USER.getEmail());
-        found.setInstitutionalId(USER.getInstitutionalId());
-        found.setLocalKey(USER.getEmployeeId());
+        found.setLocatorIds(USER.getLocatorIds());
         found.setRoles(Arrays.asList(Role.ADMIN));
         when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
 
@@ -277,8 +282,9 @@ public class UserServletTest {
         assertTrue(fromServlet.getId().toString().contains("https"));
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
-        assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
+        assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
+        assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), fromServlet.getLocatorIds().size());
 
         verify(client, times(0)).updateResource(any());
     }
@@ -297,8 +303,9 @@ public class UserServletTest {
         assertTrue(fromServlet.getId().toString().startsWith("http://foo.org/"));
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
-        assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
+        assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
+        assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), fromServlet.getLocatorIds().size());
 
         verify(client, times(0)).updateResource(any());
     }
@@ -316,9 +323,9 @@ public class UserServletTest {
         assertEquals(USER.getId(), fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
-        assertEquals(USER.getInstitutionalId(), fromServlet.getInstitutionalId());
-        assertEquals(USER.getEmployeeId(), fromServlet.getLocalKey());
-
+        assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
+        assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
+        assertEquals(USER.getLocatorIds().size(), fromServlet.getLocatorIds().size());
         verify(client, times(0)).updateResource(any());
     }
 
