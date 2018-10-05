@@ -22,13 +22,18 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.dataconservancy.pass.authz.JarRunner.jar;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -53,6 +58,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -85,6 +91,8 @@ public class PolicyListenerIT extends FcrepoIT {
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
 
     static CloseableHttpClient http = getHttpClient();
+    
+    static String domain = "johnshopkins.edu";
 
     @BeforeClass
     public static void startListener() throws Exception {
@@ -124,22 +132,25 @@ public class PolicyListenerIT extends FcrepoIT {
 
         user1 = new User();
         user1.setDisplayName("User One");
-        user1.setLocalKey("x0001");
-        user1.setInstitutionalId("user1@johnshopkins.edu");
+        user1.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE,"x0001").serialize());
+        user1.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"user1").serialize());
+        user1.getLocatorIds().add(new Identifier(domain, HOPKINS_ID_TYPE, "U1U1U1").serialize());
         user1.getRoles().add(Role.SUBMITTER);
         user1 = client.createAndReadResource(user1, User.class);
 
         user2 = new User();
         user2.setDisplayName("User Two");
-        user2.setLocalKey("x0002");
-        user2.setInstitutionalId("user2@johnshopkins.edu");
+        user2.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE,"x0002").serialize());
+        user2.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"user2").serialize());
+        user2.getLocatorIds().add(new Identifier(domain, HOPKINS_ID_TYPE, "U2U2U2").serialize());
         user2.getRoles().add(Role.SUBMITTER);
         user2 = client.createAndReadResource(user2, User.class);
 
         userAdmin = new User();
         userAdmin.setDisplayName("Admin user");
-        userAdmin.setLocalKey("x0003");
-        userAdmin.setInstitutionalId("admin@johnshopkins.edu");
+        userAdmin.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE,"x0003").serialize());
+        userAdmin.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"admin").serialize());
+        userAdmin.getLocatorIds().add(new Identifier(domain, HOPKINS_ID_TYPE, "ADMIN1").serialize());
         userAdmin.getRoles().add(Role.ADMIN);
         userAdmin = client.createAndReadResource(userAdmin, User.class);
 
@@ -176,7 +187,7 @@ public class PolicyListenerIT extends FcrepoIT {
 
         // Wait until the submission is successfully created
         final Submission submission = attempt(10, () -> {
-            return tryCeateSubmission(user1, grant, SC_CREATED);
+            return tryCreateSubmission(user1, grant, SC_CREATED);
         });
 
         // Now try modifying it as somebody else, and assure it fails.
@@ -202,7 +213,7 @@ public class PolicyListenerIT extends FcrepoIT {
         // Verify that the PI can create a submission, but this time
         // set submitted=true
         final Submission submission = attempt(10, () -> {
-            return tryCeateSubmission(user1, grant, SC_CREATED, true);
+            return tryCreateSubmission(user1, grant, SC_CREATED, true);
         });
 
         // Assure we cannot update the submission, since submitted=true and it should be frozen.
@@ -225,7 +236,7 @@ public class PolicyListenerIT extends FcrepoIT {
 
         // Create a submission
         final Submission submission = attempt(10, () -> {
-            return tryCeateSubmission(user1, grant, SC_CREATED, true);
+            return tryCreateSubmission(user1, grant, SC_CREATED, true);
         });
 
         // Wait until it has an ACL
@@ -249,7 +260,7 @@ public class PolicyListenerIT extends FcrepoIT {
 
         // Create a submission
         final Submission submission = attempt(10, () -> {
-            return tryCeateSubmission(user1, grant, SC_CREATED, false);
+            return tryCreateSubmission(user1, grant, SC_CREATED, false);
         });
 
         // Wait until it has an ACL
@@ -287,14 +298,15 @@ public class PolicyListenerIT extends FcrepoIT {
 
     }
 
-    static Submission tryCeateSubmission(User authUser, Grant grant, int expectedResponseCode,
+    static Submission tryCreateSubmission(User authUser, Grant grant, int expectedResponseCode,
             boolean... isSubmitted) {
         final HttpPost post = new HttpPost(URI.create(FCREPO_BASE_URI) + "submissions");
         post.setHeader("Content-Type", "application/ld+json");
 
         if (authUser != BACKEND) {
-            post.setHeader(EMPLOYEE_ID, authUser.getLocalKey());
-            post.setHeader(EPPN_HEADER, authUser.getInstitutionalId());
+            post.setHeader(EMPLOYEE_ID_HEADER, getIdHeaderValueForType(authUser.getLocatorIds(), EMPLOYEE_ID_TYPE));
+            post.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), domain));
+            post.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), domain));
         } else {
             post.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -338,8 +350,9 @@ public class PolicyListenerIT extends FcrepoIT {
         final HttpPatch patch = new HttpPatch(passObject.getId());
         patch.setHeader("Content-Type", "application/merge-patch+json");
         if (authUser != BACKEND) {
-            patch.setHeader(EMPLOYEE_ID, authUser.getLocalKey());
-            patch.setHeader(EPPN_HEADER, authUser.getInstitutionalId());
+            patch.setHeader(EMPLOYEE_ID_HEADER, getIdHeaderValueForType(authUser.getLocatorIds(), EMPLOYEE_ID_TYPE));
+            patch.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), domain));
+            patch.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), domain));
         } else {
             patch.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -371,9 +384,12 @@ public class PolicyListenerIT extends FcrepoIT {
         final HttpGet get = new HttpGet(resource.getId());
         get.setHeader("Accept", "application/ld+json");
 
+
+
         if (authUser != BACKEND) {
-            get.setHeader(EMPLOYEE_ID, authUser.getLocalKey());
-            get.setHeader(EPPN_HEADER, authUser.getInstitutionalId());
+            get.setHeader(EMPLOYEE_ID_HEADER, getIdHeaderValueForType(authUser.getLocatorIds(), EMPLOYEE_ID_TYPE));
+            get.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), domain));
+            get.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), domain));
         } else {
             get.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -396,5 +412,15 @@ public class PolicyListenerIT extends FcrepoIT {
         } catch (final Exception e) {
             throw new RuntimeException("ACL detection failed ", e);
         }
+    }
+
+    private static String getIdHeaderValueForType(List<String> locatorIds, String type) {
+        for (String ser : locatorIds) {
+            Identifier id = Identifier.deserialize(ser);
+            if (id.getType().equals(type)) {
+                return id.getValue();
+            }
+        }
+        return null;
     }
 }

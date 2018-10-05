@@ -17,8 +17,13 @@
 package org.dataconservancy.pass.authz;
 
 import static org.dataconservancy.pass.authz.AuthRolesProvider.getAuthRoleURI;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -37,6 +42,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -56,6 +62,8 @@ public class PassAuthzIT extends FcrepoIT {
     static CloseableHttpClient http = getHttpClient();
 
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
+    
+    String domain = "johnshopkins.edu";
 
     @BeforeClass
     public static void addAclContainer() throws Exception {
@@ -79,7 +87,12 @@ public class PassAuthzIT extends FcrepoIT {
     public void userBasedPermissionIT() throws Exception {
 
         final User user = new User();
-        user.setLocalKey(UUID.randomUUID().toString());
+        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, UUID.randomUUID().toString()).serialize();
+        String hkId = new Identifier(domain, HOPKINS_ID_TYPE, UUID.randomUUID().toString()).serialize();
+        String jhId = new Identifier(domain, JHED_ID_TYPE, UUID.randomUUID().toString()).serialize();
+        user.getLocatorIds().add(eeId);
+        user.getLocatorIds().add(hkId);
+        user.getLocatorIds().add(jhId);
 
         final URI userUri = client.createResource(user);
 
@@ -95,13 +108,18 @@ public class PassAuthzIT extends FcrepoIT {
 
         // This will wait until we have a lookup in the index
         assertEquals(userUri, attempt(60, () -> {
-            final URI found = client.findByAttribute(User.class, "localKey", user.getLocalKey());
+            final URI found = client.findByAttribute(User.class, "locatorIds", hkId);
             assertNotNull(found);
             return found;
         }));
 
         final HttpGet fakeShibGet = new HttpGet(resourceToProtect);
-        fakeShibGet.setHeader(EMPLOYEE_ID, user.getLocalKey());
+        String eeHeaderValue = Identifier.deserialize(eeId).getValue();
+        String hkHeaderValue = String.join("@", Identifier.deserialize(hkId).getValue(), domain);
+        String jhHeaderValue = String.join("@", Identifier.deserialize(jhId).getValue(), domain);
+        fakeShibGet.setHeader(EMPLOYEE_ID_HEADER, eeHeaderValue);
+        fakeShibGet.setHeader(HOPKINS_ID_HEADER, hkHeaderValue);
+        fakeShibGet.setHeader(EPPN_HEADER, jhHeaderValue);
 
         userHttp.execute(fakeShibGet, r -> {
             assertEquals(403, r.getStatusLine().getStatusCode());
@@ -129,11 +147,18 @@ public class PassAuthzIT extends FcrepoIT {
         final String DOMAIN = "bovidae.edu";
         final String USER_NAME = "4stomachs@" + DOMAIN;
         final String LOCAL_KEY = UUID.randomUUID().toString();
+        final String HOP_ID = "4STOMAX@" + DOMAIN;
+        final String SCOPED_AFFILIATIONS = "PARTNER@bovidae.edu;COW@bovidae.edu";
 
         final URI authzRole = getAuthRoleURI(DOMAIN, Role.SUBMITTER);
 
         final User user = new User();
-        user.setLocalKey(LOCAL_KEY);
+        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, LOCAL_KEY).serialize();
+        String jhId = new Identifier(DOMAIN, JHED_ID_TYPE, "4stomachs").serialize();
+        String hkId = new Identifier(DOMAIN, HOPKINS_ID_TYPE, "4STOMAX").serialize();
+        user.getLocatorIds().add(eeId);
+        user.getLocatorIds().add(jhId);
+        user.getLocatorIds().add(hkId);
         user.setRoles(Arrays.asList(Role.SUBMITTER));
 
         final URI userUri = client.createResource(user);
@@ -150,14 +175,16 @@ public class PassAuthzIT extends FcrepoIT {
 
         // This will wait until we have a lookup in the index
         assertEquals(userUri, attempt(30, () -> {
-            final URI found = client.findByAttribute(User.class, "localKey", user.getLocalKey());
+            final URI found = client.findByAttribute(User.class, "locatorIds",eeId);
             assertNotNull(found);
             return found;
         }));
 
         final HttpGet fakeShibGet = new HttpGet(resourceToProtect);
-        fakeShibGet.setHeader(EMPLOYEE_ID, user.getLocalKey());
+        fakeShibGet.setHeader(EMPLOYEE_ID_HEADER, LOCAL_KEY);
         fakeShibGet.setHeader(EPPN_HEADER, USER_NAME);
+        fakeShibGet.setHeader(HOPKINS_ID_HEADER, HOP_ID);
+        fakeShibGet.setHeader(SCOPED_AFFILIATION_HEADER, SCOPED_AFFILIATIONS);
 
         // Should fail, as the user has no permissions at all
         userHttp.execute(fakeShibGet, r -> {
