@@ -16,6 +16,8 @@
 
 package org.dataconservancy.pass.authz.service.user;
 
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
@@ -49,7 +51,6 @@ import org.dataconservancy.pass.client.PassJsonAdapter;
 import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
 
 import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.Before;
@@ -104,14 +105,15 @@ public class UserServletTest {
 
     @Before
     public void setUp() throws Exception {
+        String domain = "johnshopkins.edu";
         USER = new AuthUser();
 
         USER.setPrincipal("bessie@farm.com");
         USER.setName("MOOO COW");
         USER.setEmail("bessie@farm.com");
-        USER.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE, "cowb1").serialize());
-        USER.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, "08675309").serialize());
-        USER.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, "P2P2P2").serialize());
+        USER.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE, "cowb1").serialize());
+        USER.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE, "08675309").serialize());
+        USER.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE, "P2P2P2").serialize());
 
         final User user = new User();
         user.setId(URI.create("http://example.org:2020/" + UUID.randomUUID().toString()));

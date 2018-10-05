@@ -22,7 +22,12 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.dataconservancy.pass.authz.JarRunner.jar;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -86,6 +91,8 @@ public class PolicyListenerIT extends FcrepoIT {
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
 
     static CloseableHttpClient http = getHttpClient();
+    
+    static String domain = "johnshopkins.edu";
 
     @BeforeClass
     public static void startListener() throws Exception {
@@ -125,25 +132,25 @@ public class PolicyListenerIT extends FcrepoIT {
 
         user1 = new User();
         user1.setDisplayName("User One");
-        user1.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE,"x0001").serialize());
-        user1.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE,"user1").serialize());
-        user1.getLocatorIds().add(new Identifier(DOMAIN, HOPKINS_ID_TYPE, "U1U1U1").serialize());
+        user1.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE,"x0001").serialize());
+        user1.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"user1").serialize());
+        user1.getLocatorIds().add(new Identifier(domain, HOPKINS_ID_TYPE, "U1U1U1").serialize());
         user1.getRoles().add(Role.SUBMITTER);
         user1 = client.createAndReadResource(user1, User.class);
 
         user2 = new User();
         user2.setDisplayName("User Two");
-        user2.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE,"x0002").serialize());
-        user2.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE,"user2").serialize());
-        user2.getLocatorIds().add(new Identifier(DOMAIN, HOPKINS_ID_TYPE, "U2U2U2").serialize());
+        user2.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE,"x0002").serialize());
+        user2.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"user2").serialize());
+        user2.getLocatorIds().add(new Identifier(domain, HOPKINS_ID_TYPE, "U2U2U2").serialize());
         user2.getRoles().add(Role.SUBMITTER);
         user2 = client.createAndReadResource(user2, User.class);
 
         userAdmin = new User();
         userAdmin.setDisplayName("Admin user");
-        userAdmin.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE,"x0003").serialize());
-        userAdmin.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE,"admin").serialize());
-        userAdmin.getLocatorIds().add(new Identifier(DOMAIN, HOPKINS_ID_TYPE, "ADMIN1").serialize());
+        userAdmin.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE,"x0003").serialize());
+        userAdmin.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"admin").serialize());
+        userAdmin.getLocatorIds().add(new Identifier(domain, HOPKINS_ID_TYPE, "ADMIN1").serialize());
         userAdmin.getRoles().add(Role.ADMIN);
         userAdmin = client.createAndReadResource(userAdmin, User.class);
 
@@ -298,8 +305,8 @@ public class PolicyListenerIT extends FcrepoIT {
 
         if (authUser != BACKEND) {
             post.setHeader(EMPLOYEE_ID_HEADER, getIdHeaderValueForType(authUser.getLocatorIds(), EMPLOYEE_ID_TYPE));
-            post.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), DOMAIN));
-            post.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), DOMAIN));
+            post.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), domain));
+            post.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), domain));
         } else {
             post.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -344,8 +351,8 @@ public class PolicyListenerIT extends FcrepoIT {
         patch.setHeader("Content-Type", "application/merge-patch+json");
         if (authUser != BACKEND) {
             patch.setHeader(EMPLOYEE_ID_HEADER, getIdHeaderValueForType(authUser.getLocatorIds(), EMPLOYEE_ID_TYPE));
-            patch.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), DOMAIN));
-            patch.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), DOMAIN));
+            patch.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), domain));
+            patch.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), domain));
         } else {
             patch.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }
@@ -381,8 +388,8 @@ public class PolicyListenerIT extends FcrepoIT {
 
         if (authUser != BACKEND) {
             get.setHeader(EMPLOYEE_ID_HEADER, getIdHeaderValueForType(authUser.getLocatorIds(), EMPLOYEE_ID_TYPE));
-            get.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), DOMAIN));
-            get.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), DOMAIN));
+            get.setHeader(EPPN_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), JHED_ID_TYPE), domain));
+            get.setHeader(HOPKINS_ID_HEADER, String.join("@",getIdHeaderValueForType(authUser.getLocatorIds(), HOPKINS_ID_TYPE), domain));
         } else {
             get.setHeader(AUTH_ROLE_HEADER, BACKEND_ROLE.toString());
         }

@@ -198,6 +198,8 @@ public class UserServlet extends HttpServlet {
             user.setDisplayName(shibUser.getName());
             update = true;
         }
+
+        //synchronize shared field
         if (user.getLocatorIds() == null || !user.getLocatorIds().containsAll(shibUser.getLocatorIds())) {
             user.getLocatorIds().addAll(shibUser.getLocatorIds());
             user.setLocatorIds(new ArrayList<>(new HashSet(user.getLocatorIds())));//remove duplicates

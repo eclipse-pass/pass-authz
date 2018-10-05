@@ -75,8 +75,6 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
     public static final String JHED_ID_TYPE = "jhed";
 
-    public static final String DOMAIN = "johnshopkins.edu";
-
     final PassClient passClient;
 
     final ExpiringLRUCache<String, User> userCache;
@@ -117,20 +115,21 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         final String displayName = getShibAttr(request, DISPLAY_NAME_HEADER, String::trim);
         final String emailAddress = getShibAttr(request, EMAIL_HEADER, String::trim);
+        String domain = getShibAttr(request, EPPN_HEADER, s ->s.split("@")[1]);
         String institutionalId = getShibAttr(request, EPPN_HEADER, s ->s.split("@")[0]);
         if (institutionalId != null && !institutionalId.isEmpty()) {
-            institutionalId = new Identifier(DOMAIN, JHED_ID_TYPE, institutionalId.toLowerCase()).serialize();
+            institutionalId = new Identifier(domain, JHED_ID_TYPE, institutionalId.toLowerCase()).serialize();
         }
 
-        final String employeeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE,  getShibAttr(request, EMPLOYEE_ID_HEADER, e -> e)).serialize();
-        final String hopkinsId = new Identifier(DOMAIN, HOPKINS_ID_TYPE, getShibAttr(request, HOPKINS_ID_HEADER, s -> s.split("@")[0])).serialize();
+        final String employeeId = new Identifier(domain, EMPLOYEE_ID_TYPE,  getShibAttr(request, EMPLOYEE_ID_HEADER, e -> e)).serialize();
+        final String hopkinsId = new Identifier(domain, HOPKINS_ID_TYPE, getShibAttr(request, HOPKINS_ID_HEADER, s -> s.split("@")[0])).serialize();
 
         String cacheLookupId = null;
 
         final AuthUser authUser = new AuthUser();
         authUser.setName(displayName);
         authUser.setEmail(emailAddress);
-        //populate the locatorId list with durable ids first
+        //populate the locatorId list with durable ids first - shib user always has hopkins id
         if (hopkinsId != null) {
             authUser.getLocatorIds().add(hopkinsId);
             cacheLookupId = hopkinsId;

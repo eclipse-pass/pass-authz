@@ -17,7 +17,13 @@
 package org.dataconservancy.pass.authz;
 
 import static org.dataconservancy.pass.authz.AuthRolesProvider.getAuthRoleURI;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -56,6 +62,8 @@ public class PassAuthzIT extends FcrepoIT {
     static CloseableHttpClient http = getHttpClient();
 
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
+    
+    String domain = "johnshopkins.edu";
 
     @BeforeClass
     public static void addAclContainer() throws Exception {
@@ -79,9 +87,9 @@ public class PassAuthzIT extends FcrepoIT {
     public void userBasedPermissionIT() throws Exception {
 
         final User user = new User();
-        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, UUID.randomUUID().toString()).serialize();
-        String hkId = new Identifier(DOMAIN, HOPKINS_ID_TYPE, UUID.randomUUID().toString()).serialize();
-        String jhId = new Identifier(DOMAIN, JHED_ID_TYPE, UUID.randomUUID().toString()).serialize();
+        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, UUID.randomUUID().toString()).serialize();
+        String hkId = new Identifier(domain, HOPKINS_ID_TYPE, UUID.randomUUID().toString()).serialize();
+        String jhId = new Identifier(domain, JHED_ID_TYPE, UUID.randomUUID().toString()).serialize();
         user.getLocatorIds().add(eeId);
         user.getLocatorIds().add(hkId);
         user.getLocatorIds().add(jhId);
@@ -107,8 +115,8 @@ public class PassAuthzIT extends FcrepoIT {
 
         final HttpGet fakeShibGet = new HttpGet(resourceToProtect);
         String eeHeaderValue = Identifier.deserialize(eeId).getValue();
-        String hkHeaderValue = String.join("@", Identifier.deserialize(hkId).getValue(), DOMAIN);
-        String jhHeaderValue = String.join("@", Identifier.deserialize(jhId).getValue(), DOMAIN);
+        String hkHeaderValue = String.join("@", Identifier.deserialize(hkId).getValue(), domain);
+        String jhHeaderValue = String.join("@", Identifier.deserialize(jhId).getValue(), domain);
         fakeShibGet.setHeader(EMPLOYEE_ID_HEADER, eeHeaderValue);
         fakeShibGet.setHeader(HOPKINS_ID_HEADER, hkHeaderValue);
         fakeShibGet.setHeader(EPPN_HEADER, jhHeaderValue);

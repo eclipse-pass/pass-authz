@@ -17,8 +17,16 @@
 package org.dataconservancy.pass.authz;
 
 import static java.util.Arrays.asList;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.DISPLAY_NAME_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMAIL_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_HEADER;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
+import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
 import static org.junit.Assert.assertEquals;
-import static org.dataconservancy.pass.authz.ShibAuthUserProvider.*;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -28,7 +36,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -75,19 +82,19 @@ public class UserServiceIT extends FcrepoIT {
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .build();
+    String domain = "johnshopkins.edu";
 
     @Test
-
     public void testGivenUserDoesExistReturns200() throws Exception {
 
         final User newUser = new User();
         newUser.setFirstName("Bugs");
         newUser.setLastName("Bunny");
-        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE,"10933511").serialize();
+        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE,"10933511").serialize();
         newUser.getLocatorIds().add(eeId);
-        String hkId = new Identifier(DOMAIN, HOPKINS_ID_TYPE, "LSDFER").serialize();
+        String hkId = new Identifier(domain, HOPKINS_ID_TYPE, "LSDFER").serialize();
         newUser.getLocatorIds().add(hkId);
-        newUser.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE,"bbunny1").serialize());
+        newUser.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"bbunny1").serialize());
         newUser.getRoles().add(User.Role.SUBMITTER);
 
         final PassClient passClient = PassClientFactory.getPassClient();
@@ -98,12 +105,12 @@ public class UserServiceIT extends FcrepoIT {
         final Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(DISPLAY_NAME_HEADER, "Bugs Bunny");
         shibHeaders.put(EMAIL_HEADER, "bugs@jhu.edu");
-        shibHeaders.put(EPPN_HEADER, "bbunny1@jhu.edu");
+        shibHeaders.put(EPPN_HEADER, "bbunny1@johnshopkins.edu");
         shibHeaders.put(SCOPED_AFFILIATION_HEADER, "SOCIOPATH@jhu.edu;FACULTY@jhu.edu");
         shibHeaders.put(EMPLOYEE_ID_HEADER, "10933511");
         shibHeaders.put(HOPKINS_ID_HEADER, "LSDFER@johnshopkins.edu");
 
-        String jhedId = new Identifier(DOMAIN, JHED_ID_TYPE, "bbunny1").serialize();
+        String jhedId = new Identifier(domain, JHED_ID_TYPE, "bbunny1").serialize();
 
         final Request get = buildShibRequest(shibHeaders);
         final User fromResponse;
@@ -145,14 +152,14 @@ public class UserServiceIT extends FcrepoIT {
         final Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(DISPLAY_NAME_HEADER, "Daffy Duck");
         shibHeaders.put(EMAIL_HEADER, "daffy@jhu.edu");
-        shibHeaders.put(EPPN_HEADER, "dduck1@jhu.edu");
+        shibHeaders.put(EPPN_HEADER, "dduck1@johnshopkins.edu");
         shibHeaders.put(HOPKINS_ID_HEADER, "DDDDDD@johnshopkins.edu");
         shibHeaders.put(SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;STAFF@jhmi.edu");
         String number = Integer.toString(ThreadLocalRandom.current().nextInt(1000,
                 99999));
         shibHeaders.put(EMPLOYEE_ID_HEADER, number);
 
-        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, number).serialize();
+        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, number).serialize();
 
         assertNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
 
@@ -214,10 +221,10 @@ public class UserServiceIT extends FcrepoIT {
         final Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(DISPLAY_NAME_HEADER, "Wot Gorilla");
         shibHeaders.put(EMAIL_HEADER, "gorilla@jhu.edu");
-        shibHeaders.put(EPPN_HEADER, "wotg1@jhu.edu");
+        shibHeaders.put(EPPN_HEADER, "wotg1@johnshopkins.edu");
         shibHeaders.put(SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
         shibHeaders.put(EMPLOYEE_ID_HEADER, "89248104");
-        shibHeaders.put(HOPKINS_ID_HEADER, "WGWGWG@" + DOMAIN);
+        shibHeaders.put(HOPKINS_ID_HEADER, "WGWGWG@" + domain);
 
         final List<Future<User>> results = new ArrayList<>();
 
@@ -246,7 +253,7 @@ public class UserServiceIT extends FcrepoIT {
                 .collect(Collectors.toSet());
 
         Assert.assertEquals(1, created.size());
-        String eeId = new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, "89248104").serialize();
+        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, "89248104").serialize();
         attempt(60, () -> {
             Assert.assertNotNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
         });
