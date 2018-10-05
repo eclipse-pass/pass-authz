@@ -24,6 +24,7 @@ import java.util.Set;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.Submission.SubmissionStatus;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,10 +73,11 @@ public class PolicyEngine {
         final Set<URI> authReaders = new HashSet<>();
         final Set<URI> authWriters = new HashSet<>();
 
-        // If a submission is "submitted=true", then it's frozen.
-        if (submission.getSubmitted() == null || !submission.getSubmitted()) {
+        final Boolean isSubmitted = ofNullable(submission.getSubmissionStatus()).map(SubmissionStatus::isSubmitted)
+                .orElse(submission.getSubmitted());
 
-            // Not frozen, allow writes to preparers and submitters
+        if (isSubmitted == null || !isSubmitted) {
+            // Not frozen, allow writes from preparers and submitters
             ofNullable(submission.getSubmitter()).ifPresent(authWriters::add);
             submission.getPreparers().forEach(authWriters::add);
         }

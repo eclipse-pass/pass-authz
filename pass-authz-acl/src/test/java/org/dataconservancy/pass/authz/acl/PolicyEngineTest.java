@@ -28,6 +28,7 @@ import java.net.URI;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.Submission.SubmissionStatus;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -66,9 +67,10 @@ public class PolicyEngineTest {
         when(builder.grantWrite(any())).thenReturn(builder);
     }
 
-    // If the submission is in a read-only state, then it's read only except to backend.
+    // If the submission is in a read-only state according to its submission status, then it's read only except to
+    // backend.
     @Test
-    public void updateSubmissionReadOnlyTest() {
+    public void updateSubmissionStatusReadOnlyTest() {
         final URI RESOURCE_URI = URI.create("http://example.org/resource");
 
         toTest.setAdminRole(ADMIN_ROLE);
@@ -76,7 +78,7 @@ public class PolicyEngineTest {
         toTest.setSubmitterRole(SUBMITTER_ROLE);
 
         final Submission submission = new Submission();
-        submission.setSubmitted(true);
+        submission.setSubmissionStatus(SubmissionStatus.SUBMITTED);
         when(client.readResource(eq(RESOURCE_URI), eq(Submission.class))).thenReturn(submission);
 
         toTest.updateSubmission(RESOURCE_URI);
@@ -91,6 +93,7 @@ public class PolicyEngineTest {
         verify(builder, times(1)).perform();
     }
 
+    // If no roles have been defined, than a read-only submission is not writable by anybody.
     @Test
     public void updateSubmissionReadOnlyNoRolesTest() {
         final URI RESOURCE_URI = URI.create("http://example.org/resource");
@@ -110,6 +113,7 @@ public class PolicyEngineTest {
         verify(builder, times(1)).perform();
     }
 
+    // If the submission has been updated and it's still writable, make sure that write permissions are granted.
     @Test
     public void updateSubmissionSubmitterTest() {
         final URI RESOURCE_URI = URI.create("http://example.org/resource");
@@ -120,7 +124,7 @@ public class PolicyEngineTest {
         toTest.setSubmitterRole(SUBMITTER_ROLE);
 
         final Submission submission = new Submission();
-        submission.setSubmitted(false);
+        submission.setSubmissionStatus(SubmissionStatus.APPROVAL_REQUESTED);
         submission.setSubmitter(SUBMITTER_URI);
         when(client.readResource(eq(RESOURCE_URI), eq(Submission.class))).thenReturn(submission);
 
@@ -137,6 +141,7 @@ public class PolicyEngineTest {
         verify(builder, times(1)).perform();
     }
 
+    // Make sure preparers are granted write permissions if the submission is writable.
     @Test
     public void updateSubmissionPreparersTest() {
         final URI RESOURCE_URI = URI.create("http://example.org/resource");
@@ -161,6 +166,35 @@ public class PolicyEngineTest {
         verify(builder, times(1)).grantWrite(argThat(l -> l.containsAll(asList(BACKEND_ROLE, PREPARER_URI_1,
                 PREPARER_URI_2)) && l
                         .size() == 3));
+        verify(builder, times(0)).grantAppend(any());
+
+        verify(builder, times(1)).perform();
+    }
+
+    // A submission with no status is writeable
+    @Test
+    public void submissionNoStatusTest() {
+        final URI RESOURCE_URI = URI.create("http://example.org/resource");
+        final URI SUBMITTER_URI = URI.create("http://example.org/submitter");
+
+        toTest.setAdminRole(ADMIN_ROLE);
+        toTest.setBackendRole(BACKEND_ROLE);
+        toTest.setSubmitterRole(SUBMITTER_ROLE);
+
+        final Submission submission = new Submission();
+        submission.setSubmissionStatus(null);
+        submission.setSubmitted(null);
+        submission.setSubmitter(SUBMITTER_URI);
+        when(client.readResource(eq(RESOURCE_URI), eq(Submission.class))).thenReturn(submission);
+
+        toTest.updateSubmission(RESOURCE_URI);
+
+        verify(aclManager).setPermissions(eq(RESOURCE_URI));
+        verify(builder, times(1)).grantRead(argThat(l -> l.containsAll(asList(ADMIN_ROLE, BACKEND_ROLE,
+                SUBMITTER_ROLE)) && l.size() == 3));
+
+        verify(builder, times(1)).grantWrite(argThat(l -> l.containsAll(asList(BACKEND_ROLE, SUBMITTER_URI)) && l
+                .size() == 2));
         verify(builder, times(0)).grantAppend(any());
 
         verify(builder, times(1)).perform();
