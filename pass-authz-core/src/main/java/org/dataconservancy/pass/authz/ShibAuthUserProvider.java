@@ -40,10 +40,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the AuthUserProvider interface for JHU's Shibboleth service We are interested in six headers
+ * <ul>
  * <li>Displayname - First Last</li>
  * <li>Mail - the user's preferred email address</li>
  * <li>Eppn - the user's "official" JHU email address, which starts with the users institutional id</li>
- * <li>Affiliation - a semi-colon-separated list of roles or statuses indicating employment type and domain/li>
+ * <li>Affiliation - a semi-colon-separated list of roles or statuses indicating employment type and domain</li>
  * <li>Employeenumber - the user's employee id, durable across institutional id changes</li>
  * <li>unique-id - the user's hopkins id, durable across institutional id changes, for all active hopkins community members</li>
  * </ul>
@@ -53,26 +54,36 @@ import org.slf4j.LoggerFactory;
  */
 public class ShibAuthUserProvider implements AuthUserProvider {
 
+    /** Property for configuing whether to use shib headers (vs attributes) */
     public static final String CONFIG_SHIB_USE_HEADERS = "authz.shib.use.headers";
 
     Logger LOG = LoggerFactory.getLogger(ShibAuthUserProvider.class);
 
+    /** Display name http header */
     public static final String DISPLAY_NAME_HEADER = "Displayname";
 
+    /** Email http header */
     public static final String EMAIL_HEADER = "Mail";
 
+    /** EPPN http header */
     public static final String EPPN_HEADER = "Eppn";
 
+    /** Scoped affiliation http header */
     public static final String SCOPED_AFFILIATION_HEADER = "Affiliation";
 
+    /** Employee number http header */
     public static final String EMPLOYEE_ID_HEADER = "Employeenumber";
 
+    /** Unique ID header */
     public static final String HOPKINS_ID_HEADER = "unique-id";
 
+    /** Employee ID Identifier type */
     public static final String EMPLOYEE_ID_TYPE = "employeeid";
 
+    /** hopkins id identifier type */
     public static final String HOPKINS_ID_TYPE = "hopkinsid";
 
+    /** JHED id type */
     public static final String JHED_ID_TYPE = "jhed";
 
     final PassClient passClient;
@@ -81,11 +92,20 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
     boolean useShibHeaders = ofNullable(getValue(CONFIG_SHIB_USE_HEADERS)).map(Boolean::valueOf).orElse(false);
 
+    /** Constructor.
+     * 
+     * @param client PASS client.
+     */
     public ShibAuthUserProvider(PassClient client) {
         this.passClient = client;
         userCache = new ExpiringLRUCache<>(100, Duration.ofMinutes(10));
     }
 
+    /** Constructor.
+     * 
+     * @param client PASS client
+     * @param cache LRU cache.
+     */
     public ShibAuthUserProvider(PassClient client, ExpiringLRUCache<String, User> cache) {
         this.passClient = client;
         userCache = cache;

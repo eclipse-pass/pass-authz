@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
  * </p>
  *
  * @author apb@jhu.edu
+ * @param <K> Key type
+ * @param <V> Value type
  */
 @SuppressWarnings("serial")
 public class ExpiringLRUCache<K, V> {
@@ -95,9 +97,9 @@ public class ExpiringLRUCache<K, V> {
     /**
      * Call a generator to populate the cache, regardless of whether there is already a cached value or not.
      *
-     * @param key
-     * @param generator
-     * @return
+     * @param key The key
+     * @param generator Generator function
+     * @return The generated value
      */
     public V doAndCache(K key, Callable<V> generator) {
         return getOrDo(key, generator, true);
@@ -151,7 +153,7 @@ public class ExpiringLRUCache<K, V> {
      * Get a cached value, or null if not present in cache.
      *
      * @param key Cache key.
-     * @return
+     * @return The cached value
      */
     public V get(K key) {
         synchronized (cache) {
