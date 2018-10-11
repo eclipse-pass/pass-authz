@@ -388,7 +388,7 @@
     <dependency>
       <groupId>org.dataconservancy.fcrepo</groupId>
       <artifactId>jsonld-addon-filters</artifactId>
-      <version>0.0.3-SNAPSHOT</version>
+      <version>0.0.6</version>
       <classifier>shaded</classifier>
       <scope>test</scope>
     </dependency>
