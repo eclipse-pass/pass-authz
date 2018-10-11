@@ -21,30 +21,30 @@
 
     <commons-codec.version>1.11</commons-codec.version>
     <fcrepo.version>4.7.5</fcrepo.version>
-    <jackson.version>2.9.5</jackson.version>
+    <jackson.version>2.9.7</jackson.version>
     <javax.servlet.version>3.1.0</javax.servlet.version>
-    <jena.version>3.8.0</jena.version>
+    <jena.version>3.9.0</jena.version>
     <junit.version>4.12</junit.version>
     <logback.version>1.2.3</logback.version>
-    <mockito.version>2.18.0</mockito.version>
-    <okhttp.version>3.9.0</okhttp.version>
-    <pass.fedora.client.version>0.4.1-SNAPSHOT</pass.fedora.client.version>
-    <elasticsearch.version>6.2.3</elasticsearch.version>
+    <mockito.version>2.23.0</mockito.version>
+    <okhttp.version>3.11.0</okhttp.version>
+    <pass.fedora.client.version>0.4.1</pass.fedora.client.version>
+    <elasticsearch.version>6.2.4</elasticsearch.version>
     <slf4j.version>1.7.25</slf4j.version>
-    <apache.log.api>2.9.1</apache.log.api>
-    <activemq.version>5.14.4</activemq.version>
+    <apache.log.api>2.11.1</apache.log.api>
+    <activemq.version>5.15.6</activemq.version>
     <system.rules.version>1.18.0</system.rules.version>
     <json.version>20180130</json.version>
 
     <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
-    <docker-maven-plugin.version>0.24.0</docker-maven-plugin.version>
-    <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
-    <maven-failsafe-plugin.version>2.21.0</maven-failsafe-plugin.version>
-    <maven-surefire-plugin.version>2.20.1</maven-surefire-plugin.version>
+    <docker-maven-plugin.version>0.27.2</docker-maven-plugin.version>
+    <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+    <maven-failsafe-plugin.version>2.22.0</maven-failsafe-plugin.version>
+    <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
     <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-    <maven-war-plugin.version>3.2.0</maven-war-plugin.version>
+    <maven-war-plugin.version>3.2.2</maven-war-plugin.version>
     <maven.deploy.plugin.version>2.8.2</maven.deploy.plugin.version>
-    <maven.wagon.ssh.version>2.10</maven.wagon.ssh.version>
+    <maven.wagon.ssh.version>3.2.0</maven.wagon.ssh.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
