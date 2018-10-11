@@ -1,6 +1,6 @@
 /*
 
- * Copyright 2017 Johns Hopkins University
+ * Copyright 2018 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ import javax.servlet.http.HttpServletRequest;
 public interface AuthUserProvider {
 
     /**
-     * Get theauthenticated user from the current http request.
+     * Get the authenticated user from the current http request.
      * <p>
      * Inspects the http request for the current user/principal, and provides information about that user
      * <p>
      *
-     * @param request the curent http request.
-     * @return
+     * @param request the current http request.
+     * @return the AuthUser
      */
     public default AuthUser getUser(HttpServletRequest request) {
         return getUser(request, a -> a, true);
@@ -49,12 +49,12 @@ public interface AuthUserProvider {
      * if not present".
      * <p>
      *
-     * @param request
-     * @param filterWhenDone
+     * @param request HTTP request
+     * @param filterWhenDone Function to be applied to the authUser.
      * @param allowCached If true, then the implementation may return a cached result (this potentially NOT executing
      *        the function). Otherwise, if false, the implementation MAY cache the result. But if it does, it MUST
      *        cache the result AFTER having applied the provided function.
-     * @return
+     * @return the AuthUser.
      */
     public AuthUser getUser(HttpServletRequest request, Function<AuthUser, AuthUser> filterWhenDone,
             boolean allowCached);

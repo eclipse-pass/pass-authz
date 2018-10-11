@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Johns Hopkins University
+ * Copyright 2018 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class AuthUser {
 
     private String email;
 
-    private List<String> locatorIds =  new ArrayList<>();
+    private List<String> locatorIds = new ArrayList<>();
 
     private URI id;
 
@@ -150,12 +150,20 @@ public class AuthUser {
         this.principal = principal;
     }
 
-    /** associate a User resource with this AuthUser. */
+    /**
+     * Associate a User resource with this AuthUser.
+     *
+     * @param user The user
+     */
     public void setUser(User user) {
         this.user = user;
     }
 
-    /** Get the associated User resource, if defined/provided. May be null. */
+    /**
+     * Get the associated User resource, if defined/provided. May be null.
+     *
+     * @return The user, if present.
+     */
     public User getUser() {
         return user;
     }
