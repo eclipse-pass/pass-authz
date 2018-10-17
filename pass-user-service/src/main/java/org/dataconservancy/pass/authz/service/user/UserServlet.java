@@ -140,7 +140,7 @@ public class UserServlet extends HttpServlet {
                 out.append("Unauthorized");
             }
         } else {
-            final User user = shibUser.getUser();
+            final User user = new User(shibUser.getUser());
             rewriteUri(user, request);
 
             LOG.debug("Successfully returning User data for {}", user.getId());
