@@ -1,6 +1,8 @@
 # Pass Authorization Tools
 
 [![Build Status](https://travis-ci.org/OA-PASS/pass-authz.svg?branch=master)](https://travis-ci.org/OA-PASS/pass-authz)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.dataconservancy.pass/pass-authz/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.dataconservancy.pass/)
+
 
 * `pass-authz-roles` Determines the access roles of a given user, used for enforcement via access control lists.
 * `pass-authz-listener` A service which listens for changes to resources (e.g. submission of a resource), and then enacts changes to their access control list (making it read-only, for example).
