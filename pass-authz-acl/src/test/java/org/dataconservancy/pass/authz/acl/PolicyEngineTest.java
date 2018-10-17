@@ -70,7 +70,7 @@ public class PolicyEngineTest {
     // If the submission is in a read-only state according to its submission status, then it's read only except to
     // backend.
     @Test
-    public void updateSubmissionStatusReadOnlyTest() {
+    public void updateSubmissionStatusReadOnlyViaSubmissionStatusTest() {
         final URI RESOURCE_URI = URI.create("http://example.org/resource");
 
         toTest.setAdminRole(ADMIN_ROLE);
@@ -79,6 +79,58 @@ public class PolicyEngineTest {
 
         final Submission submission = new Submission();
         submission.setSubmissionStatus(SubmissionStatus.SUBMITTED);
+        when(client.readResource(eq(RESOURCE_URI), eq(Submission.class))).thenReturn(submission);
+
+        toTest.updateSubmission(RESOURCE_URI);
+
+        verify(aclManager).setPermissions(eq(RESOURCE_URI));
+        verify(builder, times(1)).grantRead(argThat(l -> l.containsAll(asList(ADMIN_ROLE, BACKEND_ROLE,
+                SUBMITTER_ROLE)) && l.size() == 3));
+
+        verify(builder, times(1)).grantWrite(argThat(l -> l.containsAll(asList(BACKEND_ROLE)) && l.size() == 1));
+        verify(builder, times(0)).grantAppend(any());
+
+        verify(builder, times(1)).perform();
+    }
+
+    // If the submission is in a read-only state according to its 'submitted' boolean, then it's read only except to
+    // backend.
+    @Test
+    public void updateSubmissionStatusReadOnlyViaSubmittedTest() {
+        final URI RESOURCE_URI = URI.create("http://example.org/resource");
+
+        toTest.setAdminRole(ADMIN_ROLE);
+        toTest.setBackendRole(BACKEND_ROLE);
+        toTest.setSubmitterRole(SUBMITTER_ROLE);
+
+        final Submission submission = new Submission();
+        submission.setSubmitted(true);
+        when(client.readResource(eq(RESOURCE_URI), eq(Submission.class))).thenReturn(submission);
+
+        toTest.updateSubmission(RESOURCE_URI);
+
+        verify(aclManager).setPermissions(eq(RESOURCE_URI));
+        verify(builder, times(1)).grantRead(argThat(l -> l.containsAll(asList(ADMIN_ROLE, BACKEND_ROLE,
+                SUBMITTER_ROLE)) && l.size() == 3));
+
+        verify(builder, times(1)).grantWrite(argThat(l -> l.containsAll(asList(BACKEND_ROLE)) && l.size() == 1));
+        verify(builder, times(0)).grantAppend(any());
+
+        verify(builder, times(1)).perform();
+    }
+
+    // If the submission is in a read-only state according to a cancelled status, then it's read only except to
+    // backend.
+    @Test
+    public void updateSubmissionStatusReadOnlyViaCancelledTest() {
+        final URI RESOURCE_URI = URI.create("http://example.org/resource");
+
+        toTest.setAdminRole(ADMIN_ROLE);
+        toTest.setBackendRole(BACKEND_ROLE);
+        toTest.setSubmitterRole(SUBMITTER_ROLE);
+
+        final Submission submission = new Submission();
+        submission.setSubmissionStatus(SubmissionStatus.CANCELLED);
         when(client.readResource(eq(RESOURCE_URI), eq(Submission.class))).thenReturn(submission);
 
         toTest.updateSubmission(RESOURCE_URI);

@@ -76,7 +76,10 @@ public class PolicyEngine {
         final Boolean isSubmitted = ofNullable(submission.getSubmissionStatus()).map(SubmissionStatus::isSubmitted)
                 .orElse(submission.getSubmitted());
 
-        if (isSubmitted == null || !isSubmitted) {
+        final boolean isCancelled = ofNullable(submission.getSubmissionStatus()).map(s -> s.equals(
+                SubmissionStatus.CANCELLED)).orElse(false);
+
+        if (!isCancelled && (isSubmitted == null || !isSubmitted)) {
             // Not frozen, allow writes from preparers and submitters
             ofNullable(submission.getSubmitter()).ifPresent(authWriters::add);
             submission.getPreparers().forEach(authWriters::add);
