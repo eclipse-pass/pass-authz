@@ -33,8 +33,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
-
 import org.dataconservancy.pass.model.support.Identifier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +46,8 @@ import org.slf4j.LoggerFactory;
  * <li>Eppn - the user's "official" JHU email address, which starts with the users institutional id</li>
  * <li>Affiliation - a semi-colon-separated list of roles or statuses indicating employment type and domain</li>
  * <li>Employeenumber - the user's employee id, durable across institutional id changes</li>
- * <li>unique-id - the user's hopkins id, durable across institutional id changes, for all active hopkins community members</li>
+ * <li>unique-id - the user's hopkins id, durable across institutional id changes, for all active hopkins community
+ * members</li>
  * </ul>
  *
  * @author apb@jhu.edu
@@ -92,8 +93,9 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
     boolean useShibHeaders = ofNullable(getValue(CONFIG_SHIB_USE_HEADERS)).map(Boolean::valueOf).orElse(false);
 
-    /** Constructor.
-     * 
+    /**
+     * Constructor.
+     *
      * @param client PASS client.
      */
     public ShibAuthUserProvider(PassClient client) {
@@ -101,8 +103,9 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         userCache = new ExpiringLRUCache<>(100, Duration.ofMinutes(10));
     }
 
-    /** Constructor.
-     * 
+    /**
+     * Constructor.
+     *
      * @param client PASS client
      * @param cache LRU cache.
      */
@@ -135,21 +138,23 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         final String displayName = getShibAttr(request, DISPLAY_NAME_HEADER, String::trim);
         final String emailAddress = getShibAttr(request, EMAIL_HEADER, String::trim);
-        String domain = getShibAttr(request, EPPN_HEADER, s ->s.split("@")[1]);
-        String institutionalId = getShibAttr(request, EPPN_HEADER, s ->s.split("@")[0]);
+        final String domain = getShibAttr(request, EPPN_HEADER, s -> s.split("@")[1]);
+        String institutionalId = getShibAttr(request, EPPN_HEADER, s -> s.split("@")[0]);
         if (institutionalId != null && !institutionalId.isEmpty()) {
             institutionalId = new Identifier(domain, JHED_ID_TYPE, institutionalId.toLowerCase()).serialize();
         }
 
-        final String employeeId = new Identifier(domain, EMPLOYEE_ID_TYPE,  getShibAttr(request, EMPLOYEE_ID_HEADER, e -> e)).serialize();
-        final String hopkinsId = new Identifier(domain, HOPKINS_ID_TYPE, getShibAttr(request, HOPKINS_ID_HEADER, s -> s.split("@")[0])).serialize();
+        final String employeeId = new Identifier(domain, EMPLOYEE_ID_TYPE, getShibAttr(request, EMPLOYEE_ID_HEADER,
+                e -> e)).serialize();
+        final String hopkinsId = new Identifier(domain, HOPKINS_ID_TYPE, getShibAttr(request, HOPKINS_ID_HEADER,
+                s -> s.split("@")[0])).serialize();
 
         String cacheLookupId = null;
 
         final AuthUser authUser = new AuthUser();
         authUser.setName(displayName);
         authUser.setEmail(emailAddress);
-        //populate the locatorId list with durable ids first - shib user always has hopkins id
+        // populate the locatorId list with durable ids first - shib user always has hopkins id
         if (hopkinsId != null) {
             authUser.getLocatorIds().add(hopkinsId);
             cacheLookupId = hopkinsId;
@@ -170,10 +175,10 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         authUser.getDomains().addAll(stream(ofNullable(getShibAttr(request, SCOPED_AFFILIATION_HEADER, s -> s.split(
                 ";")))
-                .orElse(new String[0]))
-                .filter(sa -> sa.contains("@"))
-                .map(sa -> sa.split("@")[1])
-                .collect(toSet()));
+                        .orElse(new String[0]))
+                                .filter(sa -> sa.contains("@"))
+                                .map(sa -> sa.split("@")[1])
+                                .collect(toSet()));
 
         if (cacheLookupId != null) {
             LOG.debug("Looking up User based on hopkins id '{}'", cacheLookupId);
@@ -217,7 +222,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                 }
                 LOG.debug("User resource for {} is {}", hopkinsId, authUser.getId());
             } catch (final Exception e) {
-                throw new RuntimeException("Error while looking up user by locatorIds" + authUser.getLocatorIds().toString(), e);
+                throw new RuntimeException("Error while looking up user by locatorIds" + authUser.getLocatorIds()
+                        .toString(), e);
             }
         } else {
             LOG.debug("No shibboleth hopkins id; skipping user lookup ");
@@ -229,10 +235,10 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     private URI findUserId(List<String> locatorIdList) {
 
         URI userURI = null;
-        ListIterator idIterator = locatorIdList.listIterator();
+        final ListIterator idIterator = locatorIdList.listIterator();
 
         while (userURI == null && idIterator.hasNext()) {
-            String locatorId = String.valueOf(idIterator.next());
+            final String locatorId = String.valueOf(idIterator.next());
             if (locatorId != null) {
                 userURI = passClient.findByAttribute(User.class, "locatorIds", locatorId);
             }

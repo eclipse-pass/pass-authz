@@ -19,15 +19,12 @@ package org.dataconservancy.pass.authz;
 import static java.lang.String.format;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
-import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
 
 import org.slf4j.Logger;
@@ -45,24 +42,13 @@ import org.slf4j.LoggerFactory;
  *
  * @author apb@jhu.edu
  */
-public class AuthRolesProvider {
+public abstract class AuthRolesProvider {
 
     static final Logger LOG = LoggerFactory.getLogger(AuthRolesProvider.class);
 
     public static final String ROLE_BASE = "http://oapass.org/ns/roles/";
 
-    private final PassClient client;
-
-    private final ExpiringLRUCache<URI, User> cache;
-
-    public AuthRolesProvider(PassClient passClient) {
-        this.client = passClient;
-        this.cache = new ExpiringLRUCache<>(100, Duration.ofMinutes(30));
-    }
-
-    public AuthRolesProvider(PassClient passClient, ExpiringLRUCache<URI, User> cache) {
-        this.client = passClient;
-        this.cache = cache;
+    public AuthRolesProvider() {
     }
 
     /**
@@ -71,7 +57,7 @@ public class AuthRolesProvider {
      * @param authUser The authenticated user.
      * @return All roles
      */
-    public Set<URI> getRoles(AuthUser authUser) {
+    public static Set<URI> getRoles(AuthUser authUser) {
         final Set<URI> roles = new HashSet<>();
 
         if (authUser == null) {
@@ -79,7 +65,7 @@ public class AuthRolesProvider {
             return roles;
         }
 
-        if (authUser.getId() == null) {
+        if (authUser.getUser() == null) {
             if (authUser.getPrincipal() != null) {
                 LOG.info("Authenticated user {} does not have a PASS User resource yet", authUser.getPrincipal());
             } else {
@@ -88,28 +74,15 @@ public class AuthRolesProvider {
             return roles;
         }
 
-        final User user;
-        try {
-            user = cache.getOrDo(authUser.getId(),
-                    () -> client.readResource(authUser.getId(), User.class));
-        } catch (final Exception e) {
-            throw new RuntimeException("Error reading User resource for" + authUser.getId(), e);
-        }
-
-        if (user == null) {
-            LOG.warn("User {} was not found, granting NO authz roles", authUser.getId());
-            return roles;
-        }
-
         for (final String domain : authUser.getDomains()) {
-            for (final Role role : user.getRoles()) {
+            for (final Role role : authUser.getUser().getRoles()) {
                 roles.add(getAuthRoleURI(domain, role));
             }
         }
 
         LOG.debug("Found roles for {}: {}", authUser.getPrincipal(), roles);
 
-        roles.addAll(addFedoraHack(user.getId()));
+        roles.addAll(addFedoraHack(authUser.getUser().getId()));
 
         return roles;
     }
@@ -121,7 +94,7 @@ public class AuthRolesProvider {
     // This is a hack for fcrepo4, whereby ACLs cannot use http fedora resource URIs.
     // For some unknown (and incorrect) reason, they need to begin with info:fedora.
     // Therefore, we just add the info:fedora variant.
-    private List<URI> addFedoraHack(URI resource) {
+    private static List<URI> addFedoraHack(URI resource) {
 
         final List<URI> roles = new ArrayList<>();
         roles.add(resource);
