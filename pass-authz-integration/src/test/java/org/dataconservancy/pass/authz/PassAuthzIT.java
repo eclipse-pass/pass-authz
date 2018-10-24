@@ -16,7 +16,6 @@
 
 package org.dataconservancy.pass.authz;
 
-import static org.dataconservancy.pass.authz.AuthRolesProvider.getAuthRoleURI;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EPPN_HEADER;
@@ -24,6 +23,7 @@ import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_HEA
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
+import static org.dataconservancy.pass.authz.roles.AuthRolesProvider.getAuthRoleURI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 

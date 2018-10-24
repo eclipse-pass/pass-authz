@@ -18,6 +18,7 @@ package org.dataconservancy.pass.authz.roles;
 
 import static java.util.Optional.ofNullable;
 import static org.dataconservancy.pass.authz.ConfigUtil.getValue;
+import static org.dataconservancy.pass.authz.roles.AuthRolesProvider.getRoles;
 
 import java.io.IOException;
 import java.net.URI;
@@ -39,13 +40,14 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
+import javax.servlet.http.HttpServletResponse;
 
-import org.dataconservancy.pass.authz.AuthRolesProvider;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.authz.LogUtil;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
+import org.dataconservancy.pass.model.User;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +67,10 @@ public class PassRolesFilter implements Filter {
 
     public static final String PROP_HEADER_SEPARATOR = "authz.header.separator";
 
+    public static final String PROP_USER_SERVICE_PATH = "authz.user.service.path";
+
+    static final String USER_SERVICE_PATH = ofNullable(getValue(PROP_USER_SERVICE_PATH)).orElse("/pass-user-service");
+
     boolean allowExternalRoles;
 
     final String authzHeader = ofNullable(getValue(PROP_HEADER_NAME)).orElse(DEFAULT_ROLE_HEADER);
@@ -72,11 +78,10 @@ public class PassRolesFilter implements Filter {
     final String authzRoleSeparator = ofNullable(getValue(PROP_HEADER_SEPARATOR)).orElse(",");
 
     Function<ServletContext, AuthUserProvider> authUserProviderFactory = (sc) -> {
-        final ServletContext userServiceContext = sc.getContext(
-                "/pass-user-service");
+        final ServletContext userServiceContext = sc.getContext(USER_SERVICE_PATH);
 
         if (userServiceContext == null) {
-            throw new RuntimeException("Could not access the user service context");
+            throw new NullPointerException("Could not access the user service context");
         }
 
         final AuthUserProvider provider = (AuthUserProvider) userServiceContext.getAttribute("authUserProvider");
@@ -89,13 +94,12 @@ public class PassRolesFilter implements Filter {
 
     };
 
-    AuthRolesProvider rolesProvider;
+    final PassClient passClient;
 
     public PassRolesFilter() {
         LogUtil.adjustLogLevels();
 
-        final PassClient fedoraClient = PassClientFactory.getPassClient();
-        rolesProvider = new AuthRolesProvider(fedoraClient);
+        passClient = PassClientFactory.getPassClient();
     }
 
     @Override
@@ -117,8 +121,27 @@ public class PassRolesFilter implements Filter {
             ServletException {
 
         final HttpServletRequest req = (HttpServletRequest) request;
+        final HttpServletResponse resp = (HttpServletResponse) response;
 
-        chain.doFilter(new AuthzRequestWrapper(req), response);
+        AuthzRequestWrapper rolesWrapper = null;
+        try {
+            if (!req.getRequestURI().startsWith(USER_SERVICE_PATH)) {
+                LOG.debug("Preparing authorizations for {} {}", req.getMethod(), req.getRequestURL());
+                rolesWrapper = new AuthzRequestWrapper(req);
+            } else {
+                // If the request is for the user service, just pass down the chain, don't apply the roles wrapper.
+                chain.doFilter(request, response);
+            }
+        } catch (final Exception e) {
+            LOG.warn("Could not apply roles filter", e);
+            if (!resp.isCommitted()) {
+                resp.sendError(500, "Error determining authorization roles.  This request has been logged.");
+            }
+        }
+
+        if (rolesWrapper != null) {
+            chain.doFilter(rolesWrapper, response);
+        }
 
     }
 
@@ -148,12 +171,20 @@ public class PassRolesFilter implements Filter {
 
             try {
                 LOG.debug("Getting user info for roles");
-                final AuthUser user = authUserProviderFactory.apply(request.getServletContext()).getUser(request);
+                final AuthUser user = authUserProviderFactory.apply(request.getServletContext()).getUser(request,
+                        a -> {
+                            LOG.debug("Entering critical section");
+                            if (a.getId() != null && a.getUser() == null) {
+                                a.setUser(passClient.readResource(a.getId(), User.class));
+                            }
+                            return a;
+                        }, true);
 
-                rolesDiscovered.addAll(rolesProvider.getRoles(user).stream().map(URI::toString).collect(Collectors
-                        .toList()));
+                rolesDiscovered.addAll(getRoles(user).stream()
+                        .map(URI::toString)
+                        .collect(Collectors.toList()));
             } catch (final Exception e) {
-                LOG.warn("Error looking up user or roles ", e);
+                throw new RuntimeException("Error looking up user or roles ", e);
             }
 
             roles = String.join(authzRoleSeparator, rolesDiscovered);

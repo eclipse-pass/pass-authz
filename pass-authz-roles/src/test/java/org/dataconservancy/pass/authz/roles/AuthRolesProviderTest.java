@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz;
+package org.dataconservancy.pass.authz.roles;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static org.dataconservancy.pass.authz.roles.AuthRolesProvider.getRoles;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -43,11 +41,6 @@ import org.mockito.junit.MockitoJUnitRunner;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class AuthRolesProviderTest {
-
-    @Mock
-    PassClient client;
-
-    AuthRolesProvider toTest;
 
     AuthUser authUser;
 
@@ -63,24 +56,23 @@ public class AuthRolesProviderTest {
         authUser.setPrincipal("gladys@ruminant.edu");
         authUser.getDomains().add("ruminant.edu");
         authUser.setId(user.getId());
+        authUser.setUser(user);
 
-        when(client.readResource(eq(user.getId()), eq(User.class))).thenReturn(user);
-        toTest = new AuthRolesProvider(client);
     }
 
     // Verify that an empty AuthUser simply results in no domains
     @Test
     public void emptyUserTest() {
         final AuthUser empty = new AuthUser();
-        assertTrue(toTest.getRoles(empty).isEmpty());
+        assertTrue(getRoles(empty).isEmpty());
     }
 
     // Somebody who doesn't have a User in PASS shouldn't have any roles.
     @Test
     public void noUserInPassTest() {
-        authUser.setId(null);
+        authUser.setUser(null);
 
-        assertTrue(toTest.getRoles(authUser).isEmpty());
+        assertTrue(getRoles(authUser).isEmpty());
     }
 
     // Somebody that hasn't been assigned any PASS roles should have only their userID as a role.
@@ -88,7 +80,7 @@ public class AuthRolesProviderTest {
     public void noPassRolesTest() {
         user.setRoles(emptyList());
 
-        final Set<URI> roles = toTest.getRoles(authUser);
+        final Set<URI> roles = getRoles(authUser);
         assertEquals(1, roles.size());
         assertTrue(roles.contains(user.getId()));
     }
@@ -97,7 +89,7 @@ public class AuthRolesProviderTest {
     public void singleRoleTest() {
         user.setRoles(asList(Role.SUBMITTER));
 
-        final Set<URI> roles = toTest.getRoles(authUser);
+        final Set<URI> roles = getRoles(authUser);
         assertEquals(2, roles.size());
     }
 
@@ -105,7 +97,7 @@ public class AuthRolesProviderTest {
     public void twoRolesTest() {
         user.setRoles(asList(Role.SUBMITTER, Role.ADMIN));
 
-        final Set<URI> roles = toTest.getRoles(authUser);
+        final Set<URI> roles = getRoles(authUser);
         assertEquals(3, roles.size());
     }
 
@@ -116,16 +108,17 @@ public class AuthRolesProviderTest {
         user2.setId(URI.create("test:" + UUID.randomUUID().toString()));
         final AuthUser authUser2 = new AuthUser();
         authUser2.setPrincipal("clarabelle@ruminant.edu");
-        authUser2.getDomains().add("ruminant.edu");
-        authUser2.setId(user2.getId());
+        authUser2.getDomains().addAll(authUser.getDomains());
+        authUser2.setUser(user2);
 
         user.setRoles(asList(Role.SUBMITTER));
         user2.setRoles(asList(Role.SUBMITTER));
 
-        when(client.readResource(eq(user2.getId()), eq(User.class))).thenReturn(user2);
+        final Set<URI> roles1 = getRoles(authUser);
+        final Set<URI> roles2 = getRoles(authUser2);
 
-        final Set<URI> roles1 = toTest.getRoles(authUser);
-        final Set<URI> roles2 = toTest.getRoles(authUser2);
+        System.out.println(roles1);
+        System.out.println(roles2);
 
         final Set<URI> commonRoles = new HashSet<>(roles1);
         commonRoles.retainAll(roles2);
@@ -143,15 +136,13 @@ public class AuthRolesProviderTest {
         final AuthUser authUser2 = new AuthUser();
         authUser2.setPrincipal("clarabelle@ungulate.edu");
         authUser2.getDomains().add("ungulate.edu");
-        authUser2.setId(user2.getId());
+        authUser2.setUser(user2);
 
         user.setRoles(asList(Role.SUBMITTER));
         user2.setRoles(asList(Role.SUBMITTER));
 
-        when(client.readResource(eq(user2.getId()), eq(User.class))).thenReturn(user2);
-
-        final Set<URI> roles1 = toTest.getRoles(authUser);
-        final Set<URI> roles2 = toTest.getRoles(authUser2);
+        final Set<URI> roles1 = getRoles(authUser);
+        final Set<URI> roles2 = getRoles(authUser2);
 
         final Set<URI> commonRoles = new HashSet<>(roles1);
         commonRoles.retainAll(roles2);
