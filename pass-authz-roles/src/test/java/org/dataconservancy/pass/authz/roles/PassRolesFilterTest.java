@@ -17,7 +17,7 @@
 package org.dataconservancy.pass.authz.roles;
 
 import static java.util.Collections.emptySet;
-import static org.dataconservancy.pass.authz.AuthRolesProvider.getRoles;
+import static org.dataconservancy.pass.authz.roles.AuthRolesProvider.getRoles;
 import static org.dataconservancy.pass.authz.roles.PassRolesFilter.PROP_ALLOW_EXTERNAL_ROLES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -44,7 +44,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.dataconservancy.pass.authz.AuthRolesProvider;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.client.PassClient;

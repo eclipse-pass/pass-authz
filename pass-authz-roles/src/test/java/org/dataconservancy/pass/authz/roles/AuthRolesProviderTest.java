@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz;
+package org.dataconservancy.pass.authz.roles;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static org.dataconservancy.pass.authz.AuthRolesProvider.getRoles;
+import static org.dataconservancy.pass.authz.roles.AuthRolesProvider.getRoles;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
 

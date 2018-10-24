@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.dataconservancy.pass.authz;
+package org.dataconservancy.pass.authz.roles;
 
 import static java.lang.String.format;
 
@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.model.User.Role;
 

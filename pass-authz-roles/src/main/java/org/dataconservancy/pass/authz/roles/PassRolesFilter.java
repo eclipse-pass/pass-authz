@@ -17,8 +17,8 @@
 package org.dataconservancy.pass.authz.roles;
 
 import static java.util.Optional.ofNullable;
-import static org.dataconservancy.pass.authz.AuthRolesProvider.getRoles;
 import static org.dataconservancy.pass.authz.ConfigUtil.getValue;
+import static org.dataconservancy.pass.authz.roles.AuthRolesProvider.getRoles;
 
 import java.io.IOException;
 import java.net.URI;
