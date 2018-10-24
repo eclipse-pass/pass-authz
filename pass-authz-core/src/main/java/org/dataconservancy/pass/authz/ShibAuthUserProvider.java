@@ -58,6 +58,10 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     /** Property for configuing whether to use shib headers (vs attributes) */
     public static final String CONFIG_SHIB_USE_HEADERS = "authz.shib.use.headers";
 
+    public static final String CONFIG_SHIB_CACHE_LIFE = "authz.shib.cache.minutes";
+
+    public static final String CONFIG_SHIB_CACHE_SIZE = "authz.shib.cache.size";
+
     Logger LOG = LoggerFactory.getLogger(ShibAuthUserProvider.class);
 
     /** Display name http header */
@@ -100,7 +104,9 @@ public class ShibAuthUserProvider implements AuthUserProvider {
      */
     public ShibAuthUserProvider(PassClient client) {
         this.passClient = client;
-        userCache = new ExpiringLRUCache<>(100, Duration.ofMinutes(10));
+        final int minutes = Integer.valueOf(ofNullable(getValue(CONFIG_SHIB_CACHE_LIFE)).orElse("10"));
+        final int size = Integer.valueOf(ofNullable(getValue(CONFIG_SHIB_CACHE_SIZE)).orElse("100"));
+        userCache = new ExpiringLRUCache<>(size, Duration.ofMinutes(minutes));
     }
 
     /**
