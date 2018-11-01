@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -137,6 +138,7 @@ public class TokenServiceTest {
                 .getSubmitterEmail());
 
         when(passClient.readResource(eq(toBeProcessed.getId()), eq(Submission.class))).thenReturn(toBeProcessed);
+
         doAnswer(i -> {
             final Submission updated = i.getArgument(0);
             assertEquals(toBeAssigned.getId(), updated.getSubmitter());
@@ -167,6 +169,92 @@ public class TokenServiceTest {
         assertFalse(toTest.enactUserToken(alreadyAssigned, token));
 
         verify(passClient, times(0)).updateResource(any(Submission.class));
+    }
+
+    @Test
+    public void submitterIsDefinedButDoesNotConflictWithEmailTest() {
+        final User toBeAssigned = new User();
+        toBeAssigned.setId(randomUri());
+
+        final Submission toBeProcessed = new Submission();
+        toBeProcessed.setId(randomUri());
+        toBeProcessed.setSubmitterName("The name");
+        toBeProcessed.setSubmitterEmail(randomUri());
+        toBeProcessed.setSubmitter(toBeProcessed.getSubmitterEmail());
+
+        final Token token = tokenFactory.forPassResource(toBeProcessed.getId()).withReference(toBeProcessed
+                .getSubmitterEmail());
+
+        when(passClient.readResource(eq(toBeProcessed.getId()), eq(Submission.class))).thenReturn(toBeProcessed);
+
+        doAnswer(i -> {
+            final Submission updated = i.getArgument(0);
+            assertEquals(toBeAssigned.getId(), updated.getSubmitter());
+            assertNull(updated.getSubmitterName());
+            assertNull(updated.getSubmitterEmail());
+            return null;
+        }).when(passClient).updateResource(any(PassEntity.class));
+
+        assertTrue(toTest.enactUserToken(toBeAssigned, token));
+
+        verify(passClient, times(1)).updateResource(any(Submission.class));
+    }
+
+    @Test
+    public void submitterIsDefinedButDoesNotConflictWithUserTest() {
+        final User toBeAssigned = new User();
+        toBeAssigned.setId(randomUri());
+
+        final Submission toBeProcessed = new Submission();
+        toBeProcessed.setId(randomUri());
+        toBeProcessed.setSubmitterName("The name");
+        toBeProcessed.setSubmitterEmail(randomUri());
+        toBeProcessed.setSubmitter(toBeAssigned.getId());
+
+        final Token token = tokenFactory.forPassResource(toBeProcessed.getId()).withReference(toBeProcessed
+                .getSubmitterEmail());
+
+        when(passClient.readResource(eq(toBeProcessed.getId()), eq(Submission.class))).thenReturn(toBeProcessed);
+
+        doAnswer(i -> {
+            final Submission updated = i.getArgument(0);
+            assertEquals(toBeAssigned.getId(), updated.getSubmitter());
+            assertNull(updated.getSubmitterName());
+            assertNull(updated.getSubmitterEmail());
+            return null;
+        }).when(passClient).updateResource(any(PassEntity.class));
+
+        assertTrue(toTest.enactUserToken(toBeAssigned, token));
+
+        verify(passClient, times(1)).updateResource(any(Submission.class));
+    }
+
+    @Test
+    public void conflictingSubmitterTest() {
+
+        final User toBeAssigned = new User();
+        toBeAssigned.setId(randomUri());
+
+        final Submission toBeProcessed = new Submission();
+        toBeProcessed.setId(randomUri());
+        toBeProcessed.setSubmitterName("The name");
+        toBeProcessed.setSubmitterEmail(randomUri());
+        toBeProcessed.setSubmitter(randomUri());
+
+        final Token token = tokenFactory.forPassResource(toBeProcessed.getId()).withReference(toBeProcessed
+                .getSubmitterEmail());
+
+        when(passClient.readResource(eq(toBeProcessed.getId()), eq(Submission.class))).thenReturn(toBeProcessed);
+
+        try {
+            toTest.enactUserToken(toBeAssigned, token);
+            fail("Should have thrown an exception");
+        } catch (final BadTokenException e) {
+            assertTrue("Exception should mention submission ID", e.getMessage().contains(toBeProcessed.getId()
+                    .toString()));
+            assertTrue("Exception should mention conflicting submitter", e.getMessage().contains(toBeProcessed
+                    .getSubmitter().toString()));
+        }
     }
 
     @Test(expected = BadTokenException.class)
