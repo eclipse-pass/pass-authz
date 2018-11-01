@@ -116,6 +116,13 @@ class TokenService {
             submission.setSubmitterEmail(null);
             submission.setSubmitterName(null);
 
+            if (submission.getSubmitter() != null && !submission.getSubmitter().equals(token.getReference()) &&
+                    !submission.getSubmitter().equals(user.getId())) {
+                throw new BadTokenException(format(
+                        "There is already a submitter <%s> for the submission <%s>, and it isn't the intended user <%s>  Refusing to apply the token for <%s>",
+                        submission.getSubmitter(), submission.getId(), user.getId(), token.getReference()));
+            }
+
             submission.setSubmitter(user.getId());
             client.updateResource(submission);
             return true;
