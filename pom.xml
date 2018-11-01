@@ -82,9 +82,9 @@
     <elasticsearch.version>6.2.4</elasticsearch.version>
     <slf4j.version>1.7.25</slf4j.version>
     <apache.log.api>2.11.1</apache.log.api>
-    <activemq.version>5.15.6</activemq.version>
+    <activemq.version>5.15.7</activemq.version>
     <system.rules.version>1.18.0</system.rules.version>
-    <powermock.version>2.0.0-beta.5</powermock.version>
+    <powermock.version>2.0.0-RC.1</powermock.version>
     <json.version>20180130</json.version>
 
     <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
