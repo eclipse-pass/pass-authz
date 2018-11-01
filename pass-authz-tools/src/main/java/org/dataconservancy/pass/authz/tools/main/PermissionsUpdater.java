@@ -25,7 +25,9 @@ import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.authz.acl.PolicyEngine;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
+import org.dataconservancy.pass.client.util.ConfigUtil;
 import org.dataconservancy.pass.model.Submission;
+import org.dataconservancy.pass.model.SubmissionEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,11 +57,28 @@ public class PermissionsUpdater {
         authzPolicy.setAdminRole(PASS_GRANTADMIN_ROLE);
         authzPolicy.setSubmitterRole(PASS_SUBMITTER_ROLE);
 
-        LOG.info("Visiting submissions...");
-        final Future<Integer> submissions = exe.submit(() -> client.processAllEntities(authzPolicy::updateSubmission,
-                Submission.class));
+        final String type = ConfigUtil.getSystemProperty("type", null);
 
-        LOG.info("Updated {} submissions", submissions.get());
+        System.out.println("Specified type is: " + type);
 
+        if (type == null || type.equals(Submission.class.getSimpleName())) {
+            LOG.info("Visiting submissions...");
+            final Future<Integer> submissions = exe.submit(() -> client.processAllEntities(
+                    authzPolicy::updateSubmission,
+                    Submission.class));
+
+            LOG.info("Processed {} submissions", submissions.get());
+        }
+
+        if (type == null || type.equals(SubmissionEvent.class.getSimpleName())) {
+            LOG.info("Visiting submissionEvents...");
+            final Future<Integer> submissionEvents = exe.submit(() -> client.processAllEntities(
+                    authzPolicy::updateSubmissionEvent,
+                    SubmissionEvent.class));
+
+            LOG.info("Processed {} submissionEvents", submissionEvents.get());
+        }
+
+        exe.shutdown();
     }
 }
