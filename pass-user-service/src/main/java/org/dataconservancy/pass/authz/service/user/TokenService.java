@@ -80,7 +80,14 @@ class TokenService {
         return null;
     }
 
-    public boolean replacePlaceholder(User user, Token token) {
+    /**
+     * Updates the submission by validating the user token and injecting the new user.
+     *
+     * @param user The new user
+     * @param token User token
+     * @return true, if the submission is updated.
+     */
+    public boolean enactUserToken(User user, Token token) {
 
         if (user == null || user.getId() == null) {
             throw new NullPointerException("Cannot process token for a null or unidentified user");
@@ -100,11 +107,14 @@ class TokenService {
                     .getPassResource()), e);
         }
 
-        if (token.getReference().equals(submission.getSubmitter())) {
-            LOG.info("User <{}> will be made a submitter for <{}>, replacing placeholder <{}>",
+        if (token.getReference().equals(submission.getSubmitterEmail())) {
+            LOG.info("User <{}> will be made a submitter for <{}>, based on matching e-mail <{}>",
                     user.getId(),
                     submission.getId(),
-                    submission.getSubmitter());
+                    submission.getSubmitterEmail());
+
+            submission.setSubmitterEmail(null);
+            submission.setSubmitterName(null);
 
             submission.setSubmitter(user.getId());
             client.updateResource(submission);
@@ -115,8 +125,8 @@ class TokenService {
             return false;
         } else {
             final String message = format(
-                    "New user token does not match expected placeholer <%s> on submission <%s>; found <%s> instead",
-                    token.getReference(), submission.getId(), submission.getSubmitter());
+                    "New user token does not match expected e-mail <%s> on submission <%s>; found <%s> instead",
+                    token.getReference(), submission.getId(), submission.getSubmitterEmail());
 
             LOG.warn(message);
             throw new BadTokenException(message);

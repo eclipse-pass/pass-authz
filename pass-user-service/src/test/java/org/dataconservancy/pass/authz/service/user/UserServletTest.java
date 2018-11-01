@@ -347,7 +347,7 @@ public class UserServletTest {
     @Test
     public void noTokenTest() throws Exception {
         servlet.doGet(request, response);
-        verify(tokenService, times(0)).replacePlaceholder(any(User.class), any(Token.class));
+        verify(tokenService, times(0)).enactUserToken(any(User.class), any(Token.class));
         verify(response, times(1)).setStatus(eq(200));
         assertOutputEquals(USER.getUser());
     }
@@ -357,7 +357,7 @@ public class UserServletTest {
         final String queryString = "userToken=BLAH";
         when(request.getQueryString()).thenReturn(queryString);
         when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
-        when(tokenService.replacePlaceholder(any(), any())).thenThrow(BadTokenException.class);
+        when(tokenService.enactUserToken(any(), any())).thenThrow(BadTokenException.class);
 
         servlet.doGet(request, response);
         verify(response, times(1)).setStatus(eq(400));
@@ -368,10 +368,10 @@ public class UserServletTest {
         final String queryString = "userToken=BLAH";
         when(request.getQueryString()).thenReturn(queryString);
         when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
-        when(tokenService.replacePlaceholder(eq(USER.getUser()), eq(token))).thenReturn(true);
+        when(tokenService.enactUserToken(eq(USER.getUser()), eq(token))).thenReturn(true);
 
         servlet.doGet(request, response);
-        verify(tokenService, times(1)).replacePlaceholder(eq(USER.getUser()), eq(token));
+        verify(tokenService, times(1)).enactUserToken(eq(USER.getUser()), eq(token));
         verify(tokenService, times(1)).addWritePermissions(eq(USER.getUser()), eq(token));
         verify(response, times(1)).setStatus(eq(200));
         assertOutputEquals(USER.getUser());
@@ -392,10 +392,10 @@ public class UserServletTest {
 
         when(request.getQueryString()).thenReturn(queryString);
         when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
-        when(tokenService.replacePlaceholder(any(User.class), eq(token))).thenReturn(true);
+        when(tokenService.enactUserToken(any(User.class), eq(token))).thenReturn(true);
 
         servlet.doGet(request, response);
-        verify(tokenService, times(1)).replacePlaceholder(any(User.class), eq(token));
+        verify(tokenService, times(1)).enactUserToken(any(User.class), eq(token));
         verify(tokenService, times(1)).addWritePermissions(any(User.class), eq(token));
         verify(response, times(1)).setStatus(eq(200));
 
@@ -408,10 +408,10 @@ public class UserServletTest {
         final String queryString = "userToken=BLAH";
         when(request.getQueryString()).thenReturn(queryString);
         when(tokenService.fromQueryString(eq(queryString))).thenReturn(token);
-        when(tokenService.replacePlaceholder(eq(USER.getUser()), eq(token))).thenReturn(false);
+        when(tokenService.enactUserToken(eq(USER.getUser()), eq(token))).thenReturn(false);
 
         servlet.doGet(request, response);
-        verify(tokenService, times(1)).replacePlaceholder(eq(USER.getUser()), eq(token));
+        verify(tokenService, times(1)).enactUserToken(eq(USER.getUser()), eq(token));
         verify(tokenService, times(0)).addWritePermissions(any(), any());
         verify(response, times(1)).setStatus(eq(200));
         assertOutputEquals(USER.getUser());
