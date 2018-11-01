@@ -60,11 +60,12 @@ The applications are:
 
 Configuration:
 
-The only configuration these tools need are standard PASS java client [properties](https://github.com/OA-PASS/java-fedora-client#configuration) for Fedora username,  password, and baseURI.
+* Standard PASS java client [properties](https://github.com/OA-PASS/java-fedora-client#configuration) for Fedora username,  password, and baseURI.
+* `TYPE` (or, as a java property, `-Dtype`).  For the individual permissions updator, this specifies the type of PASS entity to update.  If not specified, it will update all.
 
 For example:
 
-    java -Dpass.fedora.baseurl=http://example.org/fcrepo/rest -Dpass.fedora.user=fedoraAdmin -Dpass.fedora.password=pass -jar pass-authz-tools-${version}-SNAPSHOT-individual-permissions-exe.jar
+    java -Dpass.fedora.baseurl=http://example.org/fcrepo/rest -Dtype=SubmissionEvent -Dpass.fedora.user=fedoraAdmin -Dpass.fedora.password=pass -jar pass-authz-tools-${version}-SNAPSHOT-individual-permissions-exe.jar
     
 ### pass-authz-usertoken
 
