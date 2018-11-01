@@ -152,7 +152,7 @@ public class UserServlet extends HttpServlet {
     }
 
     private void applyUserToken(Token token, User user) {
-        if (tokenService.replacePlaceholder(user, token)) {
+        if (tokenService.enactUserToken(user, token)) {
             tokenService.addWritePermissions(user, token);
         }
     }

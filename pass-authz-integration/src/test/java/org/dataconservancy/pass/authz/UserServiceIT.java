@@ -55,10 +55,10 @@ import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.client.util.ConfigUtil;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.User;
+import org.dataconservancy.pass.model.support.Identifier;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
-import org.dataconservancy.pass.model.support.Identifier;
 import org.fusesource.hawtbuf.ByteArrayInputStream;
 import org.junit.Assert;
 import org.junit.Test;
@@ -82,6 +82,7 @@ public class UserServiceIT extends FcrepoIT {
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .build();
+
     String domain = "johnshopkins.edu";
 
     @Test
@@ -90,11 +91,11 @@ public class UserServiceIT extends FcrepoIT {
         final User newUser = new User();
         newUser.setFirstName("Bugs");
         newUser.setLastName("Bunny");
-        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE,"10933511").serialize();
+        final String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, "10933511").serialize();
         newUser.getLocatorIds().add(eeId);
-        String hkId = new Identifier(domain, HOPKINS_ID_TYPE, "LSDFER").serialize();
+        final String hkId = new Identifier(domain, HOPKINS_ID_TYPE, "LSDFER").serialize();
         newUser.getLocatorIds().add(hkId);
-        newUser.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE,"bbunny1").serialize());
+        newUser.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE, "bbunny1").serialize());
         newUser.getRoles().add(User.Role.SUBMITTER);
 
         final PassClient passClient = PassClientFactory.getPassClient();
@@ -110,7 +111,7 @@ public class UserServiceIT extends FcrepoIT {
         shibHeaders.put(EMPLOYEE_ID_HEADER, "10933511");
         shibHeaders.put(HOPKINS_ID_HEADER, "LSDFER@johnshopkins.edu");
 
-        String jhedId = new Identifier(domain, JHED_ID_TYPE, "bbunny1").serialize();
+        final String jhedId = new Identifier(domain, JHED_ID_TYPE, "bbunny1").serialize();
 
         final Request get = buildShibRequest(shibHeaders);
         final User fromResponse;
@@ -155,11 +156,11 @@ public class UserServiceIT extends FcrepoIT {
         shibHeaders.put(EPPN_HEADER, "dduck1@johnshopkins.edu");
         shibHeaders.put(HOPKINS_ID_HEADER, "DDDDDD@johnshopkins.edu");
         shibHeaders.put(SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;STAFF@jhmi.edu");
-        String number = Integer.toString(ThreadLocalRandom.current().nextInt(1000,
+        final String number = Integer.toString(ThreadLocalRandom.current().nextInt(1000,
                 99999));
         shibHeaders.put(EMPLOYEE_ID_HEADER, number);
 
-        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, number).serialize();
+        final String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, number).serialize();
 
         assertNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
 
@@ -167,7 +168,8 @@ public class UserServiceIT extends FcrepoIT {
 
         // First, add a new submission, and make it writable by someone else;
         final Submission submission = new Submission();
-        submission.setSubmitter(MAILTO_PLACEHOLDER);
+        submission.setSubmitterName("My name");
+        submission.setSubmitterEmail(MAILTO_PLACEHOLDER);
         final URI SUBMISSION_URI = passClient.createResource(submission);
         new ACLManager().setPermissions(SUBMISSION_URI).grantWrite(asList(URI.create(
                 "http://example.org/nobody"))).perform();
@@ -253,7 +255,7 @@ public class UserServiceIT extends FcrepoIT {
                 .collect(Collectors.toSet());
 
         Assert.assertEquals(1, created.size());
-        String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, "89248104").serialize();
+        final String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, "89248104").serialize();
         attempt(60, () -> {
             Assert.assertNotNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
         });

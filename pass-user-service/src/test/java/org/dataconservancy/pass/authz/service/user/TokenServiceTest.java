@@ -123,32 +123,35 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void replacePlaceholderTest() {
+    public void insertSubmitterAndRemoveNameAndEmailTest() {
 
         final User toBeAssigned = new User();
         toBeAssigned.setId(randomUri());
 
         final Submission toBeProcessed = new Submission();
         toBeProcessed.setId(randomUri());
-        toBeProcessed.setSubmitter(randomUri());
+        toBeProcessed.setSubmitterName("The name");
+        toBeProcessed.setSubmitterEmail(randomUri());
 
         final Token token = tokenFactory.forPassResource(toBeProcessed.getId()).withReference(toBeProcessed
-                .getSubmitter());
+                .getSubmitterEmail());
 
         when(passClient.readResource(eq(toBeProcessed.getId()), eq(Submission.class))).thenReturn(toBeProcessed);
         doAnswer(i -> {
             final Submission updated = i.getArgument(0);
             assertEquals(toBeAssigned.getId(), updated.getSubmitter());
+            assertNull(updated.getSubmitterName());
+            assertNull(updated.getSubmitterEmail());
             return null;
         }).when(passClient).updateResource(any(PassEntity.class));
 
-        assertTrue(toTest.replacePlaceholder(toBeAssigned, token));
+        assertTrue(toTest.enactUserToken(toBeAssigned, token));
 
         verify(passClient, times(1)).updateResource(any(Submission.class));
     }
 
     @Test
-    public void replacePlaceholderAlreadyReplacedTest() {
+    public void submitterAlreadyPresentTestTest() {
 
         final User alreadyAssigned = new User();
         alreadyAssigned.setId(randomUri());
@@ -161,13 +164,13 @@ public class TokenServiceTest {
 
         when(passClient.readResource(eq(toBeProcessed.getId()), eq(Submission.class))).thenReturn(toBeProcessed);
 
-        assertFalse(toTest.replacePlaceholder(alreadyAssigned, token));
+        assertFalse(toTest.enactUserToken(alreadyAssigned, token));
 
         verify(passClient, times(0)).updateResource(any(Submission.class));
     }
 
     @Test(expected = BadTokenException.class)
-    public void replacePlaceholderCannotGetSubmissionTest() {
+    public void cannotGetSubmissionTest() {
 
         final User illFatedUser = new User();
         illFatedUser.setId(randomUri());
@@ -175,27 +178,27 @@ public class TokenServiceTest {
 
         when(passClient.readResource(any(URI.class), eq(Submission.class))).thenThrow(RuntimeException.class);
 
-        toTest.replacePlaceholder(illFatedUser, token);
+        toTest.enactUserToken(illFatedUser, token);
     }
 
     @Test(expected = BadTokenException.class)
-    public void replacePlaceholderMismatchedPlaceholderTest() {
+    public void mismatchedEmailTest() {
         final User toBeAssigned = new User();
         toBeAssigned.setId(randomUri());
 
         final Submission toBeProcessed = new Submission();
         toBeProcessed.setId(randomUri());
-        toBeProcessed.setSubmitter(randomUri());
+        toBeProcessed.setSubmitterEmail(randomUri());
 
         final Token token = tokenFactory.forPassResource(toBeProcessed.getId()).withReference(randomUri());
 
         when(passClient.readResource(eq(toBeProcessed.getId()), eq(Submission.class))).thenReturn(toBeProcessed);
 
-        toTest.replacePlaceholder(toBeAssigned, token);
+        toTest.enactUserToken(toBeAssigned, token);
     }
 
     @Test(expected = BadTokenException.class)
-    public void replacePlacholderNullSubmissionTest() {
+    public void nullSubmissionTest() {
 
         final User illFatedUser = new User();
         illFatedUser.setId(randomUri());
@@ -203,17 +206,17 @@ public class TokenServiceTest {
 
         when(passClient.readResource(any(URI.class), eq(Submission.class))).thenReturn(null);
 
-        toTest.replacePlaceholder(illFatedUser, token);
+        toTest.enactUserToken(illFatedUser, token);
     }
 
     @Test(expected = NullPointerException.class)
-    public void replacePlaceholderUserNullTest() {
-        toTest.replacePlaceholder(null, mock(Token.class));
+    public void nullUserTest() {
+        toTest.enactUserToken(null, mock(Token.class));
     }
 
     @Test(expected = NullPointerException.class)
-    public void replacePlaceholderTokenNullTest() {
-        toTest.replacePlaceholder(new User(), null);
+    public void nullTokenTest() {
+        toTest.enactUserToken(new User(), null);
     }
 
     @Test
@@ -233,8 +236,8 @@ public class TokenServiceTest {
 
         when(toTest.acls.addPermissions(eq(submission.getId()))).thenReturn(builder);
         when(builder.grantWrite(argThat(l -> {
-            assertTrue("Should only grant pwemission to one resource; the user", l.size() == 1);
-            assertTrue("Expected permission to be granted to th user.", l.contains(user.getId()));
+            assertTrue("Should only grant permission to one resource; the user", l.size() == 1);
+            assertTrue("Expected permission to be granted to the user.", l.contains(user.getId()));
             return true;
         }))).thenReturn(builder);
         when(builder.perform()).thenReturn(null);
