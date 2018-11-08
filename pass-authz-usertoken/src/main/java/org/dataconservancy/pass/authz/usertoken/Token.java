@@ -110,7 +110,7 @@ public class Token {
      *         parameter.
      */
     public URI addTo(URI anyUri) {
-        String qs = anyUri.getQuery();
+        String qs = anyUri.getRawQuery();
         if (qs == null) {
             qs = String.format("%s=%s", USER_TOKEN_PARAM, toString());
         } else {
@@ -118,8 +118,9 @@ public class Token {
         }
 
         try {
-            return new URI(anyUri.getScheme(), anyUri.getUserInfo(), anyUri.getHost(), anyUri.getPort(), anyUri
-                    .getPath(), qs, anyUri.getFragment());
+            return URI.create(new URI(anyUri.getScheme(), anyUri.getUserInfo(), anyUri.getHost(), anyUri.getPort(),
+                    anyUri.getRawPath(), qs, anyUri.getRawFragment())
+                            .toString().replace("%25", "%"));
         } catch (final URISyntaxException e) {
             throw new RuntimeException("Could not add token to URI " + anyUri, e);
         }

@@ -170,6 +170,47 @@ public class TokenTest {
 
     }
 
+    @Test
+    public void addToUriWithEncodedPathsAndParamsTest() {
+        final String[] params = { "foo=bar", "baz=huh" };
+        final String encodedPathPart =
+                "https%3A%2F%2Fpass.local%2Ffcrepo%2Frest%2Fsubmissions%2F91%2F75%2Fba%2Fe6%2F9175ba";
+        final URI initialUri = URI.create("https://fedoraAdmin:moo@127.0.0.1:8080/path/to/" +
+                encodedPathPart + "?" + String.join("&", params) + "#fragment");
+
+        final URI resource = randomUri();
+
+        final URI reference = randomUri();
+
+        final Key key = Key.generate();
+
+        final Codec codec = new Codec(key);
+
+        final Token created = new Token(codec, resource, reference);
+
+        final URI uriWithToken = created.addTo(initialUri);
+
+        assertTrue(initialUri.toString().contains(encodedPathPart));
+        assertTrue(uriWithToken.toASCIIString().contains(encodedPathPart));
+
+        assertEquals(initialUri.getScheme(), uriWithToken.getScheme());
+        assertEquals(initialUri.getAuthority(), uriWithToken.getAuthority());
+        assertEquals(initialUri.getHost(), uriWithToken.getHost());
+        assertEquals(initialUri.getPort(), uriWithToken.getPort());
+        assertEquals(initialUri.getPath(), uriWithToken.getPath());
+        assertEquals(initialUri.getFragment(), uriWithToken.getFragment());
+        assertNotEquals(initialUri.getQuery(), uriWithToken.getQuery());
+
+        assertTrue(uriWithToken.getQuery().contains(params[0]));
+        assertTrue(uriWithToken.getQuery().contains(params[1]));
+
+        final Token deserializedFromUrl = new TokenFactory(key).fromUri(uriWithToken);
+
+        assertNotNull(deserializedFromUrl);
+        assertEquals(resource, deserializedFromUrl.getPassResource());
+        assertEquals(reference, deserializedFromUrl.getReference());
+    }
+
     static URI randomUri() {
         return URI.create("urn:uuid:" + UUID.randomUUID().toString());
     }
