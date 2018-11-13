@@ -51,10 +51,13 @@ import org.junit.BeforeClass;
  */
 public abstract class FcrepoIT {
 
-    static final String FCREPO_BASE_URI = String.format("http://localhost:%s/%s/rest/", System.getProperty(
-            "FCREPO_PORT", "8080"), System.getProperty("fcrepo.cxtPath", "fcrepo"));
+    static final String FCREPO_BASE_URI = String.format("http://%s:%s/%s/rest/",
+            System.getProperty("FCREPO_HOST", "localhost"),
+            System.getProperty("FCREPO_PORT", "8080"),
+            System.getProperty("fcrepo.cxtPath", "fcrepo"));
 
-    static final URI USER_SERVICE_URI = URI.create(String.format("http://localhost:%s/pass-user-service/whoami",
+    static final URI USER_SERVICE_URI = URI.create(String.format("http://%s:%s/pass-user-service/whoami",
+            System.getProperty("FCREPO_HOST", "localhost"),
             System.getProperty("FCREPO_PORT", "8080")));
 
     static final String AUTH_ROLE_HEADER = "some-header";

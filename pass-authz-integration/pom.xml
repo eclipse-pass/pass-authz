@@ -11,6 +11,7 @@
     <fcrepo.cxtPath>fcrepo</fcrepo.cxtPath>
     <FCREPO_HOST>localhost</FCREPO_HOST>
     <ES_HOST>localhost</ES_HOST>
+    <JMS_HOST>localhost</JMS_HOST>
     <activemq.user>messaging</activemq.user>
     <activemq.password>moo</activemq.password>
     <pass.user.token.key>BETKPFHWGGDIEWIIYKYQ33LUS4</pass.user.token.key>
@@ -128,7 +129,7 @@
             <project.basedir>${project.basedir}</project.basedir>
             <pass.fedora.baseurl>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</pass.fedora.baseurl>
             <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
-            <jms.brokerUrl>failover:(tcp://localhost:${JMS_PORT})?trackMessages=true</jms.brokerUrl>
+            <jms.brokerUrl>failover:(tcp://${JMS_HOST}:${JMS_PORT})?trackMessages=true</jms.brokerUrl>
             <authz.listener.jar>${org.dataconservancy.pass:pass-authz-listener:jar:exe}</authz.listener.jar>
             <authz.containerPermissions.jar>${org.dataconservancy.pass:pass-authz-tools:jar:container-permissions-exe}</authz.containerPermissions.jar>
             <pass.authz.queue>Consumer.authz.VirtualTopic.pass.authz</pass.authz.queue>
