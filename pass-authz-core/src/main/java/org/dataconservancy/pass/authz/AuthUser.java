@@ -168,4 +168,16 @@ public class AuthUser {
         return user;
     }
 
+    @Override
+    public String toString() {
+        return "AuthUser{" +
+                "name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", locatorIds=" + locatorIds +
+                ", id=" + id +
+                ", principal='" + principal + '\'' +
+                ", domains=" + domains +
+                ", user=" + user +
+                '}';
+    }
 }
