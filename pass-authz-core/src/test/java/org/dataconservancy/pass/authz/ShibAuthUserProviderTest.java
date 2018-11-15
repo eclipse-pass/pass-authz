@@ -30,11 +30,14 @@ import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
+import java.util.UUID;
 import java.util.function.Function;
 
 import javax.servlet.http.HttpServletRequest;
@@ -68,7 +71,7 @@ public class ShibAuthUserProviderTest {
     private PassClient client;
 
     @Mock
-    ExpiringLRUCache<String, User> mockCache;
+    ExpiringLRUCache<String, AuthUser> mockCache;
 
     @Mock
     Function<AuthUser, AuthUser> doAfter;
@@ -282,7 +285,7 @@ public class ShibAuthUserProviderTest {
 
         final RuntimeException theException = new RuntimeException();
 
-        when(mockCache.getOrDo(eq(cacheLookupId), any())).thenThrow(theException);
+        when(mockCache.getOrDo(eq(cacheLookupId), any(), any())).thenThrow(theException);
 
         final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client, mockCache);
 
@@ -314,7 +317,6 @@ public class ShibAuthUserProviderTest {
 
         when(doAfter.apply(any())).thenAnswer(i -> {
             final AuthUser u = i.getArgument(0);
-            u.setId(u.getId());
             u.setUser(foundUser);
             return u;
         });
@@ -350,36 +352,6 @@ public class ShibAuthUserProviderTest {
         final AuthUser authUser = underTest.getUser(request, doAfter, true);
         assertNotNull(authUser);
         assertNull(underTest.userCache.get(employeeId));
-    }
-
-    @Test
-    public void forceComputationTest() {
-        final String displayName = "Bessie Cow";
-        final String emailAddress = "bessie@farm.com";
-        final String eppn = "bcow666@johnshopkins.edu";
-        final String employeeId = "12345678";
-        final String hopkinsId = "T6T6T6@johnshopkins.edu";
-        final String scopedAffiliation = "STAFF@jhu.edu;WIDOWMAKER@library.jhu.edu";
-
-        String cacheLookupId = new Identifier(DOMAIN, HOPKINS_ID_TYPE, "T6T6T6").serialize();
-
-        when(request.getHeader(DISPLAY_NAME_HEADER)).thenReturn(displayName);
-        when(request.getHeader(EMAIL_HEADER)).thenReturn(emailAddress);
-        when(request.getHeader(EPPN_HEADER)).thenReturn(eppn);
-        when(request.getHeader(EMPLOYEE_ID_HEADER)).thenReturn(employeeId);
-        when(request.getHeader(HOPKINS_ID_HEADER)).thenReturn(hopkinsId);
-        when(request.getHeader(SCOPED_AFFILIATION_HEADER)).thenReturn(scopedAffiliation);
-
-        when(doAfter.apply(any())).thenAnswer(i -> {
-            final AuthUser u = i.getArgument(0);
-            return u;
-        });
-
-        final ShibAuthUserProvider underTest = new ShibAuthUserProvider(client, mockCache);
-        final AuthUser authUser = underTest.getUser(request, doAfter, false);
-        assertNotNull(authUser);
-        verify(mockCache, times(1)).doAndCache(eq(cacheLookupId), any());
-        verify(mockCache, times(0)).getOrDo(any(), any());
     }
 
 }

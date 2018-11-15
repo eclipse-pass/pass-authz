@@ -177,6 +177,7 @@ public class PassRolesFilter implements Filter {
                             if (a.getId() != null && a.getUser() == null) {
                                 a.setUser(passClient.readResource(a.getId(), User.class));
                             }
+                            LOG.debug("Exiting critical section");
                             return a;
                         }, true);
 

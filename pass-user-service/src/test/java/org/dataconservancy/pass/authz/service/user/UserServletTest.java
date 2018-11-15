@@ -23,6 +23,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -210,6 +212,8 @@ public class UserServletTest {
         found.setLocatorIds(USER.getLocatorIds());
         found.setRoles(Arrays.asList(Role.ADMIN));
         when(client.readResource(eq(foundId), eq(User.class))).thenReturn(found);
+        when(client.updateAndReadResource(argThat(u -> u.getId().equals(foundId)), eq(User.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
 
         servlet.doGet(request, response);
 
@@ -223,7 +227,10 @@ public class UserServletTest {
         assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
         assertEquals(USER.getLocatorIds().size(), fromServlet.getLocatorIds().size());
 
-        verify(client).updateResource((userCaptor.capture()));
+        verify(client).readResource(eq(foundId), eq(User.class));
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(client).updateAndReadResource(userCaptor.capture(), eq(User.class));
+        assertEquals(foundId, userCaptor.getValue().getId());
 
         final User updated = userCaptor.getValue();
         assertEquals(USER.getName(), updated.getDisplayName());

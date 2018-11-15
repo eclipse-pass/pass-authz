@@ -27,6 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,35 +93,38 @@ public class ExpiringLRUCache<K, V> {
      * @return The cached or generated value.
      */
     public V getOrDo(K key, Callable<V> generator) {
-        return getOrDo(key, generator, false);
+        return getOrDo(key, generator, Function.identity());
     }
 
     /**
-     * Call a generator to populate the cache, regardless of whether there is already a cached value or not.
+     * Get a cached value, or run the provided generator to compute a new value.  The supplied filter will be applied
+     * to non-null values.
      *
-     * @param key The key
-     * @param generator Generator function
-     * @return The generated value
+     * @param key       Retrieval key
+     * @param generator Function that MAY be executed, if there is no cached value
+     * @param filter    Function applied to non-null values, regardless of whether the value was retrieved from the
+     *                  cache
+     * @return The cached or generated value after application of the {@code filter}
      */
-    public V doAndCache(K key, Callable<V> generator) {
-        return getOrDo(key, generator, true);
-    }
-
-    private V getOrDo(K key, Callable<V> generator, boolean forceGenerate) {
+    public V getOrDo(K key, Callable<V> generator, Function<V, V> filter) {
 
         final Future<V> result;
         boolean cached = true;
         synchronized (cache) {
-
-            if (cache.containsKey(key) && !forceGenerate) {
-                result = cache.get(key);
+            if (cache.containsKey(key)) {
+                // get the cached future, and apply the filter to the future's value
+                result = runner.submit(() -> {
+                    V value = doGet(cache.get(key));
+                    return value != null ? filter.apply(value) : null;
+                });
                 cached = true;
             } else {
                 cached = false;
                 result = runner.submit(() -> {
+                    // call the generator, and apply the filter to the generated future's value
                     final V value = generator.call();
                     LOG.debug("[{}] Calculated value for {} as {}", name, key, value);
-                    return value;
+                    return value != null ? filter.apply(value) : null;
                 });
                 cache.put(key, result);
                 scheduler.schedule(() -> {

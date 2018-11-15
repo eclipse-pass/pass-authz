@@ -42,7 +42,7 @@ public interface AuthUserProvider {
     }
 
     /**
-     * Get the authenticated user, and filter the result before returning. *
+     * Get the authenticated user, and filter the result before returning.
      * <p>
      * Inspects the http request for the current user/principal, and provides information about that user. Invokes the
      * provided function to map/transform/inspect the authenticated user. The primary use case is filter for "create

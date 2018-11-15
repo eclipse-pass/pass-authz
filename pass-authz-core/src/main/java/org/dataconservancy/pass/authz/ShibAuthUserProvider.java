@@ -23,9 +23,10 @@ import static org.dataconservancy.pass.authz.ConfigUtil.getValue;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
@@ -93,7 +94,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
     final PassClient passClient;
 
-    final ExpiringLRUCache<String, User> userCache;
+    final ExpiringLRUCache<String, AuthUser> userCache;
 
     boolean useShibHeaders = ofNullable(getValue(CONFIG_SHIB_USE_HEADERS)).map(Boolean::valueOf).orElse(false);
 
@@ -115,7 +116,7 @@ public class ShibAuthUserProvider implements AuthUserProvider {
      * @param client PASS client
      * @param cache LRU cache.
      */
-    public ShibAuthUserProvider(PassClient client, ExpiringLRUCache<String, User> cache) {
+    public ShibAuthUserProvider(PassClient client, ExpiringLRUCache<String, AuthUser> cache) {
         this.passClient = client;
         userCache = cache;
     }
@@ -125,6 +126,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
      * consumed by the {@code UserServlet} to build a {@code User} object for the back-end storage system.
      *
      * @param request the HTTP servlet request
+     * @param doAfter a filter applied to the {@code AuthUser} by the caller
+     * @param allowCached ignored by this implementation
      * @return the populated AuthUser
      */
     @Override
@@ -190,41 +193,27 @@ public class ShibAuthUserProvider implements AuthUserProvider {
             LOG.debug("Looking up User based on hopkins id '{}'", cacheLookupId);
             try {
 
-                final Callable<User> criticalSection = () -> {
+                final Callable<AuthUser> criticalSection = () -> {
 
-                    // Critical section, only executed for a cache miss.
-                    //
-                    // We look to see if the user exists, then execute any
-                    // doAfter filters in the critical section
-                    // (e.g. User service creating or updating users).
-                    // If the doAfter filter has populated the User field, then
-                    // cache it. Otherwise, don't cache anything.
+                    // If a User resource exists in the index for the AuthUser, retrieve and set the backing User
+                    // resource on the AuthUser.  Otherwise, return the AuthUser with no backing User resource.
+                    // Either way, the returned AuthUser will be cached.
 
-                    authUser.setId(findUserId(authUser.getLocatorIds()));
-                    final AuthUser filtered = doAfter.apply(authUser);
-
-                    if (filtered.getUser() != null) {
-
-                        // Return the User, it'll be cached.
-                        LOG.debug("doAfter filter supplied a User resource");
-                        return filtered.getUser();
-                    } else {
-
-                        // Return null so that this entry is not cached.
-                        LOG.debug("doAfter filter did NOT supply a User resource");
-                        return null;
-                    }
+                    Optional<AuthUser> fromIndex = findUser(authUser.getLocatorIds())
+                            .map(uri -> {
+                                User user = passClient.readResource(uri, User.class);
+                                authUser.setUser(user);
+                                authUser.setId(user.getId());
+                                return authUser;
+                            });
+                    return fromIndex.orElse(authUser);
                 };
 
-                if (allowCached) {
-                    authUser.setUser(userCache.getOrDo(hopkinsId, criticalSection));
-                } else {
-                    authUser.setUser(userCache.doAndCache(hopkinsId, criticalSection));
-                }
-
-                // Populate the authUser ID for Users resulting from cache hits.
-                if (authUser.getUser() != null) {
-                    authUser.setId(authUser.getUser().getId());
+                // Retrieve the AuthUser from the cache, which may or may not have a backing User resource, and
+                // return it to the caller.
+                final AuthUser authUserFromCache = userCache.getOrDo(hopkinsId, criticalSection, doAfter);
+                if (authUserFromCache != null) {
+                    return authUserFromCache;
                 }
                 LOG.debug("User resource for {} is {}", hopkinsId, authUser.getId());
             } catch (final Exception e) {
@@ -236,21 +225,6 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         }
 
         return authUser;
-    }
-
-    private URI findUserId(List<String> locatorIdList) {
-
-        URI userURI = null;
-        final ListIterator idIterator = locatorIdList.listIterator();
-
-        while (userURI == null && idIterator.hasNext()) {
-            final String locatorId = String.valueOf(idIterator.next());
-            if (locatorId != null) {
-                userURI = passClient.findByAttribute(User.class, "locatorIds", locatorId);
-            }
-        }
-
-        return userURI;
     }
 
     private <T> T getShibAttr(HttpServletRequest request, String name, Function<String, T> transform) {
@@ -266,5 +240,12 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         return ofNullable(value)
                 .map(transform)
                 .orElse(null);
+    }
+
+    private Optional<URI> findUser(Collection<String> locatorIds) {
+        return locatorIds.stream()
+                .map(locatorId -> passClient.findByAttribute(User.class, "locatorIds", locatorId))
+                .filter(Objects::nonNull)
+                .findAny();
     }
 }

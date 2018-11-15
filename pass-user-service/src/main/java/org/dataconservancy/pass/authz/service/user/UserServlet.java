@@ -22,7 +22,10 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -101,8 +104,9 @@ public class UserServlet extends HttpServlet {
 
                 LOG.debug("Entering critical section");
 
-                // This is the critical section of the user service.
-                // If we need to create a user, do it. Otherwise update.
+                // If the AuthUser returned from the AuthUserProvider does not have a backing User resource, then
+                // create one from Shibboleth headers; if the AuthUser *does* have a backing User, then update the
+                // User from Shibboleth headers.
                 final AuthUser u;
                 if (authUser.getId() == null) {
                     LOG.debug("Creating new user");
@@ -119,7 +123,6 @@ public class UserServlet extends HttpServlet {
 
                 LOG.debug("Exiting critical section");
                 return u;
-
             }, usertoken == null);
         } catch (final BadTokenException e) {
             try (Writer out = response.getWriter()) {
@@ -173,7 +176,7 @@ public class UserServlet extends HttpServlet {
     }
 
     private AuthUser updateUser(AuthUser shibUser) {
-        final User user = fedoraClient.readResource(shibUser.getId(), User.class);
+        User user = fedoraClient.readResource(shibUser.getId(), User.class);
 
         if (user == null) {
             throw new RuntimeException(String.format("Resource %s does not exist, this should never happen", shibUser
@@ -209,11 +212,12 @@ public class UserServlet extends HttpServlet {
         if (update) {
             LOG.info("User record for {} in repository is out of date, updating {} ", shibUser.getPrincipal(),
                     user.getId());
-            fedoraClient.updateResource(user);
+            user = fedoraClient.updateAndReadResource(user, User.class);
         } else {
             LOG.info("User record {} in repository is up to date, NOT updating", user.getId());
         }
         shibUser.setUser(user);
+        shibUser.setId(user.getId());
         return shibUser;
     }
 
