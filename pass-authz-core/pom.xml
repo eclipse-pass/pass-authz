@@ -74,6 +74,16 @@
     </dependency>
 
     <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-client-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.dataconservancy.pass</groupId>
+      <artifactId>pass-model</artifactId>
+    </dependency>
+
+    <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <scope>provided</scope>

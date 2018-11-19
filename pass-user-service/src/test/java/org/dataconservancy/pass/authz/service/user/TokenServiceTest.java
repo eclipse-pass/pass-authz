@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -42,7 +43,6 @@ import org.dataconservancy.pass.authz.usertoken.Key;
 import org.dataconservancy.pass.authz.usertoken.Token;
 import org.dataconservancy.pass.authz.usertoken.TokenFactory;
 import org.dataconservancy.pass.client.PassClient;
-import org.dataconservancy.pass.model.PassEntity;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.User;
 
@@ -144,12 +144,15 @@ public class TokenServiceTest {
             assertEquals(toBeAssigned.getId(), updated.getSubmitter());
             assertNull(updated.getSubmitterName());
             assertNull(updated.getSubmitterEmail());
-            return null;
-        }).when(passClient).updateResource(any(PassEntity.class));
+            return updated;
+        }).when(passClient).updateAndReadResource(argThat(s -> s.getId().equals(toBeProcessed.getId())), eq(Submission.class));
 
         assertTrue(toTest.enactUserToken(toBeAssigned, token));
 
-        verify(passClient, times(1)).updateResource(any(Submission.class));
+        verify(passClient)
+                .readResource(eq(toBeProcessed.getId()), eq(Submission.class));
+        verify(passClient, times(1))
+                .updateAndReadResource(argThat(s -> s.getId().equals(toBeProcessed.getId())), eq(Submission.class));
     }
 
     @Test
@@ -168,7 +171,9 @@ public class TokenServiceTest {
 
         assertFalse(toTest.enactUserToken(alreadyAssigned, token));
 
-        verify(passClient, times(0)).updateResource(any(Submission.class));
+        verify(passClient)
+                .readResource(eq(toBeProcessed.getId()), eq(Submission.class));
+        verify(passClient, times(0)).updateAndReadResource(any(), any());
     }
 
     @Test
@@ -192,12 +197,15 @@ public class TokenServiceTest {
             assertEquals(toBeAssigned.getId(), updated.getSubmitter());
             assertNull(updated.getSubmitterName());
             assertNull(updated.getSubmitterEmail());
-            return null;
-        }).when(passClient).updateResource(any(PassEntity.class));
+            return updated;
+        }).when(passClient).updateAndReadResource(argThat(s -> s.getId().equals(toBeProcessed.getId())), eq(Submission.class));
 
         assertTrue(toTest.enactUserToken(toBeAssigned, token));
 
-        verify(passClient, times(1)).updateResource(any(Submission.class));
+        verify(passClient)
+                .readResource(eq(toBeProcessed.getId()), eq(Submission.class));
+        verify(passClient, times(1))
+                .updateAndReadResource(argThat(s -> s.getId().equals(toBeProcessed.getId())), eq(Submission.class));
     }
 
     @Test
@@ -221,12 +229,15 @@ public class TokenServiceTest {
             assertEquals(toBeAssigned.getId(), updated.getSubmitter());
             assertNull(updated.getSubmitterName());
             assertNull(updated.getSubmitterEmail());
-            return null;
-        }).when(passClient).updateResource(any(PassEntity.class));
+            return updated;
+        }).when(passClient).updateAndReadResource(argThat(s -> s.getId().equals(toBeProcessed.getId())), eq(Submission.class));
 
         assertTrue(toTest.enactUserToken(toBeAssigned, token));
 
-        verify(passClient, times(1)).updateResource(any(Submission.class));
+        verify(passClient)
+                .readResource(eq(toBeProcessed.getId()), eq(Submission.class));
+        verify(passClient, times(1))
+                .updateAndReadResource(argThat(s -> s.getId().equals(toBeProcessed.getId())), eq(Submission.class));
     }
 
     @Test
@@ -336,6 +347,161 @@ public class TokenServiceTest {
         verify(builder, times(1)).grantWrite(any());
         verify(builder, times(1)).perform();
 
+    }
+
+    /**
+     * A Token reference that does not equal the Submission.submitterEmail should result in a BadTokenException
+     */
+    @Test
+    public void preconditionMismatchedRef () {
+        User u = new User();
+        URI userId = randomUri();
+        u.setId(userId);
+
+        Token t = mock(Token.class);
+        when(t.getReference()).thenReturn(userId);
+
+        Submission s = new Submission();
+        s.setSubmitterEmail(randomUri());
+
+        try {
+            TokenService.preconditions(u, t).test(s);
+            fail("Expected BadTokenException");
+        } catch (BadTokenException expected) {
+            assertTrue(expected.getMessage().contains("does not match expected e-mail"));
+        }
+    }
+
+    /**
+     * A Submission with an existing Submission.submitter that does not equal User.id and does not
+     * equal the token reference should fail preconditions by throwing a BadTokenException
+     */
+    @Test
+    public void preconditionExistingSubmitterInvalidRef() {
+        User u = new User();
+        u.setId(randomUri());
+
+        Token t = mock(Token.class);
+        URI tokenRef = randomUri();
+        when(t.getReference()).thenReturn(tokenRef);
+
+        Submission s = new Submission();
+        s.setSubmitterEmail(tokenRef);
+        s.setSubmitter(randomUri());
+
+        try {
+            TokenService.preconditions(u, t).test(s);
+            fail("Expected BadTokenException");
+        } catch (BadTokenException expected) {
+            assertTrue(expected.getMessage().contains("There is already a submitter"));
+        }
+    }
+
+    /**
+     * A Submission with an existing Submission.submitter that does equal User.id and does equal the
+     * token reference should fail preconditions, because the Submission is already properly associated
+     * with the User.
+     */
+    @Test
+    public void preconditionExistingSubmitter() {
+        User u = new User();
+        URI userId = randomUri();
+        u.setId(userId);
+
+        Token t = mock(Token.class);
+        when(t.getReference()).thenReturn(userId);
+
+        Submission s = new Submission();
+        s.setSubmitter(userId);
+
+        assertFalse(TokenService.preconditions(u, t).test(s));
+        verify(t, atLeastOnce()).getReference();
+    }
+
+    /**
+     * post condition should succeed if Submission.submitterName and Submission.submitterEmail are null
+     * and Submission.submitter equals User.id
+     */
+    @Test
+    public void postConditionSuccess() {
+        User u = new User();
+        URI userId = randomUri();
+        u.setId(userId);
+
+        Submission s = new Submission();
+        s.setSubmitter(userId);
+
+        assertTrue(TokenService.postConditions(u).test(s));
+    }
+
+    /**
+     * Post condition should fail if the Submission has a non-null email
+     */
+    @Test
+    public void postConditionFailEmail() {
+        User u = new User();
+        URI userId = randomUri();
+        u.setId(userId);
+
+        Submission s = new Submission();
+        s.setSubmitterName("Foo");
+        s.setSubmitter(userId);
+
+        assertFalse(TokenService.postConditions(u).test(s));
+    }
+
+    /**
+     * Post condition should fail if the Submission has a non-null name
+     */
+    @Test
+    public void postConditionFailName() {
+        User u = new User();
+        URI userId = randomUri();
+        u.setId(userId);
+
+        Submission s = new Submission();
+        s.setSubmitterEmail(URI.create("mailto:foo@bar.baz"));
+        s.setSubmitter(userId);
+
+        assertFalse(TokenService.postConditions(u).test(s));
+    }
+
+    /**
+     * Post condition should fail if the Submission.submitter doesn't equal User.id
+     */
+    @Test
+    public void postConditionFailUser() {
+        User u = new User();
+        URI userId = randomUri();
+        u.setId(userId);
+
+        Submission s = new Submission();
+        s.setSubmitterEmail(URI.create("mailto:foo@bar.baz"));
+        s.setSubmitterName("Foo");
+        s.setSubmitter(randomUri());
+
+        assertFalse(TokenService.postConditions(u).test(s));
+    }
+
+    /**
+     * Critical section should null out the Submission.emailAddress and Submission.submitterName and
+     * set Submission.submitter from User.id
+     */
+    @Test
+    public void verifyCritical() {
+        User u = new User();
+        URI userUri = randomUri();
+        u.setId(userUri);
+
+        Submission s = new Submission();
+        s.setSubmitterName("Foo");
+        s.setSubmitterEmail(URI.create("mailto:foo@bar.baz"));
+
+        TokenService.criticalSection(u).apply(s);
+
+        assertNull(s.getSubmitterName());
+        assertNull(s.getSubmitterEmail());
+        assertEquals(userUri, s.getSubmitter());
     }
 
     private static URI randomUri() {

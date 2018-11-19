@@ -68,11 +68,15 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author apb@jhu.edu
  */
 public class UserServiceIT extends FcrepoIT {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UserServiceIT.class);
 
     PassJsonAdapter json = new PassJsonAdapterBasic();
 
@@ -164,15 +168,10 @@ public class UserServiceIT extends FcrepoIT {
 
         assertNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
 
-        final URI MAILTO_PLACEHOLDER = URI.create("mailto:Daffy%20Duck%20%3Cdduck%40gmail.com%3E");
-
         // First, add a new submission, and make it writable by someone else;
-        final Submission submission = new Submission();
-        submission.setSubmitterName("My name");
-        submission.setSubmitterEmail(MAILTO_PLACEHOLDER);
-        final URI SUBMISSION_URI = passClient.createResource(submission);
-        new ACLManager().setPermissions(SUBMISSION_URI).grantWrite(asList(URI.create(
-                "http://example.org/nobody"))).perform();
+        final URI writableBy = URI.create("http://example.org/nobody");
+        final URI MAILTO_PLACEHOLDER = URI.create("mailto:Daffy%20Duck%20%3Cdduck%40gmail.com%3E");
+        final URI SUBMISSION_URI = createSubmission(writableBy, MAILTO_PLACEHOLDER, passClient);
 
         // Next, if desired try to log in to the user service first, without a token. This will create a User.
         if (loginFirst) {
@@ -218,7 +217,14 @@ public class UserServiceIT extends FcrepoIT {
     /* Makes sure that only one new user is created in the face of multiple concurrent requests */
     @Test
     public void testConcurrentNewUser() throws Exception {
-        final ExecutorService exe = Executors.newFixedThreadPool(8);
+        // First, add a new submission, and make it writable by someone else;
+        final URI writableBy = URI.create("http://example.org/nobody");
+        final URI mailtoPlaceholder = URI.create("mailto:Daffy%20Duck%20%3Cdduck%40gmail.com%3E");
+        final URI submissionUri = createSubmission(writableBy, mailtoPlaceholder, passClient);
+
+
+        final int concurrentRequests = 16;
+        final ExecutorService exe = Executors.newFixedThreadPool(concurrentRequests);
 
         final Map<String, String> shibHeaders = new HashMap<>();
         shibHeaders.put(DISPLAY_NAME_HEADER, "Wot Gorilla");
@@ -230,15 +236,22 @@ public class UserServiceIT extends FcrepoIT {
 
         final List<Future<User>> results = new ArrayList<>();
 
-        final Request get = buildShibRequest(shibHeaders);
-        try (Response response = httpClient.newCall(get).execute()) {
-            Assert.assertEquals(200, response.code());
-        }
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < concurrentRequests; i++) {
+            final Request get;
+            if (i % 2 == 0) {
+                get = buildShibRequest(shibHeaders);
+            } else {
+                final Token token = new TokenFactory(ConfigUtil.getSystemProperty(Key.USER_TOKEN_KEY_PROPERTY,
+                        "BETKPFHWGGDIEWIIYKYQ33LUS4"))
+                        .forPassResource(submissionUri).withReference(mailtoPlaceholder);
+                get = buildShibRequest(shibHeaders, token);
+            }
+
             results.add(exe.submit(() -> {
                 try (Response response = httpClient.newCall(get).execute()) {
-                    Assert.assertEquals(200, response.code());
-                    return json.toModel(response.body().bytes(), User.class);
+                    byte[] body = response.body().bytes();
+                    Assert.assertEquals(String.format("Request: '%s' Body: '%s'", get.toString(), new String(body)),200, response.code());
+                    return json.toModel(body, User.class);
                 }
             }));
         }
@@ -260,7 +273,20 @@ public class UserServiceIT extends FcrepoIT {
             Assert.assertNotNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
         });
 
+        LOG.warn("Requesting shutdown.");
         exe.shutdown();
+        LOG.warn("Awaiting termination.");
+        assertTrue(exe.awaitTermination(30, TimeUnit.SECONDS));
+        LOG.warn("Terminated.");
+    }
+
+    private static URI createSubmission(URI writableBy, URI mailtoPlaceholder, PassClient passClient) {
+        final Submission submission = new Submission();
+        submission.setSubmitterName("My name");
+        submission.setSubmitterEmail(mailtoPlaceholder);
+        final URI submissionUri = passClient.createResource(submission);
+        new ACLManager().setPermissions(submissionUri).grantWrite(asList(writableBy)).perform();
+        return submissionUri;
     }
 
     private Request buildShibRequest(Request.Builder builder, Map<String, String> headers, URI uri, Token token)
