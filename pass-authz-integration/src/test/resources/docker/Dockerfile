@@ -10,3 +10,4 @@ COPY pass-user-service.war /usr/local/tomcat/webapps/
 COPY pass-authz-roles.jar /usr/local/tomcat/lib
 COPY pass-authz-core-shaded.jar /usr/local/tomcat/lib
 COPY fcrepo.xml /usr/local/tomcat/conf/Catalina/localhost/
+COPY logback.xml /usr/local/tomcat/lib

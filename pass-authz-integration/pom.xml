@@ -236,6 +236,7 @@
                   <SPRING_ACTIVEMQ_BROKER_URL>failover:(tcp://activemq:61616)?trackMessages=true</SPRING_ACTIVEMQ_BROKER_URL>
                   <SPRING_ACTIVEMQ_USER>messaging</SPRING_ACTIVEMQ_USER>
                   <SPRING_ACTIVEMQ_PASSWORD>moo</SPRING_ACTIVEMQ_PASSWORD>
+                  <FCREPO_LOGBACK_LOCATION>/usr/local/tomcat/lib/logback.xml</FCREPO_LOGBACK_LOCATION>
                 </env>
                 <ports>
                   <port>${FCREPO_PORT}:${FCREPO_PORT}</port>

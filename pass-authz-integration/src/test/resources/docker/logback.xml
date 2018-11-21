@@ -1,0 +1,34 @@
+<configuration>
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss.SSS} [%20.20thread] %-5level [%30.-30C{0}] - %msg%n
+            </pattern>
+        </encoder>
+        <target>System.err</target>
+    </appender>
+    <root level="WARN">
+        <appender-ref ref="STDERR"/>
+    </root>
+    <logger name="org.springframework" additivity="false" level="WARN">
+        <appender-ref ref="STDERR"/>
+    </logger>
+    <logger name="org.fcrepo.client" additivity="false" level="WARN">
+        <appender-ref ref="STDERR"/>
+    </logger>
+    <logger name="org.dataconservancy.pass" additivity="false" level="DEBUG">
+        <appender-ref ref="STDERR"/>
+    </logger>
+    <logger name="org.dataconservancy.pass.authz" additivity="false" level="TRACE">
+        <appender-ref ref="STDERR"/>
+    </logger>
+
+    <logger name="org.elasticsearch" additivity="false" level="WARN">
+        <appender-ref ref="STDERR"/>
+    </logger>
+
+    <!-- the rest client is noisy, and detracts from looking at test logging output -->
+    <logger name="org.elasticsearch.client.RestClient" additivity="false" level="ERROR">
+        <appender-ref ref="STDERR"/>
+    </logger>
+</configuration>
