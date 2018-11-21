@@ -187,13 +187,13 @@ public class PolicyListenerIT extends FcrepoIT {
         final Grant grant = client.createAndReadResource(g, Grant.class);
 
         // Wait until the submission is successfully created
-        final Submission submission = attempt(10, () -> {
+        final Submission submission = attempt(20, () -> {
             return tryCreateSubmission(user1, grant, SC_CREATED);
         });
 
         // Now try modifying it as somebody else, and assure it fails.
         // Wait until the policy is enacted by the authz listener
-        attempt(10, () -> {
+        attempt(20, () -> {
             tryModifySubmission(user2, submission, SC_FORBIDDEN);
         });
 
@@ -213,13 +213,13 @@ public class PolicyListenerIT extends FcrepoIT {
 
         // Verify that the PI can create a submission, but this time
         // set submitted=true
-        final Submission submission = attempt(10, () -> {
+        final Submission submission = attempt(20, () -> {
             return tryCreateSubmission(user1, grant, SC_CREATED, true);
         });
 
         // Assure we cannot update the submission, since submitted=true and it should be frozen.
         // Wait until the policy is enacted by the authz listener
-        attempt(10, () -> {
+        attempt(20, () -> {
             tryModifySubmission(user1, submission, SC_FORBIDDEN);
         });
 
@@ -236,12 +236,12 @@ public class PolicyListenerIT extends FcrepoIT {
         final Grant grant = client.createAndReadResource(g, Grant.class);
 
         // Create a submission
-        final Submission submission = attempt(10, () -> {
+        final Submission submission = attempt(20, () -> {
             return tryCreateSubmission(user1, grant, SC_CREATED, true);
         });
 
         // Wait until it has an ACL
-        attempt(10, () -> {
+        attempt(20, () -> {
             assertHasACL(submission.getId());
         });
 
@@ -260,12 +260,12 @@ public class PolicyListenerIT extends FcrepoIT {
         final Grant grant = client.createAndReadResource(g, Grant.class);
 
         // Create a submission
-        final Submission submission = attempt(10, () -> {
+        final Submission submission = attempt(20, () -> {
             return tryCreateSubmission(user1, grant, SC_CREATED, false);
         });
 
         // Wait until it has an ACL
-        attempt(10, () -> {
+        attempt(20, () -> {
             assertHasACL(submission.getId());
         });
 
@@ -282,7 +282,7 @@ public class PolicyListenerIT extends FcrepoIT {
         final SubmissionEvent event = client.createAndReadResource(new SubmissionEvent(), SubmissionEvent.class);
 
         // Wait until it has an ACL
-        attempt(10, () -> {
+        attempt(20, () -> {
             assertHasACL(event.getId());
         });
 
