@@ -30,6 +30,7 @@ import org.dataconservancy.pass.authz.usertoken.Token;
 import org.dataconservancy.pass.authz.usertoken.TokenFactory;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
+import org.dataconservancy.pass.client.fedora.UpdateConflictException;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.User;
 
@@ -124,7 +125,15 @@ class TokenService {
             }
 
             submission.setSubmitter(user.getId());
-            client.updateResource(submission);
+
+            // Note: There are potentially several async services operating on the submission. Try again if it's
+            // stale.
+            try {
+                client.updateResource(submission);
+            } catch (final UpdateConflictException e) {
+                LOG.info("Submission is out of date.  Refreshing and re-trying");
+                enactUserToken(user, token);
+            }
             return true;
 
         } else if (user.getId().equals(submission.getSubmitter())) {
