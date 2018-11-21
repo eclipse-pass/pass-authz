@@ -224,7 +224,7 @@
                   <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
                   <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
                   <FCREPO_JMS_BASEURL>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</FCREPO_JMS_BASEURL>
-                  <PASS_FEDORA_BASEURL>http://localhost:${FCREPO_PORT}/fcrepo/rest/</PASS_FEDORA_BASEURL>
+                  <PASS_FEDORA_BASEURL>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</PASS_FEDORA_BASEURL>
                   <PASS_ELASTICSEARCH_URL>http://elasticsearch:9200</PASS_ELASTICSEARCH_URL>
                   <PASS_FEDORA_USER>fedoraAdmin</PASS_FEDORA_USER>
                   <PASS_FEDORA_PASSWORD>moo</PASS_FEDORA_PASSWORD>
