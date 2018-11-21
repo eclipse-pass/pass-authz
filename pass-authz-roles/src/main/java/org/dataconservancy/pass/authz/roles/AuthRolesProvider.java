@@ -81,9 +81,10 @@ public abstract class AuthRolesProvider {
             }
         }
 
-        LOG.debug("Found roles for {}: {}", authUser.getPrincipal(), roles);
 
         roles.addAll(addFedoraHack(authUser.getUser().getId()));
+
+        LOG.debug("Found roles for {}: {}", authUser.getPrincipal(), roles);
 
         return roles;
     }
