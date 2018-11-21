@@ -263,6 +263,88 @@ public class UserServiceIT extends FcrepoIT {
         exe.shutdown();
     }
 
+    /* Makes sure that only one new user is created in the face of multiple concurrent requests */
+    @Test
+    public void testConcurrentNewUserWithToken() throws Exception {
+        final ExecutorService exe = Executors.newFixedThreadPool(8);
+
+        final URI MAILTO_PLACEHOLDER = URI.create("mailto:Daffy%20Duck%20%3Cdduck%40gmail.com%3E");
+        final String EMPLOYEE_ID = Integer.toString(ThreadLocalRandom.current().nextInt(1000,
+                99999));
+
+        // First, add a new submission, and make it writable by someone else;
+        final Submission submission = new Submission();
+        submission.setSubmitterName("My name");
+        submission.setSubmitterEmail(MAILTO_PLACEHOLDER);
+        final URI SUBMISSION_URI = passClient.createResource(submission);
+        new ACLManager().setPermissions(SUBMISSION_URI).grantWrite(asList(URI.create(
+                "http://example.org/nobody"))).perform();
+
+        final Map<String, String> shibHeaders = new HashMap<>();
+        shibHeaders.put(DISPLAY_NAME_HEADER, "Wot Gorilla");
+        shibHeaders.put(EMAIL_HEADER, "gorilla@jhu.edu");
+        shibHeaders.put(EPPN_HEADER, "testConcurrentNewUserWithToken@johnshopkins.edu");
+        shibHeaders.put(SCOPED_AFFILIATION_HEADER, "TARGET@jhu.edu;FACULTY@jhmi.edu");
+        shibHeaders.put(EMPLOYEE_ID_HEADER, EMPLOYEE_ID);
+        shibHeaders.put(HOPKINS_ID_HEADER, "testConcurrentNewUserWithToken@" + domain);
+
+        // Next, build a token to give to the user service
+        final Token token = new TokenFactory(ConfigUtil.getSystemProperty(Key.USER_TOKEN_KEY_PROPERTY,
+                "BETKPFHWGGDIEWIIYKYQ33LUS4"))
+                        .forPassResource(SUBMISSION_URI).withReference(MAILTO_PLACEHOLDER);
+
+        // Build user service requests with and without tokens
+        final Request userServiceWithoutToken = buildShibRequest(shibHeaders);
+        final Request userServiceWithToken = buildShibRequest(shibHeaders, token);
+
+        // We'll concurrently interleave requests that have user tokens vs not
+        final List<Future<User>> results = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+
+            if ((i & 1) == 0) {
+                results.add(exe.submit(() -> {
+                    try (Response response = httpClient.newCall(userServiceWithToken).execute()) {
+                        Assert.assertEquals(200, response.code());
+                        return json.toModel(response.body().bytes(), User.class);
+                    }
+                }));
+            } else {
+                results.add(exe.submit(() -> {
+                    try (Response response = httpClient.newCall(userServiceWithoutToken).execute()) {
+                        Assert.assertEquals(200, response.code());
+                        return json.toModel(response.body().bytes(), User.class);
+                    }
+                }));
+            }
+        }
+
+        final Set<URI> created = results.stream()
+                .map(f -> {
+                    try {
+                        return f.get();
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        // Make sure only one User resource was created.
+        Assert.assertEquals(1, created.size());
+
+        // Make sure we can find the user
+        final String eeId = new Identifier(domain, EMPLOYEE_ID_TYPE, EMPLOYEE_ID).serialize();
+        attempt(60, () -> {
+            Assert.assertNotNull(passClient.findByAttribute(User.class, "locatorIds", eeId));
+        });
+
+        // Make sure the submission has the new user as the submitter
+        final Submission finalSubmissionState = passClient.readResource(SUBMISSION_URI, Submission.class);
+        assertEquals(finalSubmissionState.getSubmitter(), created.iterator().next());
+
+        exe.shutdown();
+    }
+
     private Request buildShibRequest(Request.Builder builder, Map<String, String> headers, URI uri, Token token)
             throws MalformedURLException {
 
