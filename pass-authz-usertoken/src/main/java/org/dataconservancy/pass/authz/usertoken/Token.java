@@ -23,6 +23,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 /**
  * User token; encodes the identity of a PASS resource, and a reference/link within it.
@@ -141,5 +142,23 @@ public class Token {
             // Should never happen
             throw new RuntimeException("Gosh, your platform does not support UTF-8??");
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Token that = (Token) o;
+        return Objects.equals(resource, that.resource) &&
+                Objects.equals(reference, that.reference);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(resource, reference);
     }
 }
