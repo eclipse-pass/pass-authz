@@ -98,7 +98,7 @@ public class PolicyEngine {
             authReaders.add(submitterRole);
         }
 
-        LOG.debug("Granting read of submission {} to {}", authReaders);
+        LOG.debug("Granting read of submission {} to {}", uri, authReaders);
         LOG.debug("Granting write on submission {} to {}", uri, authWriters);
         acls.setPermissions(uri)
                 .grantRead(authReaders)
