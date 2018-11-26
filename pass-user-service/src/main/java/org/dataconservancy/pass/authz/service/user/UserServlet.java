@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -32,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
+import org.dataconservancy.pass.authz.ExpiringLRUCache;
 import org.dataconservancy.pass.authz.LogUtil;
 import org.dataconservancy.pass.authz.ShibAuthUserProvider;
 import org.dataconservancy.pass.authz.usertoken.BadTokenException;
@@ -65,6 +67,8 @@ public class UserServlet extends HttpServlet {
 
     TokenService tokenService = new TokenService();
 
+    ExpiringLRUCache<Token, Boolean> tokenIsEncountered = new ExpiringLRUCache<>(100, Duration.ofHours(1));
+
     static {
         LogUtil.adjustLogLevels();
     }
@@ -96,39 +100,25 @@ public class UserServlet extends HttpServlet {
         final Token usertoken = tokenService.fromQueryString(request.getQueryString());
 
         final AuthUser shibUser;
-        try {
-            shibUser = provider.getUser(request, authUser -> {
+        shibUser = provider.getUser(request, authUser -> {
 
-                LOG.debug("Entering critical section");
+            LOG.debug("Entering critical section");
 
-                // This is the critical section of the user service.
-                // If we need to create a user, do it. Otherwise update.
-                final AuthUser u;
-                if (authUser.getId() == null) {
-                    LOG.debug("Creating new user");
-                    u = createUser(authUser);
-                } else {
-                    LOG.debug("Updating user");
-                    u = updateUser(authUser);
-                }
-
-                // If there is a user token, apply it to the submission.
-                if (usertoken != null) {
-                    applyUserToken(usertoken, u.getUser());
-                }
-
-                LOG.debug("Exiting critical section");
-                return u;
-
-            }, usertoken == null);
-        } catch (final BadTokenException e) {
-            try (Writer out = response.getWriter()) {
-                LOG.warn("Sending 400 response due to token exception", e);
-                response.setStatus(400);
-                out.append(e.getMessage());
+            // This is the critical section of the user service.
+            // If we need to create a user, do it. Otherwise update.
+            final AuthUser u;
+            if (authUser.getId() == null) {
+                LOG.debug("Creating new user");
+                u = createUser(authUser);
+            } else {
+                LOG.debug("Updating user");
+                u = updateUser(authUser);
             }
-            return;
-        }
+
+            LOG.debug("Exiting critical section");
+            return u;
+
+        }, true);
 
         // At this point, any eligible person will have an up to date User object in Fedora
         // if the person is not eligible, the shib user ID will be null
@@ -140,6 +130,22 @@ public class UserServlet extends HttpServlet {
                 out.append("Unauthorized");
             }
         } else {
+
+            // If there is a user token, apply it to the submission.
+            if (usertoken != null) {
+                try {
+                    tokenIsEncountered.getOrDo(usertoken,
+                            () -> applyUserToken(usertoken, shibUser.getUser()));
+                } catch (final BadTokenException e) {
+                    try (Writer out = response.getWriter()) {
+                        LOG.warn("Sending 400 response due to token exception", e);
+                        response.setStatus(400);
+                        out.append(e.getMessage());
+                    }
+                    return;
+                }
+            }
+
             final User user = new User(shibUser.getUser());
             rewriteUri(user, request);
 
@@ -151,10 +157,13 @@ public class UserServlet extends HttpServlet {
         }
     }
 
-    private void applyUserToken(Token token, User user) {
+    private boolean applyUserToken(Token token, User user) {
         if (tokenService.enactUserToken(user, token)) {
             tokenService.addWritePermissions(user, token);
+            return true;
         }
+
+        return false;
     }
 
     private AuthUser createUser(AuthUser authUser) {
