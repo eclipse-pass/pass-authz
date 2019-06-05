@@ -48,6 +48,8 @@ Configuration environment variables:
 * `JMS_BROKERURL` (URI, default `tcp://localhost:61616`) JMS broker connection URL.
 * `JMS_USERNAME` (String, no default).  JMS connection username.  Leave undefined if it is not password protected.
 * `JMS_PASSWORD` (String, no default).  JMS connection password.  Leave undefined if it is not password protected.
+* `log.org.dataconservancy.pass.authz` (String, default: `warn`). Sets the log level for org.dataconservancy.pass.authz loggers. Values: trace, debug, info, warn
+* `log.ROOT` (String, default: `warn`). Sets the root log level. More verbose than org.dataconservancy.pass.authz logger. Values: trace, debug, info, warn
 
 ### pass-authz-tools
 
