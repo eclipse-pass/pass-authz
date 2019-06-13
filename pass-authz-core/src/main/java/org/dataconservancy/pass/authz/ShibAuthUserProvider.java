@@ -42,6 +42,8 @@ import org.slf4j.LoggerFactory;
  * Implementation of the AuthUserProvider interface for JHU's Shibboleth service We are interested in six headers
  * <ul>
  * <li>Displayname - First Last</li>
+ * <li>Givenname - First</li>
+ * <li>Sn - Last</li>
  * <li>Mail - the user's preferred email address</li>
  * <li>Eppn - the user's "official" JHU email address, which starts with the users institutional id</li>
  * <li>Affiliation - a semi-colon-separated list of roles or statuses indicating employment type and domain</li>
@@ -72,6 +74,10 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
     /** EPPN http header */
     public static final String EPPN_HEADER = "Eppn";
+
+    public static final String GIVENNAME_HEADER = "Givenname";
+
+    public static final String SN_HEADER = "Sn";
 
     /** Scoped affiliation http header */
     public static final String SCOPED_AFFILIATION_HEADER = "Affiliation";
@@ -143,6 +149,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
         }
 
         final String displayName = getShibAttr(request, DISPLAY_NAME_HEADER, String::trim);
+        final String givenName = getShibAttr(request, GIVENNAME_HEADER, String::trim);
+        final String surname = getShibAttr(request, SN_HEADER, String::trim);
         final String emailAddress = getShibAttr(request, EMAIL_HEADER, String::trim);
         final String domain = getShibAttr(request, EPPN_HEADER, s -> s.split("@")[1]);
         String institutionalId = getShibAttr(request, EPPN_HEADER, s -> s.split("@")[0]);
@@ -159,6 +167,8 @@ public class ShibAuthUserProvider implements AuthUserProvider {
 
         final AuthUser authUser = new AuthUser();
         authUser.setName(displayName);
+        authUser.setGivenName(givenName);
+        authUser.setSurname(surname);
         authUser.setEmail(emailAddress);
         // populate the locatorId list with durable ids first - shib user always has hopkins id
         if (hopkinsId != null) {
