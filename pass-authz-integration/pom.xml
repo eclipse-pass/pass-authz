@@ -9,9 +9,9 @@
 
   <properties>
     <fcrepo.cxtPath>fcrepo</fcrepo.cxtPath>
-    <FCREPO_HOST>localhost</FCREPO_HOST>
-    <ES_HOST>localhost</ES_HOST>
-    <JMS_HOST>localhost</JMS_HOST>
+    <FCREPO_HOST>${docker.host.address}</FCREPO_HOST>
+    <ES_HOST>${docker.host.address}</ES_HOST>
+    <JMS_HOST>${docker.host.address}</JMS_HOST>
     <activemq.user>messaging</activemq.user>
     <activemq.password>moo</activemq.password>
     <pass.user.token.key>BETKPFHWGGDIEWIIYKYQ33LUS4</pass.user.token.key>
@@ -124,6 +124,7 @@
         </executions>
         <configuration>
           <systemPropertyVariables>
+            <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
             <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
             <fcrepo.cxtPath>${fcrepo.cxtPath}</fcrepo.cxtPath>
             <project.basedir>${project.basedir}</project.basedir>
@@ -176,7 +177,7 @@
                 <env>
                   <PI_FEDORA_USER>fedoraAdmin</PI_FEDORA_USER>
                   <PI_FEDORA_PASS>moo</PI_FEDORA_PASS>
-                  <PI_FEDORA_INTERNAL_BASE>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</PI_FEDORA_INTERNAL_BASE>
+                  <PI_FEDORA_INTERNAL_BASE>http://fcrepo:${FCREPO_PORT}/fcrepo/rest/</PI_FEDORA_INTERNAL_BASE>
                   <PI_ES_BASE>http://elasticsearch:9200/</PI_ES_BASE>
                   <PI_ES_INDEX>http://elasticsearch:9200/pass/</PI_ES_INDEX>
                   <PI_FEDORA_JMS_QUEUE>Consumer.indexer.VirtualTopic.pass.authz</PI_FEDORA_JMS_QUEUE>
@@ -221,10 +222,10 @@
                 <env>
                   <LOG_org_dataconservancy>DEBUG</LOG_org_dataconservancy>
                   <FCREPO_AUTH_LOG_LEVEL>DEBUG</FCREPO_AUTH_LOG_LEVEL>
-                  <FCREPO_HOST>${FCREPO_HOST}</FCREPO_HOST>
+                  <FCREPO_HOST>fcrepo</FCREPO_HOST>
                   <FCREPO_PORT>${FCREPO_PORT}</FCREPO_PORT>
-                  <FCREPO_JMS_BASEURL>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</FCREPO_JMS_BASEURL>
-                  <PASS_FEDORA_BASEURL>http://localhost:${FCREPO_PORT}/fcrepo/rest/</PASS_FEDORA_BASEURL>
+                  <FCREPO_JMS_BASEURL>http://${docker.host.address}:${FCREPO_PORT}/fcrepo/rest</FCREPO_JMS_BASEURL>
+                  <PASS_FEDORA_BASEURL>http://${docker.host.address}:${FCREPO_PORT}/fcrepo/rest/</PASS_FEDORA_BASEURL>
                   <PASS_ELASTICSEARCH_URL>http://elasticsearch:9200</PASS_ELASTICSEARCH_URL>
                   <PASS_FEDORA_USER>fedoraAdmin</PASS_FEDORA_USER>
                   <PASS_FEDORA_PASSWORD>moo</PASS_FEDORA_PASSWORD>
@@ -248,7 +249,7 @@
                 </network>
                 <wait>
                   <http>
-                    <url>http://fedoraAdmin:moo@${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest</url>
+                    <url>http://fedoraAdmin:moo@${docker.host.address}:${FCREPO_PORT}/fcrepo/rest</url>
                   </http>
                   <time>120000</time>
                 </wait>
@@ -278,7 +279,7 @@
                 </network>
                 <wait>
                   <http>
-                    <url>http://${ES_HOST}:${ES_PORT}/</url>
+                    <url>http://${docker.host.address}:${ES_PORT}/</url>
                   </http>
                   <time>120000</time>
                 </wait>
