@@ -32,6 +32,10 @@ public class AuthUser {
 
     private String name;
 
+    private String givenName;
+
+    private String surname;
+
     private String email;
 
     private List<String> locatorIds = new ArrayList<>();
@@ -114,6 +118,46 @@ public class AuthUser {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Get the given name for the user, as determined by the authentication provider.  Differs from the display name
+     * as the given name is typically the user's first name.
+     *
+     * @return the given name
+     */
+    public String getGivenName() {
+        return givenName;
+    }
+
+    /**
+     * Set the given name for the user, as determined by the authentication provider. Differs from the display name
+     * as the given name is typically the user's first name.
+     *
+     * @param givenName the given name
+     */
+    public void setGivenName(String givenName) {
+        this.givenName = givenName;
+    }
+
+    /**
+     * Get the surname for the user, as determined by the authentication provider. Differs from the display name
+     * as the surname is only the user's last name.
+     *
+     * @return the surname
+     */
+    public String getSurname() {
+        return surname;
+    }
+
+    /**
+     * Set the surname for the user, as determined by the authentication provider. Differs from the display name
+     * as the surname is only the user's last name.
+     *
+     * @param surname the surname
+     */
+    public void setSurname(String surname) {
+        this.surname = surname;
     }
 
     /**

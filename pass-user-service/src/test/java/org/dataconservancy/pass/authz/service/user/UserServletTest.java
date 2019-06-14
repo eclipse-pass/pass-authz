@@ -111,6 +111,8 @@ public class UserServletTest {
         USER.setPrincipal("bessie@farm.com");
         USER.setName("MOOO COW");
         USER.setEmail("bessie@farm.com");
+        USER.setGivenName("MOOO");
+        USER.setSurname("COW");
         USER.getLocatorIds().add(new Identifier(domain, JHED_ID_TYPE, "cowb1").serialize());
         USER.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE, "08675309").serialize());
         USER.getLocatorIds().add(new Identifier(domain, EMPLOYEE_ID_TYPE, "P2P2P2").serialize());
@@ -119,6 +121,8 @@ public class UserServletTest {
         user.setId(URI.create("http://example.org:2020/" + UUID.randomUUID().toString()));
         user.setUsername(USER.getPrincipal());
         user.setDisplayName(USER.getName());
+        user.setFirstName(USER.getGivenName());
+        user.setLastName(USER.getSurname());
         user.setEmail(USER.getEmail());
         user.setLocatorIds(USER.getLocatorIds());
         user.setRoles(Arrays.asList(Role.ADMIN));
@@ -180,6 +184,8 @@ public class UserServletTest {
 
         assertEquals(newUserId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
+        assertEquals(USER.getGivenName(), fromServlet.getFirstName());
+        assertEquals(USER.getSurname(), fromServlet.getLastName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
         assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
@@ -218,6 +224,8 @@ public class UserServletTest {
 
         assertEquals(foundId, fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
+        assertEquals(USER.getGivenName(), fromServlet.getFirstName());
+        assertEquals(USER.getSurname(), fromServlet.getLastName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
         assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
@@ -228,6 +236,8 @@ public class UserServletTest {
         final User updated = userCaptor.getValue();
         assertEquals(USER.getName(), updated.getDisplayName());
         assertEquals(USER.getEmail(), updated.getEmail());
+        assertEquals(USER.getGivenName(), fromServlet.getFirstName());
+        assertEquals(USER.getSurname(), fromServlet.getLastName());
         assertEquals(Arrays.asList(Role.ADMIN), updated.getRoles());
         assertTrue(USER.getLocatorIds().containsAll(updated.getLocatorIds()));
         assertTrue(updated.getLocatorIds().containsAll(USER.getLocatorIds()));
@@ -247,6 +257,8 @@ public class UserServletTest {
 
         assertEquals(USER.getUser().getId(), fromServlet.getId());
         assertEquals(USER.getName(), fromServlet.getDisplayName());
+        assertEquals(USER.getGivenName(), fromServlet.getFirstName());
+        assertEquals(USER.getSurname(), fromServlet.getLastName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
         assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));
@@ -270,6 +282,8 @@ public class UserServletTest {
         found.setId(foundId);
         found.setUsername(USER.getPrincipal());
         found.setDisplayName(USER.getName());
+        found.setFirstName(USER.getGivenName());
+        found.setLastName(USER.getSurname());
         found.setEmail(USER.getEmail());
         found.setLocatorIds(USER.getLocatorIds());
         found.setRoles(Arrays.asList(Role.ADMIN));
@@ -283,6 +297,8 @@ public class UserServletTest {
         assertNotEquals(foundId, fromServlet.getId());
         assertTrue(fromServlet.getId().toString().contains("https"));
         assertEquals(USER.getName(), fromServlet.getDisplayName());
+        assertEquals(USER.getGivenName(), fromServlet.getFirstName());
+        assertEquals(USER.getSurname(), fromServlet.getLastName());
         assertEquals(USER.getEmail(), fromServlet.getEmail());
         assertTrue(USER.getLocatorIds().containsAll(fromServlet.getLocatorIds()));
         assertTrue(fromServlet.getLocatorIds().containsAll(USER.getLocatorIds()));

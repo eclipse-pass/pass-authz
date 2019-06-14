@@ -171,6 +171,8 @@ public class UserServlet extends HttpServlet {
         user.setUsername(authUser.getPrincipal());
         user.setLocatorIds(authUser.getLocatorIds());
         user.setDisplayName(authUser.getName());
+        user.setFirstName(authUser.getGivenName());
+        user.setLastName(authUser.getSurname());
         user.setEmail(authUser.getEmail());
         user.getRoles().add(User.Role.SUBMITTER);
 
@@ -205,6 +207,16 @@ public class UserServlet extends HttpServlet {
         }
         if (user.getDisplayName() == null || !user.getDisplayName().equals(shibUser.getName())) {
             user.setDisplayName(shibUser.getName());
+            update = true;
+        }
+
+        if (user.getFirstName() == null || !user.getFirstName().equals(shibUser.getGivenName())) {
+            user.setFirstName(shibUser.getGivenName());
+            update = true;
+        }
+
+        if (user.getLastName() == null || !user.getLastName().equals(shibUser.getSurname())) {
+            user.setLastName(shibUser.getSurname());
             update = true;
         }
 
