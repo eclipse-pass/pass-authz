@@ -15,14 +15,27 @@
  */
 package org.dataconservancy.pass.authz.tools.main;
 
+import java.net.URI;
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 class Const {
 
     /**
-     * Base URI for PASS roles, e.g. {@code http://oapass.org/ns/roles/johnshopkins.edu}
+     * Property or environment varialbe containing the base URI for PASS roles, e.g.
+     * {@code http://oapass.org/ns/roles/johnshopkins.edu}
      */
-    static final String ROLE_BASE = "pass.authz.rolebase";
+    static final String ROLE_BASE_PROP = "pass.authz.rolebase";
 
+    /**
+     * Optional base URI provided by {@link #ROLE_BASE_PROP}
+     */
+    static final Optional<URI> ROLE_BASE_URI = ofNullable(System.getProperties().getProperty(Const.ROLE_BASE_PROP,
+            System.getenv(Const.ROLE_BASE_PROP.toUpperCase().replace(".", "_"))))
+            .map(uri -> uri.endsWith("#") ? uri : uri + "#")
+            .map(URI::create);
 }
