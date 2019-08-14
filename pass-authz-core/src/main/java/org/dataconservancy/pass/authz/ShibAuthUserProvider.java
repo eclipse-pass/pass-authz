@@ -92,10 +92,10 @@ public class ShibAuthUserProvider implements AuthUserProvider {
     public static final String EMPLOYEE_ID_TYPE = "employeeid";
 
     /** hopkins id identifier type */
-    public static final String HOPKINS_ID_TYPE = "hopkinsid";
+    public static final String HOPKINS_ID_TYPE = "unique-id";
 
     /** JHED id type */
-    public static final String JHED_ID_TYPE = "jhed";
+    public static final String JHED_ID_TYPE = "eppn";
 
     final PassClient passClient;
 
