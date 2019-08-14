@@ -63,7 +63,11 @@ public class ContainerPermissions {
         final FcrepoClient client = getFcrepoClient();
 
         containerBase = URI.create(ofNullable(FedoraConfig.getBaseUrl()).orElse(root.get("container-base").asText()));
-        roleBase = ofNullable(root.get("role-base").asText()).map(URI::create).orElse(null);
+        roleBase = ofNullable(System.getProperties().getProperty(Const.ROLE_BASE,
+                    System.getenv(Const.ROLE_BASE.toUpperCase().replace(".", "_"))))
+                .map(uri -> uri.endsWith("#") ? uri : uri + "#")
+                .map(URI::create)
+                .orElse(URI.create(root.get("role-base").asText()));
 
         try (FcrepoResponse response = client.head(getAclBase()).perform()) {
             if (response.getStatusCode() == 404) {

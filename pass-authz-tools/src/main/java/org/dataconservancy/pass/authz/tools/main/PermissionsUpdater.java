@@ -32,16 +32,24 @@ import org.dataconservancy.pass.model.SubmissionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * @author apb@jhu.edu
  */
 public class PermissionsUpdater {
 
-    static final URI PASS_BACKEND_ROLE = URI.create("http://oapass.org/ns/roles/johnshopkins.edu#pass-backend");
+    static final URI ROLE_BASE = ofNullable(System.getProperties().getProperty(Const.ROLE_BASE,
+            System.getenv(Const.ROLE_BASE.toUpperCase().replace(".", "_"))))
+            .map(uri -> uri.endsWith("#") ? uri : uri + "#")
+            .map(URI::create)
+            .orElse(URI.create("http://oapass.org/ns/roles/johnshopkins.edu#"));
 
-    static final URI PASS_GRANTADMIN_ROLE = URI.create("http://oapass.org/ns/roles/johnshopkins.edu#admin");
+    static final URI PASS_BACKEND_ROLE = URI.create(ROLE_BASE.toString() + "pass-backend");
 
-    static final URI PASS_SUBMITTER_ROLE = URI.create("http://oapass.org/ns/roles/johnshopkins.edu#submitter");
+    static final URI PASS_GRANTADMIN_ROLE = URI.create(ROLE_BASE.toString() + "admin");
+
+    static final URI PASS_SUBMITTER_ROLE = URI.create(ROLE_BASE.toString() + "submitter");
 
     static final Logger LOG = LoggerFactory.getLogger(PermissionsUpdater.class);
 
