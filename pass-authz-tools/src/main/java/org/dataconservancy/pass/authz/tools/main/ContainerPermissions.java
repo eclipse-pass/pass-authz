@@ -19,6 +19,7 @@ package org.dataconservancy.pass.authz.tools.main;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Optional.ofNullable;
 import static org.dataconservancy.pass.authz.acl.ACLManager.getAclBase;
+import static org.dataconservancy.pass.authz.tools.main.Const.ROLE_BASE_URI;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class ContainerPermissions {
         final FcrepoClient client = getFcrepoClient();
 
         containerBase = URI.create(ofNullable(FedoraConfig.getBaseUrl()).orElse(root.get("container-base").asText()));
-        roleBase = ofNullable(root.get("role-base").asText()).map(URI::create).orElse(null);
+        roleBase = ROLE_BASE_URI.orElse(URI.create(root.get("role-base").asText()));
 
         try (FcrepoResponse response = client.head(getAclBase()).perform()) {
             if (response.getStatusCode() == 404) {
