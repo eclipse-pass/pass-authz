@@ -62,10 +62,12 @@ Configuration:
 
 * Standard PASS java client [properties](https://github.com/OA-PASS/java-fedora-client#configuration) for Fedora username,  password, and baseURI.
 * `TYPE` (or, as a java property, `-Dtype`).  For the individual permissions updator, this specifies the type of PASS entity to update.  If not specified, it will update all.
+* `PASS_AUTHZ_ROLEBASE` (or as, a java property, `-Dpass.authz.rolebase`).  Example value: `http://oapass.org/ns/roles/johnshopkins.edu`.  Specifies the base URI used when setting [authorization roles](#authorization-roles).  For the container permissions updator, overrides the value set in `containers.yml`.
+
 
 For example:
 
-    java -Dpass.fedora.baseurl=http://example.org/fcrepo/rest -Dtype=SubmissionEvent -Dpass.fedora.user=fedoraAdmin -Dpass.fedora.password=pass -jar pass-authz-tools-${version}-SNAPSHOT-individual-permissions-exe.jar
+    java -Dpass.fedora.baseurl=http://example.org/fcrepo/rest -Dpass.authz.rolebase=http://oapass.org/ns/roles/harvard.edu -Dtype=SubmissionEvent -Dpass.fedora.user=fedoraAdmin -Dpass.fedora.password=pass -jar pass-authz-tools-${version}-SNAPSHOT-individual-permissions-exe.jar
     
 ### pass-authz-usertoken
 
