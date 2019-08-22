@@ -24,6 +24,8 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -175,6 +177,7 @@ public class UserServlet extends HttpServlet {
         user.setLastName(authUser.getSurname());
         user.setEmail(authUser.getEmail());
         user.getRoles().add(User.Role.SUBMITTER);
+        user.setAffiliation(authUser.getScopedAffiliations());
 
         authUser.setUser(fedoraClient.createAndReadResource(user, User.class));
         authUser.setId(authUser.getUser().getId());
@@ -224,6 +227,11 @@ public class UserServlet extends HttpServlet {
         if (user.getLocatorIds() == null || !user.getLocatorIds().containsAll(shibUser.getLocatorIds())) {
             user.getLocatorIds().addAll(shibUser.getLocatorIds());
             user.setLocatorIds(new ArrayList<>(new HashSet(user.getLocatorIds())));//remove duplicates
+            update = true;
+        }
+
+        if (user.getAffiliation() == null || !user.getAffiliation().equals(shibUser.getScopedAffiliations())) {
+            user.setAffiliation(shibUser.getScopedAffiliations());
             update = true;
         }
 

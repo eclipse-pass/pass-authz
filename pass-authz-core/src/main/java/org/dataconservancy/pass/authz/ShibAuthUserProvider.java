@@ -196,6 +196,12 @@ public class ShibAuthUserProvider implements AuthUserProvider {
                                 .map(sa -> sa.split("@")[1])
                                 .collect(toSet()));
 
+        authUser.setScopedAffiliations(stream(
+                                            ofNullable(
+                                                    getShibAttr(request, SCOPED_AFFILIATION_HEADER, s -> s.split(";")))
+                                                    .orElse(new String[0]))
+                                            .collect(toSet()));
+
         if (cacheLookupId != null) {
             LOG.debug("Looking up User based on hopkins id '{}'", cacheLookupId);
             try {
