@@ -46,6 +46,8 @@ public class AuthUser {
 
     private final Set<String> domains = new HashSet<>();
 
+    private Set<String> scopedAffiliations = new HashSet<>();
+
     private User user;
 
     /**
@@ -212,4 +214,21 @@ public class AuthUser {
         return user;
     }
 
+    /**
+     * The affiliation(s) of the user, per domain.  Typically in the form {@code &lt;affiliation&gt;@&lt;domain&gt;}
+     *
+     * @return the user's affiliation(s)
+     */
+    public Set<String> getScopedAffiliations() {
+        return scopedAffiliations;
+    }
+
+    /**
+     * The affiliation(s) of the user, per domain.  Typically in the form {@code &lt;affiliation&gt;@&lt;domain&gt;}
+     *
+     * @param scopedAffiliations the user's affiliation(s) for each domain
+     */
+    public void setScopedAffiliations(Set<String> scopedAffiliations) {
+        this.scopedAffiliations = scopedAffiliations;
+    }
 }
