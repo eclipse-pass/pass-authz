@@ -78,7 +78,7 @@
     <okhttp.version>3.11.0</okhttp.version>
     <pass.fedora.client.version>0.7.0</pass.fedora.client.version>
     <elasticsearch.version>6.2.4</elasticsearch.version>
-    <slf4j.version>1.7.25</slf4j.version>
+    <slf4j.version>1.7.29</slf4j.version>
     <apache.log.api>2.11.1</apache.log.api>
     <activemq.version>5.15.9</activemq.version>
     <system.rules.version>1.18.0</system.rules.version>
