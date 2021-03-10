@@ -83,7 +83,7 @@
     <activemq.version>5.15.9</activemq.version>
     <system.rules.version>1.18.0</system.rules.version>
     <powermock.version>2.0.0-RC.1</powermock.version>
-    <json.version>20180130</json.version>
+    <json.version>20210307</json.version>
 
     <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
     <docker-maven-plugin.version>0.27.2</docker-maven-plugin.version>
