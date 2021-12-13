@@ -79,7 +79,7 @@
     <pass.fedora.client.version>0.7.0</pass.fedora.client.version>
     <elasticsearch.version>6.2.4</elasticsearch.version>
     <slf4j.version>1.7.25</slf4j.version>
-    <apache.log.api>2.11.1</apache.log.api>
+    <apache.log.api>2.15.0</apache.log.api>
     <activemq.version>5.15.9</activemq.version>
     <system.rules.version>1.18.0</system.rules.version>
     <powermock.version>2.0.0-RC.1</powermock.version>
@@ -351,6 +351,12 @@
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-to-slf4j</artifactId>
+        <version>${apache.log.api}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
         <version>${apache.log.api}</version>
       </dependency>
 
