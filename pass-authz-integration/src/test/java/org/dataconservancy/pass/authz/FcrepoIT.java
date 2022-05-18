@@ -24,12 +24,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Callable;
 
-import org.dataconservancy.pass.authz.acl.ACLManager;
-import org.dataconservancy.pass.authz.acl.Permission;
-import org.dataconservancy.pass.client.PassClientFactory;
-import org.dataconservancy.pass.client.fedora.FedoraConfig;
-import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -43,6 +37,11 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.dataconservancy.pass.authz.acl.ACLManager;
+import org.dataconservancy.pass.authz.acl.Permission;
+import org.dataconservancy.pass.client.PassClientFactory;
+import org.dataconservancy.pass.client.fedora.FedoraConfig;
+import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 

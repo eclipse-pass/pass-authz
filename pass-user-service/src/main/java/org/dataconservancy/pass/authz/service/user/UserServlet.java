@@ -24,9 +24,6 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -45,7 +42,6 @@ import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.PassJsonAdapter;
 import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.model.User;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

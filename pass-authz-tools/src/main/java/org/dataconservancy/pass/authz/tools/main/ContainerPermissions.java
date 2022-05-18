@@ -28,25 +28,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.fcrepo.client.FcrepoClient;
-import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
-import org.fcrepo.client.FcrepoResponse;
-
-import org.dataconservancy.pass.authz.acl.ACLManager;
-import org.dataconservancy.pass.client.fedora.FedoraConfig;
-
-import org.apache.commons.io.IOUtils;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.commons.io.IOUtils;
+import org.dataconservancy.pass.authz.acl.ACLManager;
+import org.dataconservancy.pass.client.fedora.FedoraConfig;
+import org.fcrepo.client.FcrepoClient;
+import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
+import org.fcrepo.client.FcrepoResponse;
 
 /**
  * @author apb@jhu.edu
  */
 public class ContainerPermissions {
+
+    private ContainerPermissions() {
+    }
 
     static URI containerBase;
 

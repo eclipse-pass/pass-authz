@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory;
  */
 public class ConfigUtil {
 
+    private ConfigUtil() {
+    }
+
     static final Logger LOG = LoggerFactory.getLogger(ConfigUtil.class);
 
     /**

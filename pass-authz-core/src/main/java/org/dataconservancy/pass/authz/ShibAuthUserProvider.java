@@ -28,13 +28,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.support.Identifier;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

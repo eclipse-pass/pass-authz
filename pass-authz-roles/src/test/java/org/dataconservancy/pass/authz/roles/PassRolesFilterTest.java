@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -49,7 +48,6 @@ import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.User;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

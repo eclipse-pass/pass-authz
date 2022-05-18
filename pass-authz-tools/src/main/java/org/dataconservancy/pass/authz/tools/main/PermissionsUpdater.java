@@ -16,6 +16,8 @@
 
 package org.dataconservancy.pass.authz.tools.main;
 
+import static org.dataconservancy.pass.authz.tools.main.Const.ROLE_BASE_URI;
+
 import java.net.URI;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -28,16 +30,16 @@ import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.client.util.ConfigUtil;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.SubmissionEvent;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.dataconservancy.pass.authz.tools.main.Const.ROLE_BASE_URI;
 
 /**
  * @author apb@jhu.edu
  */
 public class PermissionsUpdater {
+
+    private PermissionsUpdater() {
+    }
 
     static final URI ROLE_BASE = ROLE_BASE_URI.orElse(URI.create("http://oapass.org/ns/roles/johnshopkins.edu#"));
 

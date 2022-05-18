@@ -25,11 +25,10 @@ import static org.junit.Assert.assertTrue;
 import java.net.URI;
 import java.util.Arrays;
 
-import org.dataconservancy.pass.authz.acl.ACLManager;
-
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

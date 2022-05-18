@@ -15,15 +15,18 @@
  */
 package org.dataconservancy.pass.authz.tools.main;
 
+import static java.util.Optional.ofNullable;
+
 import java.net.URI;
 import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
 
 /**
  * @author Elliot Metsger (emetsger@jhu.edu)
  */
 class Const {
+
+    private Const() {
+    }
 
     /**
      * Property or environment varialbe containing the base URI for PASS roles, e.g.

@@ -17,8 +17,6 @@
 package org.dataconservancy.pass.authz;
 
 import static java.util.Arrays.asList;
-
-
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.DISPLAY_NAME_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMAIL_HEADER;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.EMPLOYEE_ID_HEADER;
@@ -28,7 +26,12 @@ import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_HEA
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.HOPKINS_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.JHED_ID_TYPE;
 import static org.dataconservancy.pass.authz.ShibAuthUserProvider.SCOPED_AFFILIATION_HEADER;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -36,12 +39,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.function.Function;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.User;
-
 import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.Assert;
 import org.junit.Before;

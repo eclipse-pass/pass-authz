@@ -31,17 +31,16 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.UUID;
 
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
-
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -62,7 +61,7 @@ public class PassAuthzIT extends FcrepoIT {
     static CloseableHttpClient http = getHttpClient();
 
     static CloseableHttpClient userHttp = getAuthClient("user", "moo");
-    
+
     String domain = "johnshopkins.edu";
 
     @BeforeClass

@@ -23,6 +23,9 @@ package org.dataconservancy.pass.authz.usertoken;
  */
 public class KeyGenerator {
 
+    private KeyGenerator() {
+    }
+
     /**
      * Generate a key, encode, and print to stdout.
      *

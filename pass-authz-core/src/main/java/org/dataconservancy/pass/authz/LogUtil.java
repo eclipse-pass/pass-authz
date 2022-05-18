@@ -18,15 +18,17 @@ package org.dataconservancy.pass.authz;
 
 import static org.dataconservancy.pass.authz.ConfigUtil.props;
 
-import org.slf4j.LoggerFactory;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author apb@jhu.edu
  */
 public class LogUtil {
+
+    private LogUtil() {
+    }
 
     static final String PREFIX = "log.";
 

@@ -28,14 +28,13 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.fcrepo.client.FcrepoClient;
-import org.fcrepo.client.FcrepoOperationFailedException;
-import org.fcrepo.client.FcrepoResponse;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.RDFNode;
+import org.fcrepo.client.FcrepoClient;
+import org.fcrepo.client.FcrepoOperationFailedException;
+import org.fcrepo.client.FcrepoResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

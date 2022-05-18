@@ -29,7 +29,6 @@ import java.net.URI;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.Submission.SubmissionStatus;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

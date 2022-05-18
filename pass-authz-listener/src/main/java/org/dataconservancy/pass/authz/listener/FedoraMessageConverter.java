@@ -17,7 +17,6 @@
 package org.dataconservancy.pass.authz.listener;
 
 import java.util.stream.Stream;
-
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
@@ -25,9 +24,13 @@ import javax.jms.TextMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-// TODO Give good error messages on unexpected json?
+// todo: Give good error messages on unexpected json?
 
 public class FedoraMessageConverter {
+
+    private FedoraMessageConverter() {
+    }
+
     private static final String DELETION = "http://fedora.info/definitions/v4/event#ResourceDeletion";
     private static final String MODIFICATION = "http://fedora.info/definitions/v4/event#ResourceModification";
     private static final String CREATION = "http://fedora.info/definitions/v4/event#ResourceCreation";

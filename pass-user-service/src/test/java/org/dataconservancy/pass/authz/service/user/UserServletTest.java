@@ -36,12 +36,12 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Function;
-
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.authz.AuthUserProvider;
 import org.dataconservancy.pass.authz.usertoken.BadTokenException;
@@ -51,7 +51,6 @@ import org.dataconservancy.pass.client.PassJsonAdapter;
 import org.dataconservancy.pass.client.adapter.PassJsonAdapterBasic;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
-
 import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,8 +59,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Unit test for {@link UserServlet}

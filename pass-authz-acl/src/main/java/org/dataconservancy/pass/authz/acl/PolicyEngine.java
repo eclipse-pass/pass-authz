@@ -25,7 +25,6 @@ import java.util.Set;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.Submission.SubmissionStatus;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
