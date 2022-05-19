@@ -27,7 +27,6 @@ import java.util.Set;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.model.User.Role;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

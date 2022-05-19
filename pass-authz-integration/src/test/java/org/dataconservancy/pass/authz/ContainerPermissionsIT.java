@@ -25,10 +25,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.net.URI;
 
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
-
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 

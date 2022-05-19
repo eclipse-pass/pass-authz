@@ -44,6 +44,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import okhttp3.Credentials;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.authz.usertoken.Key;
 import org.dataconservancy.pass.authz.usertoken.Token;
@@ -56,18 +63,9 @@ import org.dataconservancy.pass.client.util.ConfigUtil;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.support.Identifier;
-
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.fusesource.hawtbuf.ByteArrayInputStream;
 import org.junit.Assert;
 import org.junit.Test;
-
-import okhttp3.Credentials;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 /**
  * @author apb@jhu.edu

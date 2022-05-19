@@ -31,12 +31,10 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-import org.fcrepo.client.FcrepoClient;
-import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
-
 import org.dataconservancy.pass.client.fedora.FedoraConfig;
 import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
-
+import org.fcrepo.client.FcrepoClient;
+import org.fcrepo.client.FcrepoClient.FcrepoClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,12 +185,12 @@ public class ACLManager {
 
         Set<URI> getRolesForPermission(Permission p) {
             switch (p) {
-            case Read:
-                return read.stream().filter(not(write::contains)).collect(toSet());
-            case Write:
-                return write;
-            default:
-                return emptySet();
+                case Read:
+                    return read.stream().filter(not(write::contains)).collect(toSet());
+                case Write:
+                    return write;
+                default:
+                    return emptySet();
             }
         }
 

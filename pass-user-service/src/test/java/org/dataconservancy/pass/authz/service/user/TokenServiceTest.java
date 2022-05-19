@@ -45,7 +45,6 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.PassEntity;
 import org.dataconservancy.pass.model.Submission;
 import org.dataconservancy.pass.model.User;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

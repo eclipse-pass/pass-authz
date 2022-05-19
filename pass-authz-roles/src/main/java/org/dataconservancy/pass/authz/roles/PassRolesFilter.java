@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -48,7 +47,6 @@ import org.dataconservancy.pass.authz.LogUtil;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.User;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

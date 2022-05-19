@@ -17,11 +17,9 @@
 package org.dataconservancy.pass.authz.listener;
 
 import java.util.List;
-
 import javax.jms.ConnectionFactory;
 
 import org.dataconservancy.pass.authz.acl.PolicyEngine;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

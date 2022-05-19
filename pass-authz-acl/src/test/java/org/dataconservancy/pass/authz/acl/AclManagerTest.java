@@ -32,13 +32,12 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.util.UUID;
 
-import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.update.UpdateAction;
+import org.dataconservancy.pass.client.fedora.RepositoryCrawler;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

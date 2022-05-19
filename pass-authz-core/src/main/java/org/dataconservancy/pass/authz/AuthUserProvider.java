@@ -18,7 +18,6 @@
 package org.dataconservancy.pass.authz;
 
 import java.util.function.Function;
-
 import javax.servlet.http.HttpServletRequest;
 
 /**

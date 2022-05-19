@@ -21,15 +21,13 @@ import static org.dataconservancy.pass.authz.ConfigUtil.getValue;
 import static org.dataconservancy.pass.authz.LogUtil.adjustLogLevels;
 
 import java.net.URI;
-
 import javax.jms.ConnectionFactory;
 
+import org.apache.activemq.ActiveMQConnectionFactory;
 import org.dataconservancy.pass.authz.acl.ACLManager;
 import org.dataconservancy.pass.authz.acl.PolicyEngine;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
-
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +35,9 @@ import org.slf4j.LoggerFactory;
  * @author apb@jhu.edu
  */
 public class AuthzListenerService {
+
+    private AuthzListenerService() {
+    }
 
     static final Logger LOG = LoggerFactory.getLogger(AuthzListenerService.class);
 

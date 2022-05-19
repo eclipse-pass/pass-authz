@@ -30,7 +30,6 @@ import java.util.UUID;
 import org.dataconservancy.pass.authz.AuthUser;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.User.Role;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
