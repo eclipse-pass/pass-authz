@@ -14,7 +14,7 @@
 
   <name>PASS authorization tools</name>
   <description>PASS authorization tools and services</description>
-  <url>https://github.com/OA-PASS/pass-authz</url>
+  <url>https://github.com/eclipse-pass/pass-authz</url>
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
@@ -449,9 +449,9 @@
   </repositories>
 
   <scm>
-    <connection>scm:git:https://github.com/OA-PASS/pass-authz.git</connection>
-    <developerConnection>scm:git:https://github.com/OA-PASS/pass-authz.git</developerConnection>
-    <url>https://github.com/OA-PASS/pass-authz</url>
+    <connection>scm:git:https://github.com/eclipse-pass/pass-authz.git</connection>
+    <developerConnection>scm:git:https://github.com/eclipse-pass/pass-authz.git</developerConnection>
+    <url>https://github.com/eclipse-pass/pass-authz</url>
     <tag>HEAD</tag>
   </scm>
 
