@@ -20,7 +20,7 @@ jobs:
     name: Run Unit Tests
     uses: eclipse-pass/pass-authz/.github/workflows/tests-unit.yml@main
 
-#  call-tests-integration:
-#    name: Run Integration Tests
-#    uses: eclipse-pass/pass-authz/.github/workflows/tests-integration.yml@main
-#    needs: call-workaround
+  call-tests-integration:
+    name: Run Integration Tests
+    uses: eclipse-pass/pass-authz/.github/workflows/tests-integration.yml@main
+    needs: call-workaround
