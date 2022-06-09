@@ -16,7 +16,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2        
+          key: ${{ runner.os }}-m3-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m3       
       - name: Run unit tests
         run: mvn -pl -pass-authz-integration clean test --file pom.xml
