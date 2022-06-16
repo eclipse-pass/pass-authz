@@ -16,7 +16,7 @@ jobs:
       - run: echo "This is a CI build of branch ${{ github.ref }} in repository ${{ github.repository }}"
       - run: echo "This job was triggered by a ${{ github.event_name }} event and is running on a ${{ runner.os }} server"
 
-  call-workaround:
+  pom-workaround:
     name: "Parent POM Workaround"
     runs-on: ubuntu-latest
     steps:
@@ -37,9 +37,9 @@ jobs:
       - name: "Parent POM Workaround: Install from pass 'main'"
         run: mvn install --file pom.xml
 
-  call-tests:
+  run-tests:
     name: "Run Unit & Integration Tests"
-    needs: call-workaround
+    needs: pom-workaround
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout the repository"
