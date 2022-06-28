@@ -106,7 +106,7 @@ public class PassAuthzIT extends FcrepoIT {
                 .perform();
 
         // This will wait until we have a lookup in the index
-        assertEquals(userUri, attempt(60, () -> {
+        assertEquals(userUri, attempt(100, () -> {
             final URI found = client.findByAttribute(User.class, "locatorIds", hkId);
             assertNotNull(found);
             return found;
