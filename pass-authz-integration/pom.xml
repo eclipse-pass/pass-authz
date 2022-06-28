@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.dataconservancy.pass</groupId>
+    <groupId>org.eclipse.pass</groupId>
     <artifactId>pass-authz</artifactId>
     <version>0.5.1-SNAPSHOT</version>
   </parent>
@@ -55,7 +55,7 @@
         <configuration>
           <artifactItems>
             <artifactItem>
-              <groupId>org.dataconservancy.pass</groupId>
+              <groupId>org.eclipse.pass</groupId>
               <artifactId>pass-authz-core</artifactId>
               <version>${project.version}</version>
               <type>jar</type>
@@ -65,7 +65,7 @@
               <destFileName>pass-authz-core-shaded.jar</destFileName>
             </artifactItem>
             <artifactItem>
-              <groupId>org.dataconservancy.pass</groupId>
+              <groupId>org.eclipse.pass</groupId>
               <artifactId>pass-user-service</artifactId>
               <version>${project.version}</version>
               <type>war</type>
@@ -74,7 +74,7 @@
               <destFileName>pass-user-service.war</destFileName>
             </artifactItem>
             <artifactItem>
-              <groupId>org.dataconservancy.pass</groupId>
+              <groupId>org.eclipse.pass</groupId>
               <artifactId>pass-authz-roles</artifactId>
               <version>${project.version}</version>
               <type>jar</type>
@@ -131,8 +131,8 @@
             <pass.fedora.baseurl>http://${FCREPO_HOST}:${FCREPO_PORT}/fcrepo/rest/</pass.fedora.baseurl>
             <pass.elasticsearch.url>http://${ES_HOST}:${ES_PORT}</pass.elasticsearch.url>
             <jms.brokerUrl>failover:(tcp://${JMS_HOST}:${JMS_PORT})?trackMessages=true</jms.brokerUrl>
-            <authz.listener.jar>${org.dataconservancy.pass:pass-authz-listener:jar:exe}</authz.listener.jar>
-            <authz.containerPermissions.jar>${org.dataconservancy.pass:pass-authz-tools:jar:container-permissions-exe}</authz.containerPermissions.jar>
+            <authz.listener.jar>${org.eclipse.pass:pass-authz-listener:jar:exe}</authz.listener.jar>
+            <authz.containerPermissions.jar>${org.eclipse.pass:pass-authz-tools:jar:container-permissions-exe}</authz.containerPermissions.jar>
             <pass.authz.queue>Consumer.authz.VirtualTopic.pass.authz</pass.authz.queue>
             <jms.username>${activemq.user}</jms.username>
             <jms.password>${activemq.password}</jms.password>
@@ -325,7 +325,7 @@
   <dependencies>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-authz-core</artifactId>
       <version>${project.version}</version>
       <classifier>shaded</classifier>
@@ -333,14 +333,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-authz-acl</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-user-service</artifactId>
       <version>${project.version}</version>
       <type>war</type>
@@ -348,7 +348,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-authz-roles</artifactId>
       <version>${project.version}</version>
       <type>jar</type>
@@ -356,14 +356,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-authz-tools</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-authz-listener</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -371,7 +371,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-authz-tools</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -379,16 +379,16 @@
     </dependency>
     
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-authz-usertoken</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.fcrepo</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>jsonld-addon-filters</artifactId>
-      <version>0.0.6</version>
+      <version>${jsonld-addon-filters.version}</version>
       <classifier>shaded</classifier>
       <scope>test</scope>
     </dependency>
@@ -408,7 +408,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.dataconservancy.pass</groupId>
+      <groupId>org.eclipse.pass</groupId>
       <artifactId>pass-data-client</artifactId>
     </dependency>
 
