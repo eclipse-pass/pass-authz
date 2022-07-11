@@ -82,7 +82,7 @@
     <logback.version>1.2.3</logback.version>
     <mockito.version>2.23.0</mockito.version>
     <okhttp.version>4.10.0</okhttp.version>
-    <pass.fedora.client.version>0.9.0-SNAPSHOT</pass.fedora.client.version>
+    <pass.fedora.client.version>0.1.0-SNAPSHOT</pass.fedora.client.version>
     <jsonld-addon-filters.version>0.0.7-SNAPSHOT</jsonld-addon-filters.version>
     <elasticsearch.version>6.2.4</elasticsearch.version>
     <slf4j.version>1.7.25</slf4j.version>
