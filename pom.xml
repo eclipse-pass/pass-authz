@@ -87,10 +87,8 @@
     <javax.servlet.version>3.1.0</javax.servlet.version>
     <jena.version>3.9.0</jena.version>
     <junit.version>4.12</junit.version>
-    <logback.version>1.2.3</logback.version>
     <mockito.version>2.23.0</mockito.version>
     <okhttp.version>4.10.0</okhttp.version>
-    <pass.fedora.client.version>0.1.0-SNAPSHOT</pass.fedora.client.version>
     <jsonld-addon-filters.version>0.0.7-SNAPSHOT</jsonld-addon-filters.version>
     <elasticsearch.version>6.2.4</elasticsearch.version>
     <slf4j.version>1.7.25</slf4j.version>
@@ -119,7 +117,7 @@
       <dependency>
         <groupId>org.eclipse.pass</groupId>
         <artifactId>pass-data-client</artifactId>
-        <version>${pass.fedora.client.version}</version>
+        <version>${pass-java-client.version}</version>
       </dependency>
 
       <dependency>
