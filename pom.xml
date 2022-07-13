@@ -100,7 +100,6 @@
 
     <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
     <docker-maven-plugin.version>0.40.1</docker-maven-plugin.version>
-    <maven-compiler-plugin.version>3.10.0</maven-compiler-plugin.version>
     <maven-failsafe-plugin.version>2.22.0</maven-failsafe-plugin.version>
     <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
     <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
@@ -260,15 +259,6 @@
   <build>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${maven-compiler-plugin.version}</version>
-          <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
-          </configuration>
-        </plugin>
-
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
