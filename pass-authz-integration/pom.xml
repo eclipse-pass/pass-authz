@@ -1,10 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>org.eclipse.pass</groupId>
     <artifactId>pass-authz</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
+
   <artifactId>pass-authz-integration</artifactId>
 
   <properties>
@@ -17,21 +20,123 @@
     <pass.user.token.key>BETKPFHWGGDIEWIIYKYQ33LUS4</pass.user.token.key>
   </properties>
 
+  <dependencies>
 
-  <profiles>
-    <profile>
-      <id>standard</id>
-      <properties>
-        <ES_PORT>9200</ES_PORT>
-        <FCREPO_PORT>8080</FCREPO_PORT>
-        <JMS_PORT>61616</JMS_PORT>
-        <STOMP_PORT>61613</STOMP_PORT>
-      </properties>
-    </profile>
-  </profiles>
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-authz-core</artifactId>
+      <version>${project.version}</version>
+      <classifier>shaded</classifier>
+      <scope>test</scope>
+    </dependency>
 
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-authz-acl</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-user-service</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-authz-roles</artifactId>
+      <version>${project.version}</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-authz-tools</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-authz-listener</artifactId>
+      <version>${project.version}</version>
+      <classifier>exe</classifier>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-authz-tools</artifactId>
+      <version>${project.version}</version>
+      <classifier>container-permissions-exe</classifier>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-authz-usertoken</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>jsonld-addon-filters</artifactId>
+      <version>${jsonld-addon-filters.version}</version>
+      <classifier>shaded</classifier>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-webapp</artifactId>
+      <version>${fcrepo.version}</version>
+      <type>war</type>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.pass</groupId>
+      <artifactId>pass-data-client</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
 
   <build>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
     <plugins>
 
       <plugin>
@@ -313,122 +418,17 @@
         </executions>
       </plugin>
     </plugins>
-
-    <testResources>
-      <testResource>
-        <directory>src/test/resources</directory>
-        <filtering>true</filtering>
-      </testResource>
-    </testResources>
   </build>
 
-  <dependencies>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-authz-core</artifactId>
-      <version>${project.version}</version>
-      <classifier>shaded</classifier>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-authz-acl</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-user-service</artifactId>
-      <version>${project.version}</version>
-      <type>war</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-authz-roles</artifactId>
-      <version>${project.version}</version>
-      <type>jar</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-authz-tools</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-authz-listener</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      <classifier>exe</classifier>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-authz-tools</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      <classifier>container-permissions-exe</classifier>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-authz-usertoken</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>jsonld-addon-filters</artifactId>
-      <version>${jsonld-addon-filters.version}</version>
-      <classifier>shaded</classifier>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.fcrepo</groupId>
-      <artifactId>fcrepo-webapp</artifactId>
-      <type>war</type>
-      <version>${fcrepo.version}</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>org.eclipse.pass</groupId>
-      <artifactId>pass-data-client</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>okhttp</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
+  <profiles>
+    <profile>
+      <id>standard</id>
+      <properties>
+        <ES_PORT>9200</ES_PORT>
+        <FCREPO_PORT>8080</FCREPO_PORT>
+        <JMS_PORT>61616</JMS_PORT>
+        <STOMP_PORT>61613</STOMP_PORT>
+      </properties>
+    </profile>
+  </profiles>
 </project>

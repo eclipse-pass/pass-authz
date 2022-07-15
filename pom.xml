@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -20,6 +21,7 @@
       <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
+
   <developers>
     <developer>
       <name>Aaron Birkland</name>
@@ -59,7 +61,6 @@
     </developer>
   </developers>
 
-
   <modules>
     <module>pass-authz-core</module>
     <module>pass-authz-integration</module>
@@ -71,6 +72,13 @@
     <module>pass-authz-usertoken</module>
   </modules>
 
+  <scm>
+    <connection>scm:git:https://github.com/eclipse-pass/pass-authz.git</connection>
+    <developerConnection>scm:git:https://github.com/eclipse-pass/pass-authz.git</developerConnection>
+    <url>https://github.com/eclipse-pass/pass-authz</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <properties>
 
     <commons-codec.version>1.11</commons-codec.version>
@@ -79,10 +87,8 @@
     <javax.servlet.version>3.1.0</javax.servlet.version>
     <jena.version>3.9.0</jena.version>
     <junit.version>4.12</junit.version>
-    <logback.version>1.2.3</logback.version>
     <mockito.version>2.23.0</mockito.version>
     <okhttp.version>4.10.0</okhttp.version>
-    <pass.fedora.client.version>0.1.0-SNAPSHOT</pass.fedora.client.version>
     <jsonld-addon-filters.version>0.0.7-SNAPSHOT</jsonld-addon-filters.version>
     <elasticsearch.version>6.2.4</elasticsearch.version>
     <slf4j.version>1.7.25</slf4j.version>
@@ -92,108 +98,8 @@
     <powermock.version>2.0.0-RC.1</powermock.version>
     <json.version>20180130</json.version>
 
-    <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
-    <docker-maven-plugin.version>0.40.1</docker-maven-plugin.version>
-    <maven-compiler-plugin.version>3.10.0</maven-compiler-plugin.version>
-    <maven-failsafe-plugin.version>2.22.0</maven-failsafe-plugin.version>
-    <maven-javadoc-plugin.version>3.0.1</maven-javadoc-plugin.version>
-    <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
-    <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-    <maven-war-plugin.version>3.2.3</maven-war-plugin.version>
-
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${maven-compiler-plugin.version}</version>
-          <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>${maven-source-plugin.version}</version>
-          <executions>
-            <execution>
-              <goals>
-                <goal>jar</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>${maven-surefire-plugin.version}</version>
-          <configuration>
-            <argLine>
-              --illegal-access=permit
-              --add-opens java.xml/jdk.xml.internal=ALL-UNNAMED
-            </argLine>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${maven-javadoc-plugin.version}</version>
-          <executions>
-            <execution>
-              <id>attach-javadocs</id>
-              <goals>
-                <goal>jar</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>io.fabric8</groupId>
-          <artifactId>docker-maven-plugin</artifactId>
-          <version>${docker-maven-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>org.codehaus.mojo</groupId>
-          <artifactId>build-helper-maven-plugin</artifactId>
-          <version>${build-helper-maven-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-failsafe-plugin</artifactId>
-          <version>${maven-failsafe-plugin.version}</version>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-war-plugin</artifactId>
-          <version>${maven-war-plugin.version}</version>
-        </plugin>
-
-      </plugins>
-    </pluginManagement>
-
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-      </plugin>
-    </plugins>
-
-  </build>
 
   <dependencyManagement>
 
@@ -202,7 +108,7 @@
       <dependency>
         <groupId>org.eclipse.pass</groupId>
         <artifactId>pass-data-client</artifactId>
-        <version>${pass.fedora.client.version}</version>
+        <version>${pass-java-client.version}</version>
       </dependency>
 
       <dependency>
@@ -331,13 +237,6 @@
 
   </dependencyManagement>
 
-  <scm>
-    <connection>scm:git:https://github.com/eclipse-pass/pass-authz.git</connection>
-    <developerConnection>scm:git:https://github.com/eclipse-pass/pass-authz.git</developerConnection>
-    <url>https://github.com/eclipse-pass/pass-authz</url>
-    <tag>HEAD</tag>
-  </scm>
-  
   <repositories>
     <repository>
       <id>sonatype-nexus-snapshots</id>
@@ -349,4 +248,83 @@
     </repository>
   </repositories>
 
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${maven-source-plugin.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven-surefire-plugin.version}</version>
+          <configuration>
+            <argLine>
+              --illegal-access=permit
+              --add-opens java.xml/jdk.xml.internal=ALL-UNNAMED
+            </argLine>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${maven-javadoc-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>io.fabric8</groupId>
+          <artifactId>docker-maven-plugin</artifactId>
+          <version>${docker-maven-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>build-helper-maven-plugin</artifactId>
+          <version>${build-helper-maven-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${maven-failsafe-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>${maven-war-plugin.version}</version>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 </project>
