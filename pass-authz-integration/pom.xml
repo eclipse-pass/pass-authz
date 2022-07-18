@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.eclipse.pass</groupId>
     <artifactId>pass-authz</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>pass-authz-integration</artifactId>
@@ -86,7 +86,7 @@
     <dependency>
       <groupId>org.eclipse.pass</groupId>
       <artifactId>jsonld-addon-filters</artifactId>
-      <version>0.1.0</version>
+      <version>0.2.0-SNAPSHOT</version>
       <classifier>shaded</classifier>
       <scope>test</scope>
     </dependency>
