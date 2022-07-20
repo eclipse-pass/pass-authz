@@ -1,4 +1,4 @@
-FROM oapass/fcrepo:4.7.5-3.2-3
+FROM oapass/fcrepo:0.1.0@sha256:ffa09bb4f3481ef2840f5e40d8a214609da0600ad00f9a741f69b18a4fa4c3a1
 
 RUN rm -rf /usr/local/tomcat/webapps/pass-user-service && \
     rm /usr/local/tomcat/lib/pass-authz* && \

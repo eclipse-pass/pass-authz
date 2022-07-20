@@ -276,7 +276,7 @@
 
             <image>
               <alias>indexer</alias>
-              <name>oapass/indexer:0.0.15-3.1-SNAPSHOT</name>
+              <name>oapass/indexer:0.1.0@sha256:5ad45a9d227d9e48a607d9344b72a6bf9eeb66388a8088794bdbd5e4eab5de2d</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
