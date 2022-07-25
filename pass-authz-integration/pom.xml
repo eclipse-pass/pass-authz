@@ -276,7 +276,7 @@
 
             <image>
               <alias>indexer</alias>
-              <name>oapass/indexer:0.1.0@sha256:48364e4341ff476a92d31cd391158d832f6ba01e66fa50c79f67d3595930289b</name>
+              <name>${it.image.indexer.name}</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
@@ -366,7 +366,7 @@
 
             <image>
               <alias>elasticsearch</alias>
-              <name>docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.3</name>
+              <name>${it.image.elasticsearch.name}</name>
               <run>
                 <namingStrategy>alias</namingStrategy>
                 <env>
